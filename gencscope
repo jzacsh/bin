@@ -1,0 +1,14 @@
+#!/bin/bash
+
+pushd ~/.vim/ 1>/dev/null
+
+find \
+  /srv/http/subs/notes/www/sites/all/modules/contrib/ \
+  /srv/http/subs/notes/www/includes/ \
+  /srv/http/subs/notes/www/sites/all/themes/ \
+  /srv/http/subs/notes/www/modules/ \
+  \( -name '*.inc' -or -name '*.php' -or -name '*.module' \)  > ~/.vim/cscope.files
+
+cscope -b
+popd 1>/dev/null
+rm  ~/.vim/cscope.files
