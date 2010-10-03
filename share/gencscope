@@ -1,11 +1,14 @@
 #!/bin/bash
 
+dir="~/.vim"
+list="{dir}/cscope.files"
+
 find \
   /srv/http/subs/notes/www/sites/all/modules/contrib/ \
   /srv/http/subs/notes/www/includes/ \
   /srv/http/subs/notes/www/sites/all/themes/ \
   /srv/http/subs/notes/www/modules/ \
-  \( -name '*.inc' -or -name '*.php' -or -name '*.module' \)  > ~/.vim/cscope.files
+  \( -name '*.inc' -or -name '*.php' -or -name '*.module' \)  > $list
 
-cscope -i ~/.vim/cscope.files
-rm  ~/.vim/cscope.files
+cscope -b -i $list
+rm $list
