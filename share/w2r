@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# web two resume
+#
+# author:	  jzacsh
+# created:	2010/02/20
+# purpose:	download stand-alone copy of resume and convert to pdf
+# fpath:	  ~/bin/w2r
+######################################################################
+
+
+#params:
+#--------------------------------------------------------------------#
+# eg	w2r  shtml  Jonathan_Zacsh_Resume
+# $1	file suffix on server
+# $2	output file (w/o file extension)
+dir=/home/jzacsh/docs/bus/client/self/resume/pu/
+orig=index.$1
+convert=/usr/bin/wkhtmltopdf
+wget=/usr/bin/wget
+evince=/usr/bin/evince
+pdf=$2.pdf
+out=$2.html
+img=jz-logo.png
+url=http://jz/resume/
+
+#extra param:
+#--------------------------------------------------------------------#
+if [[ -d $3 ]]; then
+	dir=$3/
+fi
+
+#actual work:
+#--------------------------------------------------------------------#
+if [[ -n $1 && -n $2 ]]; then
+	$wget -c $url$orig -O $dir$out
+	$wget -c $url$img  -O $dir$img
+	$convert $dir$out $dir$pdf
+	$evince $dir$pdf &
+	disown
+	rm $dir$out $dir$img
+
+	echo # Print Instructions
+	echo "Pick up your resume at " $dir
+else
+	echo "USAGE:	w2r   suffix-http-doc   prefix-of-out   [ directory ]"
+fi

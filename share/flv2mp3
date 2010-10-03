@@ -1,0 +1,10 @@
+#!/bin/bash
+#convert flash files to mp3
+
+#sample: ffmpeg -i get_stream.flv -f mp3 -vn -acodec copy audio.mp3
+
+# usage:
+# $1 = original flv files
+# $2 = new mp3 file
+
+ffmpeg -i $1 -f mp3 -vn -acodec copy $2
