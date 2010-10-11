@@ -19,8 +19,4 @@
 # done
 
 tail -f /var/log/*.log\
-  /var/log/syslog\
-  /var/log/mysql\
-  /var/log/messages\
-  /var/log/dmesg\
   /home/jzacsh/docs/logs/*.log;
