@@ -22,9 +22,9 @@ if [ ! -e "$1" ]; then
 fi
 
 if [ -z "$2" ] && [ -e "$2" ]; then
-  echo "File:'$2' already exists. Clear file for output? (y/n)"
-  read
-  if [ $REPLY == "n" ]; then
+  echo -en "File:'$2' already exists. Clear file for output? [Y/n] "
+  read REPLY
+  if [ $REPLY == "n" || $REPLY == "N" ]; then
     echo "Please try running the script with another output file."
     exit 2
   else 
@@ -35,14 +35,14 @@ elif [ ! -z "$2" ]; then
 fi
 
 cat "$1" |
-"$SED_COMMAND" 's/\([;{]\)\([^\n]\)/\1\n\t\2/g' |   #do main formatting for all CSS properties and the beggining of CSS declerations
-"$SED_COMMAND" 's/\([^}]\)}/\1;\n}\n\n/g' |     #end of decleration formatting
-"$SED_COMMAND" 's/{/ {/g' |              #more beggining of CSS decleration
-"$SED_COMMAND" 's/[,]/& /g' |             #add some spaces for readability
+"$SED_COMMAND" 's/\([;{]\)\([^\n]\)/\1\n\ \2/g' |   #do main formatting for all CSS properties and the beggining of CSS declerations
+"$SED_COMMAND" 's/\([^}]\)}/\1;\n}\n\n/g'       |   #end of decleration formatting
+"$SED_COMMAND" 's/{/ {/g'                       |   #more beggining of CSS decleration
+"$SED_COMMAND" 's/[,]/& /g'                     |   #add some spaces for readability
 "$SED_COMMAND" '
 /}/ {
   N
   N
   s/}\n\([^\n]\)/}\n\n\1/
-}' #make sure there are two \n's after the closing brace
+}'  #make sure there are two \n's after the closing brace
 exit 0
