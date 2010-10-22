@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 # taken from a bird
 
-[[ pgrep offlineimap ]] && exit 1
+[[ $(pgrep "offlineimap") ]] && exit 1
 
-offlineimap -o -u Noninteractive.Quiet &>/dev/null &
+offlineimap -o -u Noninteractive.Quiet # &>/dev/null
 exit 0
