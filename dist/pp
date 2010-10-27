@@ -1,0 +1,27 @@
+#!/bin/bash
+
+#
+# Parallelized download wrapper for pacman
+# Requires: aria2
+#
+
+PACARGS=("$@")
+PACCACHE="/var/cache/pacman/pkg"
+
+(( UID != 0 )) && { echo "Must be root!"; exit 1; } >&2
+
+# find alternate pacman cache location
+paccache=$(awk -F' *= *' '/[^#]CacheDir/{ print $2 }' /etc/pacman.conf)
+[[ $paccache ]] && PACCACHE="$paccache"
+unset paccache
+
+IFS=$'\n' read -r -d'\0' -a pkgs < <(pacman -p "${PACARGS[@]}" | grep -E '^(ht|f)tp')
+
+# exit on null array
+if [[ -z "${pkgs[@]}" ]]; then
+ echo "Nothing to do!"
+ exit 0
+fi
+
+aria2c --dir "$PACCACHE" -i - < <(for pkg in "${pkgs[@]}"; do echo "$pkg"; done)
+pacman -U $(for pkg in "${pkgs[@]}"; do echo "$PACCACHE/${pkg##*/}"; done)
