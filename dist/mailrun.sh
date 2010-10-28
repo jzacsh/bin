@@ -1,7 +1,6 @@
 #!/bin/bash
-# taken from a bird
 
-[[ $(pgrep "offlineimap") ]] && exit 1
+[[ $(pgrep "offlineimap") ]] && exit 2
 
 offlineimap -o -u Noninteractive.Quiet # &>/dev/null
 exit 0
