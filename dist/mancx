@@ -23,3 +23,5 @@ case $# in
 esac
 
 $XMLLINT $XPATH_EXPR <(curl -s $BASEURL/$PAGE$SECTION) 2>/dev/null | sed 's|</\?[^>]\+>||g;s|&lt\;|<|g;s|&gt\;|>|g' | ${PAGER:-less}
+l -s $BASEURL/$PAGE$SECTION | $XMLLINT --xpath "$XPATH_EXPR" - 2>/dev/null | sed "$DETAG")
+[[ $manpage ]] && "${PAGER:-less}" <<< "$manpage" || echo "No mancx entry for $PAGE"
