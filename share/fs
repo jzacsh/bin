@@ -1,0 +1,7 @@
+#easy "project" searching
+if [[ -z $CB ]];then
+  echo '$CB env var not set.' >&2
+  return 1
+fi
+
+grep "$@" ${CB//\'/}
