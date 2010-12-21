@@ -170,13 +170,20 @@ get_latest() {
   dbg 'starting get_latest().'
 
   if [[ -d $git_land && -w $git_land ]];then
-    verb 'removing existing repo contents...'
-    if_verbose && local params='v'
-    rm -rf${params} $git_land
+    verb 'entering local repo...'
+    cd $git_land
+    verb 'comparing to upstream...'
+    if [[ $(grep "^commit" $(git fetch && git log ..origin/master)) ]]; then
+      verb 'upstream updates available, downloading...'
+      git pull origin master
+    else
+      #exit early, no updates available
+      verb 'Nothing to do. No upstream changes available.'
+      die $EC_NORM
+    fi
+  else
+    die $EC_MIGR
   fi
-  verb '`git` cloning latest repo...'
-  git clone ${git_repo} $git_land
-  verb 'finished cloning latest repo...'
 }
 
 build_live() {
