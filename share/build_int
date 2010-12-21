@@ -67,9 +67,16 @@ cleanup() {
 die() {
   dbg 'starting die().'
 
+  dbg "the following was passed to die():\n$@"
+
+  # clean up PID file. dirty param, optional
   [[ $2 = 'd' ]] && printer 'leaving PID file behind.' || cleanup
+
+  # clean up ssh keychain
   clean_key
   [[ $? = 0 ]] || local clean_fail=$ECPIDF
+
+  # exit with optional error code param
   local number='^[0-9]+([.][0-9]+)?$'
   [[ $1 =~ number ]] && exit $1 || exit ${clean_fail-$EC_FAIL}
 }
@@ -200,6 +207,7 @@ build_live() {
   fi
 }
 
+trap die SIGINT
 # main sequence: ##############################################################
 prep_env
 get_latest
