@@ -10,7 +10,15 @@
 opt_debug=0
 opt_verbose=1
 
-if [[ -z $1 ]] && source $1 #replace below fictitious values
+#exit codes:
+EC_NORM=0 # normal
+EC_FAIL=1 # irregular termination
+EC_PIDF=2 # PID file error
+EC_MIGR=3 # problem migrating files to live
+EC_REPO=4 # git, ssh, or repository issue
+EC_CONF=5 # configuration, startup issues
+
+if [[ -z $1 ]] && source $1 || return $EC_CONF #replace below fictitious values
 # should expand to HostName github.com in ~/.ssh/config [see ssh_config(5)]:
 git_server=${git_server:-github_serv}
 git_repo=${git_repo:-${git_server}:jzacsh/anyproject}
@@ -26,13 +34,6 @@ expected='/srv/http/inc/int'
 mess="${PWD-expected}"
 runfile="$mess/.running"
 git_land="$mess/$gitland"
-
-#exit codes:
-EC_NORM=0 # normal
-EC_FAIL=1 # irregular termination
-EC_PIDF=2 # PID file error
-EC_MIGR=3 # problem migrating files to live
-EC_REPO=4 # git, ssh, or repository issue
 
 #colors:
 col_end='\033[0m' #cap
