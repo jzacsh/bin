@@ -173,15 +173,20 @@ get_latest() {
     verb 'entering local repo...'
     cd $git_land
     verb 'comparing to upstream...'
-    if [[ $(grep "^commit" $(git fetch && git log ..origin/master)) ]]; then
-      verb 'upstream updates available, downloading...'
-      git pull origin master
-    else
+    local commits="$(git fetch && git log ..origin/master | grep ^commit)"
+    if [[ -z $commits ]]; then
       #exit early, no updates available
       verb 'Nothing to do. No upstream changes available.'
       die $EC_NORM
+    else
+      #updates available
+      verb "the following upstream updates available\n$commits"
+      verb 'starting `git` pull...'
+      git pull origin master
     fi
   else
+    #cannot access local repo
+    err 'Unable to access local repo, checked with `-d` and `-w`'
     die $EC_MIGR
   fi
 }
