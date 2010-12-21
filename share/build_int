@@ -67,6 +67,8 @@ cleanup() {
 die() {
   dbg 'starting die().'
 
+  stamp "Exiting integration build of\n\t$git_repo"
+
   dbg "the following was passed to die():\n$@"
 
   # clean up PID file. dirty param, optional
@@ -87,6 +89,10 @@ clean_key() {
 
 printer() {
   echo -e "${col_grn}::${col_end} ${@}"
+}
+
+stamp() {
+  printer "$(date --rfc-3339=seconds) ${col_ylw}::${col_end} ${@}"
 }
 
 err() {
@@ -209,8 +215,10 @@ build_live() {
 
 trap die SIGINT
 # main sequence: ##############################################################
+stamp "Starting integration build of\n\t$git_repo"
 prep_env
 get_latest
 build_live
+stamp "Cleaning up integration build of\n\t$git_repo"
 clean_key
 cleanup
