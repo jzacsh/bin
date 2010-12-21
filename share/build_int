@@ -1,0 +1,207 @@
+#!/bin/bash
+###############################################################################
+# integrate the latest `git clone` of a given repo
+#
+# intended to run from /srv/http/inc/int
+###############################################################################
+
+# basic vars, change these: ###################################################
+#change to non-zero to enable
+opt_debug=0
+opt_verbose=1
+
+if [[ -z $1 ]] && source $1 #replace below fictitious values
+# should expand to HostName github.com in ~/.ssh/config [see ssh_config(5)]:
+git_server=${git_server:-github_serv}
+git_repo=${git_repo:-${git_server}:jzacsh/anyproject}
+git_sshkey=${git_sshkey:-/srv/http/inc/botname_id_rsa}
+gitland=${gitland:-mess_dir-www}
+http_dir=${http_dir:-/srv/http/www}
+###############################################################################
+
+# basic script setup ##########################################################
+opt_debug=${opt_debug-0}
+opt_verbose=${opt_verbose-0}
+expected='/srv/http/inc/int'
+mess="${PWD-expected}"
+runfile="$mess/.running"
+git_land="$mess/$gitland"
+
+#exit codes:
+EC_NORM=0 # normal
+EC_FAIL=1 # irregular termination
+EC_PIDF=2 # PID file error
+EC_MIGR=3 # problem migrating files to live
+EC_REPO=4 # git, ssh, or repository issue
+
+#colors:
+col_end='\033[0m' #cap
+col_blk='\e[0;30m'
+col_red='\e[1;31m'
+col_grn='\e[1;32m'
+col_ylw='\e[1;33m'
+col_blu='\e[1;34m'
+col_wht='\e[0;37m'
+#TOOD: wrap this "color" block in if statement in case run to a log file
+###############################################################################
+
+# script helpers: #############################################################
+if_debug() { (( $opt_debug > 0)) && return 0 || return 1; }
+if_verbose() { (( $opt_verbose > 0)) && return 0 || return 1; }
+
+cleanup() {
+  dbg 'starting cleanup().'
+
+  if [[ -f $runfile ]];then
+    if [[ -w $runfile ]];then
+      if_verbose && local param='v'
+      rm -f${param} $runfile
+    else
+      err "cannot delete pid file: $runfile"
+      return $EC_PIDF
+    fi
+  fi
+}
+
+die() {
+  dbg 'starting die().'
+
+  [[ $2 = 'd' ]] && printer 'leaving PID file behind.' || cleanup
+  clean_key
+  [[ $? = 0 ]] || local clean_fail=$ECPIDF
+  local number='^[0-9]+([.][0-9]+)?$'
+  [[ $1 =~ number ]] && exit $1 || exit ${clean_fail-$EC_FAIL}
+}
+
+clean_key() {
+  ssh-add -d ${git_sshkey}
+}
+
+printer() {
+  echo -e "${col_grn}::${col_end} ${@}"
+}
+
+err() {
+  echo -e "${col_ylw}::${col_end} ${col_red}ERROR:${col_end}  ${@}"
+}
+
+verb() {
+  if_verbose || return
+  echo -e "${col_ylw}::${col_end} ${@}"
+}
+
+dbg() {
+  if_debug || return
+  echo -e "${col_ylw}::${col_end} ${col_blu}DEBUG:${col_end} ${@}"
+}
+
+test_debug() {
+  if_debug || return
+  dbg 'starting test_debug().'
+
+  dbg "mess dir is: $mess"
+  dbg "run file is: $runfile"
+  dbg "git repo is: $git_repo"
+  dbg "rsa file is: $git_sshkey"
+  dbg "git landing is: $git_land"
+  dbg 'testing git server access'
+  dbg 'printing all fingerprints in ssh agent'
+  ssh-add -l
+  dbg 'printing all fingerprints in ssh agent'
+  ssh $git_server expand
+}
+
+# program functions: ##########################################################
+prep_env() {
+  dbg 'starting get_latest().'
+
+  verb 'creating PID file..'
+  if [[ -f $runfile ]];then
+    err 'script already running or PID was left behind file..'
+    die $EC_PIDF d
+  else
+    #create PID file
+    touch $runfile
+
+    if [[ ! -f $runfile ]];then
+      err 'problem creating PID file..'
+      die $EC_PIDF
+    fi
+  fi
+
+  verb 'making sure PWD is expected location..'
+  cd $mess
+  verb "current directory is: $PWD"
+
+  verb 'making sure ssh key is in keychain...'
+  if [[ -r $git_sshkey ]];then
+    local tmp=$(mktemp);
+    local outp="$(keychain --quiet $git_sshkey &>$tmp)"
+    if [[ $(cat $tmp | wc -c) = 0 ]];then
+      verb "ssh key added to keychain."
+    else
+      err 'problem loading ssh key...'
+      verb "$(cat $tmp)"
+      die $EC_REPO
+    fi
+  else
+    err 'cannot read ssh key file...'
+    die $EC_REPO
+  fi
+
+  test_debug
+}
+
+get_latest() {
+  dbg 'starting get_latest().'
+
+  if [[ -d $git_land && -w $git_land ]];then
+    verb 'removing existing repo contents...'
+    if_verbose && local params='v'
+    rm -rf${params} $git_land
+  fi
+  verb '`git` cloning latest repo...'
+  git clone ${git_repo} $git_land
+  verb 'finished cloning latest repo...'
+}
+
+build_live() {
+  dbg 'starting build_live()'
+
+  if_verbose && local param='v'
+  if [[ -r $git_land ]] && [[ -w $http_dir ]];then
+    verb 'copying latest build into live http docs...'
+    for file in $git_land/*; do
+      cp -r${param} $file $http_dir/
+    done
+
+    verb 'copying any hidden files, as well...'
+    for file in $git_land/.*; do
+      dbg "iterating over file: $file"
+      local b=$(basename $file)
+      if [[ ! $b = '.' ]] && [[ ! $b = '..' ]] && [[ ! $b = '.git' ]];then
+        dbg "copying: $file"
+        cp -r${param} $file $http_dir/
+      fi
+    done
+  else
+    err 'improper permissions for latest fetch and/or http docs directory.'
+    if [[ if_debug ]];then
+      if [[ -r $git_land ]];then
+        dbg "improper read permissions to $git_land"
+      fi
+
+      if [[ -w $http_dir  ]];then
+        dbg "improper write permissions to $git_land"
+      fi
+    fi
+    die $EC_MIGR
+  fi
+}
+
+# main sequence: ##############################################################
+prep_env
+get_latest
+build_live
+clean_key
+cleanup
