@@ -1,0 +1,39 @@
+#!/bin/bash
+
+#exit codes
+EC_NORM=0
+EC_FAIL=1
+
+#colors
+col_end='\033[0m'
+col_blk='\e[0;30m'
+col_red='\e[1;31m'
+col_grn='\e[1;32m'
+col_ylw='\e[1;33m'
+col_blu='\e[1;34m'
+col_wht='\e[0;37m'
+
+die() {
+# fail whale syntax:
+#   local num="[0-9]+([.][0-9]*)?"
+#   [[ $1 ~= num ]] && exit $1 || exit $EC_FAIL
+    [[ -n $1 ]] && exit $1 || exit $EC_FAIL
+}
+
+err() {
+    echo -e "${col_red}ERROR:${col_end} ${@}"
+}
+
+#########################################################
+
+check_gmrun() {
+    if [[ ! $(type gmrun) ]]; then
+        err 'gmrun was not found, make sure its in your PATH'
+        die $EC_FAIL
+    fi
+}
+
+#sanity check
+check_gmrun
+pkill gmrun
+gmrun & disown && die $EC_NORM
