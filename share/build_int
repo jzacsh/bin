@@ -186,8 +186,8 @@ get_latest() {
     fi
   else
     #cannot access local repo
-    $err='Unable to access the following (local repo), checked with `-d` and `-w`'
-    err "$err\n\t$git_land"
+    local error='Unable to access the following (local repo), checked with `-d` and `-w`'
+    err "$error\n\t$git_land"
     die $EC_MIGR
   fi
 }
