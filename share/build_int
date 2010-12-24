@@ -96,7 +96,7 @@ stamp() {
 }
 
 err() {
-  echo -e "${col_ylw}::${col_end} ${col_red}ERROR:${col_end}  ${@}"
+  echo -e "${col_ylw}::${col_end} ${col_red}ERROR:${col_end}  ${@}" >&2
 }
 
 verb() {
