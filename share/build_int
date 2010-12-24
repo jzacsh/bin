@@ -75,8 +75,9 @@ die() {
   [[ $2 = 'd' ]] && printer 'leaving PID file behind.' || cleanup
 
   # clean up ssh keychain
+  local clean_fail
   clean_key
-  [[ $? = 0 ]] || local clean_fail=$ECPIDF
+  [[ $? = 0 ]] || clean_fail=$ECPIDF
 
   # exit with optional error code param
   local number='^[0-9]+([.][0-9]+)?$'
