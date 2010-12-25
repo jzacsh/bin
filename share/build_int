@@ -19,7 +19,19 @@ EC_REPO=4 # git, ssh, or repository issue
 EC_CONF=5 # configuration, startup issues
 EC_AUTH=6 # some ssh authentication issue
 
-[[ -r $1 ]] && source $1 || exit $EC_CONF #replace below fictitious values
+usage() {
+  echo "usage: ${0} conf_file"
+  echo -e "\twhere conf_file is ascii providing necessary values"
+  echo -e "\t[found at top script]"
+  #@TODO: print explanation that "ficticious value"-set at top of script is
+  # needed as seperate source file to be read at runtime
+  exit $EC_CONF
+}
+
+#expecting replacement conf for below fictitious values
+[[ -r $1 ]] && source $1 || usage
+###############################################################################
+## fiction start ##############################################################
 # should expand to HostName github.com in ~/.ssh/config [see ssh_config(5)]:
 git_server=${git_server:-github_serv}
 git_repo=${git_repo:-${git_server}:jzacsh/anyproject}
@@ -27,6 +39,7 @@ git_sshkey=${git_sshkey:-/srv/http/inc/botname_id_rsa}
 gitland=${gitland:-mess_dir-www}
 http_dir=${http_dir:-/srv/http/www}
 mess_dir=${mess_dir:-/tmp/}
+## fiction end ################################################################
 ###############################################################################
 
 # basic script setup ##########################################################
