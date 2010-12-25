@@ -7,7 +7,7 @@
 
 # basic vars, change these: ###################################################
 #change to non-zero to enable
-opt_debug=1
+opt_debug=0
 opt_verbose=1
 
 #exit codes:
