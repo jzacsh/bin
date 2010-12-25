@@ -36,7 +36,7 @@ usage() {
 git_server=${git_server:-github_serv}
 git_repo=${git_repo:-${git_server}:jzacsh/anyproject}
 git_sshkey=${git_sshkey:-/srv/http/inc/botname_id_rsa}
-gitland=${gitland:-mess_dir-www}
+git_clone=${git_clone:-mess_dir-www}
 http_dir=${http_dir:-/srv/http/www}
 mess_dir=${mess_dir:-/tmp/}
 ## fiction end ################################################################
@@ -48,7 +48,7 @@ opt_verbose=${opt_verbose-0}
 #if not set, perhaps this script is CD'd somewhere before run:
 mess="${mess_dir-$PWD}"
 runfile="$mess/.running"
-git_land="$mess/$gitland"
+git_land="$mess/$git_clone"
 param='' #cleared and used as necessary
 
 #colors:
