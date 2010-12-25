@@ -32,7 +32,8 @@ http_dir=${http_dir:-/srv/http/www}
 opt_debug=${opt_debug-0}
 opt_verbose=${opt_verbose-0}
 expected='/srv/http/inc/int'
-mess="${PWD-expected}"
+#if not set, perhaps this script is CD'd somewhere before run:
+mess="${expected-$PWD}"
 runfile="$mess/.running"
 git_land="$mess/$gitland"
 param='' #cleared and used as necessary
@@ -157,7 +158,7 @@ prep_env() {
     fi
   fi
 
-  verb 'making sure PWD is expected location..'
+  verb "making sure PWD is the below expected location..\n\t$mess"
   cd $mess
   verb "current directory is: $PWD"
 
