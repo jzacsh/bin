@@ -17,6 +17,7 @@ EC_PIDF=2 # PID file error
 EC_MIGR=3 # problem migrating files to live
 EC_REPO=4 # git, ssh, or repository issue
 EC_CONF=5 # configuration, startup issues
+EC_AUTH=6 # some ssh authentication issue
 
 [[ -r $1 ]] && source $1 || exit $EC_CONF #replace below fictitious values
 # should expand to HostName github.com in ~/.ssh/config [see ssh_config(5)]:
@@ -63,6 +64,10 @@ cleanup() {
       err "cannot delete pid file: $runfile"
       return $EC_PIDF
     fi
+  else
+    local error='cannot find below PID file (ehem, script should not have gotten this far)'
+    err "$error:\n\t$runfile"
+    return $EC_PIDF
   fi
 }
 
@@ -73,13 +78,17 @@ die() {
 
   dbg "the following was passed to die():\n$@"
 
-  # clean up PID file. dirty param, optional
-  [[ $2 = 'd' ]] && printer 'leaving PID file behind.' || cleanup
-
-  # clean up ssh keychain
+  #run general cleanup tasks
   local clean_fail
-  clean_key
-  [[ $? -eq 0 ]] || clean_fail=$ECPIDF
+
+  # clean up PID file. dirty param, optional
+  if [[ $2 = 'd' ]]; then
+    printer 'leaving PID file behind.'
+  else
+    cleanup || clean_fail=$EC_PIDF
+  fi
+  # clean up ssh keychain
+  clean_key || clean_fail=$?
 
   # exit with optional error code param
   local number='^[0-9]+([.][0-9]+)?$'
@@ -87,7 +96,7 @@ die() {
 }
 
 clean_key() {
-  ssh-add -d ${git_sshkey}
+  ssh-add -d ${git_sshkey} || return $EC_AUTH
 }
 
 printer() {
