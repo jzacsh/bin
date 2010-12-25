@@ -166,11 +166,11 @@ prep_env() {
 
   verb 'creating PID file..'
   if [[ -f $runfile ]];then
-    err 'script already running or PID was left behind file..'
+    err "script (PID: $(cat $runfile)) still running or PID file was left behind.."
     die $EC_PIDF d
   else
     #create PID file
-    touch $runfile
+    echo "$$" > $runfile
 
     if [[ ! -f $runfile ]];then
       err 'problem creating PID file..'
