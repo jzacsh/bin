@@ -7,7 +7,7 @@
 
 # basic vars, change these: ###################################################
 #change to non-zero to enable
-opt_debug=0
+opt_debug=1
 opt_verbose=1
 
 #exit codes:
@@ -90,7 +90,7 @@ die() {
 
   stamp "Exiting integration build of\n\t$git_repo"
 
-  dbg "the following was passed to die():\n$@"
+  dbg "the following ${#} arg(s) were passed with die():\n${@}"
 
   #run general cleanup tasks
   local clean_fail
@@ -100,17 +100,14 @@ die() {
     printer 'leaving PID file behind.'
   else
     cleanup || clean_fail=$EC_PIDF
+    dbg "\$clean_fail is: $clean_fail"
   fi
-  # clean up ssh keychain
-  clean_key || clean_fail=$?
+
+  dbg "\$clean_fail is: $clean_fail"
 
   # exit with optional error code param
   local number='^[0-9]+([.][0-9]+)?$'
   [[ $1 =~ $number || $1 -eq 0  ]] && exit $1 || exit ${clean_fail-$EC_FAIL}
-}
-
-clean_key() {
-  ssh-add -d ${git_sshkey} || return $EC_AUTH
 }
 
 printer() {
@@ -137,25 +134,35 @@ dbg() {
 
 conf_debug() {
   if_debug && echo || return
-  dbg 'starting conf_debug(), settings debugger.'
+  dbg "starting conf_debug(${col_red}${@}${col_end}), settings debugger."
 
-  dbg "mess dir is: $mess"
-  dbg "run file is: $runfile"
-  dbg "git repo is: $git_repo"
-  dbg "ssh key is: $git_sshkey"
-  dbg "git landing is: $git_land"
-  dbg 'printing git server access'
-  ssh $git_server expand
-  dbg 'printing all fingerprints in ssh agent'
-  ssh-add -l
-  dbg 'finished conf_debug(), settings debugger.\n'
+  case $1 in
+    1)
+      #just print variables
+      dbg "mess dir is: $mess"
+      dbg "run file is: $runfile"
+      dbg "git repo is: $git_repo"
+      dbg "ssh key is: $git_sshkey"
+      dbg "git landing is: $git_land"
+      ;;
+    2)
+      #test results of prep_env()
+      dbg 'printing git server access'
+      if_debug && ssh $git_server expand
+      dbg 'printing all fingerprints in ssh agent'
+      if_debug && ssh-add -l
+      dbg 'finished conf_debug(), settings debugger.'
+      ;;
+    esac
+
+    echo
 }
 
 # program functions: ##########################################################
 prep_env() {
   dbg 'starting prep_env().'
 
-  conf_debug
+  conf_debug 1
 
   verb 'creating PID file..'
   if [[ -f $runfile ]];then
@@ -175,17 +182,9 @@ prep_env() {
   cd $mess
   verb "current directory is: $PWD"
 
-  verb 'making sure ssh key is in keychain...'
+  verb "making sure the following ssh key is readable...\n\t$git_sshkey"
   if [[ -r $git_sshkey ]];then
-    local tmp=$(mktemp);
-    local outp="$(keychain --quiet $git_sshkey &>$tmp)"
-    if [[ $(wc -c < $tmp) = 0 ]];then
-      verb 'ssh key added to keychain.'
-    else
-      err "problem, below, loading the following ssh key...\n\t$git_sshkey"
-      verb "$(cat $tmp)"
-      die $EC_REPO
-    fi
+    verb 'ssh key file exists and is readable.'
   else
     err "cannot read below ssh key file...\n\t$git_sshkey"
     die $EC_REPO
@@ -210,6 +209,8 @@ prep_env() {
     fresh=1
     dbg "\`fresh\` bool is now: $fresh."
   fi
+
+  conf_debug 2
 }
 
 get_latest() {
