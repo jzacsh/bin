@@ -279,14 +279,9 @@ build_live() {
 trap die SIGINT
 # main sequence: ##############################################################
 stamp "Starting integration build of\n\t$git_repo"
-
 prep_env
-
 get_latest
-
 build_live
-
 stamp "Cleaning up integration build of\n\t$git_repo"
-
 clean_key
 cleanup
