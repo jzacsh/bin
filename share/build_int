@@ -44,6 +44,7 @@ col_ylw='\e[1;33m'
 col_blu='\e[1;34m'
 col_wht='\e[0;37m'
 #TOOD: wrap this "color" block in if statement in case run to a log file
+fresh=0 #indication that the repo is not new, and is to be compared upstream
 ###############################################################################
 
 # script helpers: #############################################################
@@ -110,9 +111,9 @@ dbg() {
   echo -e "${col_ylw}::${col_end} ${col_blu}DEBUG:${col_end} ${@}"
 }
 
-test_debug() {
+conf_debug() {
   if_debug || return
-  dbg 'starting test_debug().'
+  dbg 'starting conf_debug(), settings debugger.'
 
   dbg "mess dir is: $mess"
   dbg "run file is: $runfile"
@@ -124,11 +125,12 @@ test_debug() {
   ssh-add -l
   dbg 'printing all fingerprints in ssh agent'
   ssh $git_server expand
+  dbg 'finished conf_debug(), settings debugger.'
 }
 
 # program functions: ##########################################################
 prep_env() {
-  dbg 'starting get_latest().'
+  dbg 'starting prep_env().'
 
   verb 'creating PID file..'
   if [[ -f $runfile ]];then
@@ -164,11 +166,38 @@ prep_env() {
     die $EC_REPO
   fi
 
-  test_debug
+  local msg="ensuring the following 'landing directory' actually exists..."
+  verb "$msg\n\t$git_land"
+  if [[ -e $git_land ]]; then
+    verb "no landing directory found"
+    verb "creating landing directory"
+    mkdir -p $git_land
+    verb "entering and cloning latest repo into landing directory"
+    pushd $git_land
+    git clone $git_repo
+    popd
+    fresh=1
+  fi
+
+  conf_debug
 }
 
 get_latest() {
   dbg 'starting get_latest().'
+
+  if [[ $fresh ]]; then
+    # if local repo is fresh, script wil continue in main integrate the latest
+    verb 'local repo seems to have just been built, moving on to integration'
+  else
+    # local repo already existed. we can assume integration has been done
+    # before, and will simply compare upstream to see if further action is
+    # necessary.
+    _compare_latest
+  fi
+}
+
+_compare_latest() {
+  dbg 'starting _compare_latest().'
 
   if [[ -d $git_land && -w $git_land ]];then
     verb 'entering local repo...'
@@ -233,7 +262,6 @@ stamp "Starting integration build of\n\t$git_repo"
 
 prep_env
 
-[[ -e $git_land ]] || mkdir -p $git_land
 get_latest
 
 build_live
