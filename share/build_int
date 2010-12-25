@@ -26,14 +26,14 @@ git_repo=${git_repo:-${git_server}:jzacsh/anyproject}
 git_sshkey=${git_sshkey:-/srv/http/inc/botname_id_rsa}
 gitland=${gitland:-mess_dir-www}
 http_dir=${http_dir:-/srv/http/www}
+mess_dir=${mess_dir:-/tmp/}
 ###############################################################################
 
 # basic script setup ##########################################################
 opt_debug=${opt_debug-0}
 opt_verbose=${opt_verbose-0}
-expected='/srv/http/inc/int'
 #if not set, perhaps this script is CD'd somewhere before run:
-mess="${expected-$PWD}"
+mess="${mess_dir-$PWD}"
 runfile="$mess/.running"
 git_land="$mess/$gitland"
 param='' #cleared and used as necessary
@@ -254,11 +254,11 @@ build_live() {
     verb 'copying any hidden files, as well...'
     for file in $git_land/.*; do
       local b=$(basename $file)
-      if [[ ! $b = '.' ]] && [[ ! $b = '..' ]] && [[ ! $b = '.git' ]];then
+      if [[ $b = '.' ]] || [[ $b = '..' ]] || [[ $b = '.git' ]];then
+        dbg "skipping suspect file: $file"
+      else
         dbg "copying: $file"
         cp -r${param} $file $http_dir/
-      else
-        dbg "skipping suspect file: $file"
       fi
     done
     verb 'file integration complete'
