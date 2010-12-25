@@ -34,6 +34,7 @@ expected='/srv/http/inc/int'
 mess="${PWD-expected}"
 runfile="$mess/.running"
 git_land="$mess/$gitland"
+param='' #cleared and used as necessary
 
 #colors:
 col_end='\033[0m' #cap
@@ -56,7 +57,7 @@ cleanup() {
 
   if [[ -f $runfile ]];then
     if [[ -w $runfile ]];then
-      if_verbose && local param='v'
+      if_verbose && param='v' || param=''
       rm -f${param} $runfile
     else
       err "cannot delete pid file: $runfile"
@@ -66,7 +67,7 @@ cleanup() {
 }
 
 die() {
-  dbg 'starting die().'
+  dbg "starting die(${col_red}${@}${col_end})."
 
   stamp "Exiting integration build of\n\t$git_repo"
 
@@ -98,7 +99,7 @@ stamp() {
 }
 
 err() {
-  echo -e "${col_ylw}::${col_end} ${col_red}ERROR:${col_end}  ${@}" >&2
+  echo -e "${col_ylw}::${col_end} ${col_red}ERROR:${col_end} ${@}" >&2
 }
 
 verb() {
@@ -112,25 +113,26 @@ dbg() {
 }
 
 conf_debug() {
-  if_debug || return
+  if_debug && echo || return
   dbg 'starting conf_debug(), settings debugger.'
 
   dbg "mess dir is: $mess"
   dbg "run file is: $runfile"
   dbg "git repo is: $git_repo"
-  dbg "rsa file is: $git_sshkey"
+  dbg "ssh key is: $git_sshkey"
   dbg "git landing is: $git_land"
-  dbg 'testing git server access'
+  dbg 'printing git server access'
+  ssh $git_server expand
   dbg 'printing all fingerprints in ssh agent'
   ssh-add -l
-  dbg 'printing all fingerprints in ssh agent'
-  ssh $git_server expand
-  dbg 'finished conf_debug(), settings debugger.'
+  dbg 'finished conf_debug(), settings debugger.\n'
 }
 
 # program functions: ##########################################################
 prep_env() {
   dbg 'starting prep_env().'
+
+  conf_debug
 
   verb 'creating PID file..'
   if [[ -f $runfile ]];then
@@ -154,45 +156,51 @@ prep_env() {
   if [[ -r $git_sshkey ]];then
     local tmp=$(mktemp);
     local outp="$(keychain --quiet $git_sshkey &>$tmp)"
-    if [[ $(cat $tmp | wc -c) = 0 ]];then
-      verb "ssh key added to keychain."
+    if [[ $(wc -c < $tmp) = 0 ]];then
+      verb 'ssh key added to keychain.'
     else
-      err 'problem loading ssh key...'
+      err "problem, below, loading the following ssh key...\n\t$git_sshkey"
       verb "$(cat $tmp)"
       die $EC_REPO
     fi
   else
-    err 'cannot read ssh key file...'
+    err "cannot read below ssh key file...\n\t$git_sshkey"
     die $EC_REPO
   fi
 
   local msg="ensuring the following 'landing directory' actually exists..."
   verb "$msg\n\t$git_land"
   if [[ -e $git_land ]]; then
+    verb "landing directory found, continuing normally"
+    dbg 'landing directory has `stat` of:'
+    if_debug && stat $git_land
+    dbg "\`fresh\` bool is currently: $fresh."
+    dbg "marking current local repo status as NOT 'fresh'."
+    fresh=0
+    dbg "\`fresh\` bool is now: $fresh."
+  else
     verb "no landing directory found"
-    verb "creating landing directory"
-    mkdir -p $git_land
-    verb "entering and cloning latest repo into landing directory"
-    pushd $git_land
-    git clone $git_repo
-    popd
+    verb "cloning latest repo into landing directory"
+    git clone $git_repo $git_land
+    dbg "\`fresh\` bool is currently: $fresh."
+    dbg "marking current local repo status as 'fresh'."
     fresh=1
+    dbg "\`fresh\` bool is now: $fresh."
   fi
-
-  conf_debug
 }
 
 get_latest() {
   dbg 'starting get_latest().'
 
-  if [[ $fresh ]]; then
+  dbg "\`fresh\` bool is: $fresh."
+
+  if [[ $fresh -eq 0 ]]; then
+    # local repo is not "fresh" (already exists). We can assume integration has
+    # been done before, and will simply check for upstream changes.
+    _compare_latest
+  else
     # if local repo is fresh, script wil continue in main integrate the latest
     verb 'local repo seems to have just been built, moving on to integration'
-  else
-    # local repo already existed. we can assume integration has been done
-    # before, and will simply compare upstream to see if further action is
-    # necessary.
-    _compare_latest
   fi
 }
 
@@ -225,33 +233,45 @@ _compare_latest() {
 build_live() {
   dbg 'starting build_live()'
 
-  if_verbose && local param='v'
+  if_verbose && param='v' || param=''
   if [[ -r $git_land ]] && [[ -w $http_dir ]];then
-    verb 'copying latest build into live http docs...'
+    local msg='copying latest build into live http docs...'
+    verb "$msg\n\tfrom $git_land -> $http_dir"
     for file in $git_land/*; do
       cp -r${param} $file $http_dir/
     done
 
     verb 'copying any hidden files, as well...'
     for file in $git_land/.*; do
-      dbg "iterating over file: $file"
       local b=$(basename $file)
       if [[ ! $b = '.' ]] && [[ ! $b = '..' ]] && [[ ! $b = '.git' ]];then
         dbg "copying: $file"
         cp -r${param} $file $http_dir/
+      else
+        dbg "skipping suspect file: $file"
       fi
     done
+    verb 'file integration complete'
   else
     err 'improper permissions for latest fetch and/or http docs directory.'
-    if [[ if_debug ]];then
+
+    #debugging block
+    if [[ if_verb ]]; then
+      #check read permissions from local repository
       if [[ -r $git_land ]];then
-        dbg "improper read permissions to $git_land"
+        verb "improper read permissions to following landing dir/\n\t$git_land"
+        verb '`stat`s appear to be:'
+        if_verb && stat $git_land
       fi
 
+      #check write permissions to http directory
       if [[ -w $http_dir  ]];then
-        dbg "improper write permissions to $git_land"
+        verb "improper write permissions to following httpd dir/\n\t$http_dir"
+        verb '`stat`s appear to be:'
+        if_verb && stat $http_dir
       fi
     fi
+
     die $EC_MIGR
   fi
 }
