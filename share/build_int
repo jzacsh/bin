@@ -302,7 +302,7 @@ build_live() {
 
 trap die SIGINT
 # main sequence: ##############################################################
-stamp "Starting the following integration build of (PID $$).\n\t$git_repo"
+stamp "Starting the following integration build (PID $$).\n\t$git_repo"
 prep_env
 get_latest
 build_live
