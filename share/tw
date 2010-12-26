@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# twitter client
+
+creds="$HOME/.netrc"
+lno="$(grep -n 'twitter' $creds | sed -e 's/:.*$//')"
+i=1
+while read -r key value;do
+    if (( $i == $(($lno + 1)) || $i == $(($lno + 2))));then
+        case $key in
+            'login')
+                usr=$value
+                ;;
+            'password')
+                pas=$value
+                ;;
+        esac
+    fi
+    i=$(($i + 1))
+done < $creds
+
+curl -u $usr:$pas -d status="${@}" http://twitter.com/statuses/update.xml
