@@ -1,22 +1,51 @@
 #!/bin/bash
 
 # twitter client
+# exit status:
+EC_SUCC=0 #success
+EC_FAIL=1 #failed
+EC_MAXC=2 #over max chars
 
-creds="$HOME/.netrc"
-lno="$(grep -n 'twitter' $creds | sed -e 's/:.*$//')"
-i=1
-while read -r key value;do
-    if (( $i == $(($lno + 1)) || $i == $(($lno + 2))));then
-        case $key in
-            'login')
-                usr=$value
-                ;;
-            'password')
-                pas=$value
-                ;;
-        esac
+max_chars=140
+
+usage() {
+    echo -e "usage ${0} 'your tweet here'\n\tmax chars: ${max_chars}"
+}
+
+tweet() {
+    local creds="$HOME/.netrc"
+    local lno="$(grep -n 'twitter' $creds | sed -e 's/:.*$//')"
+    local i=1
+    while read -r key value;do
+        if (( $i == $(($lno + 1)) || $i == $(($lno + 2))));then
+            case $key in
+                'login')
+                    usr=$value
+                    ;;
+                'password')
+                    pas=$value
+                    ;;
+            esac
+        fi
+        ((++i))
+    done < $creds
+
+    curl -u $usr:$pas -d status="${@}" http://twitter.com/statuses/update.xml
+}
+
+check () {
+    if (( ${#} > 0 ));then
+        local num="$(echo -n ${@} | wc -c)"
+        if (( $num <= $max_chars )); then
+            return $EC_SUCC
+        else
+            usage
+            return $EC_MAXC
+        fi
+    else
+        usage
+        return $EC_FAIL
     fi
-    i=$(($i + 1))
-done < $creds
+}
 
-curl -u $usr:$pas -d status="${@}" http://twitter.com/statuses/update.xml
+check ${@} && tweet ${@} || exit $?
