@@ -7,7 +7,7 @@
 #     /var/log/mysql\
 #     /var/log/messages\
 #     /var/log/dmesg\
-#     /home/jzacsh/docs/logs/*.log;
+#     $HOME/docs/logs/*.log;
 #   do
 #     sz=$(stat --printf="%s%b" ${i})
 #     if (( $sz > 0 ));then
@@ -19,4 +19,4 @@
 # done
 
 tail -f /var/log/*.log\
-  /home/jzacsh/docs/logs/*.log;
+  $HOME/docs/logs/*.log;
