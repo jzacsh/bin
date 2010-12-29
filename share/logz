@@ -18,5 +18,4 @@
 # };
 # done
 
-tail -f /var/log/*.log\
-  $HOME/docs/logs/*.log;
+tail -f $(find $HOME/docs/log{,s} /var/log/ -name '*.log')
