@@ -1,9 +1,17 @@
 #!/bin/bash
-#easy "project" searching
+# easy "project" searching
 
-if [[ -z $CB ]];then
-  echo '$CB env var not set.' >&2
-  exit 1
+if [[ -z $PROJECT_BASE ]];then
+    echo '$PROJECT_BASE env var not set.' >&2
+    exit 1
 fi
 
-grep "$@" "${CB[@]}"
+if (( $# < 1));then
+    echo 'usage: identical to grep, without the path' >&2
+    exit 2
+fi
+
+# declare -p CB #debug
+
+#grep "$@" $PROJECT_BASE/sites/all/{modules/{features,custom},themes/zagat}
+grep "$@" ${CB[@]}
