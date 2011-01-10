@@ -1,0 +1,29 @@
+#!/bin/bash
+
+timeout_default=240 # default 4 hours
+
+# to load keys on this machine setup in ~/.ssh/add/:
+# lrwxrwxrwx   jzlut.add -> ../jzlut
+# lrwxrwxrwx   jzlut.add.pub -> ../jzlut.pub
+
+#################################################################
+
+if (( $# > 1 ));then
+    echo -e "usage: [timeout]
+    \ttimeout is minutes for key to last
+    \tdefault: $timeout_default ($(( $timeout_default / 60 )) hours).
+    \t[see keychain(1)]" >&2
+    exit 2
+elif (( $# == 1 ));then
+    passed=$1
+fi
+
+timeout=${passed:-$timeout_default}
+
+key_add() {
+    for key  in ~/.ssh/add/*.add ; do
+      keychain --quiet --timeout $timeout $key
+    done
+}
+
+key_add && source ~/.keychain/$HOSTNAME-sh || exit 1
