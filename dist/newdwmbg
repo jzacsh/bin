@@ -1,0 +1,10 @@
+#!/bin/bash
+
+WP_ROOT="/home/jzacsh/dbox/Photos/desktops/"
+
+if (( $# < 1 ));then
+    paper=$(find "$WP_ROOT" -type f -print0 | shuf -z -n1)
+else
+    paper="$@"
+fi
+feh --bg-scale $paper
