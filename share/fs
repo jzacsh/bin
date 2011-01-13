@@ -1,17 +1,46 @@
 #!/bin/bash
 # easy "project" searching
 
-if [[ -z $PROJECT_BASE ]];then
-    echo '$PROJECT_BASE env var not set.' >&2
-    exit 1
+debug=0
+
+####################################################################################
+
+usage() {
+    echo -e "
+    synopsis:\n\tfind stuff. wrapper to run grep on the usual code base.\n
+    usage: $(basename $0) -[m] [grep opts] [-e] search_terms [grep params]
+    \tparameters:
+    \t\tsearch_terms is a string you would like to find
+    \toptional:
+    \t\t-m massive grep on all of PROJECT_BASE
+    \t\t-e used to indicate multiple search_terms
+    \t\t\`grep\` is run, by default on CB environment parameter." >&2
+    exit 2
+}
+
+if (( $# < 1)) || [[ $1 == '-h' || $1 == '--help' ]]; then
+    usage
 fi
 
-if (( $# < 1));then
-    echo 'usage: identical to grep, without the path' >&2
-    exit 2
+####################################################################################
+
+if [[ $(declare -p CB &>/dev/null) || $(declare -p PROJECT_BASE &>/dev/null) ]];then
+    if [[ $1 -eq '-m' ]];then
+        BASE=$PROJECT_BASE
+        shift
+    else
+        BASE=$CB
+    fi
+else
+    #act as direct wrapping to grep
+    BASE=''
+    if (( $debug ));then
+        echo 'WARNING: no "code base" env vars found..'
+        echo 'assuming you provided the files to search, see grep(1).'
+    fi
 fi
 
 # declare -p CB #debug
 
 #grep "$@" $PROJECT_BASE/sites/all/{modules/{features,custom},themes/zagat}
-grep "$@" ${CB[@]}
+grep "$@" ${BASE}
