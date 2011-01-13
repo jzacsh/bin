@@ -24,6 +24,10 @@ stamp() {
   printer "$(date --rfc-3339=seconds) ${col_ylw}::${col_end} ${@}"
 }
 
+warn() {
+  echo -e "${col_ylw}::${col_end} ${col_red}WARNING:${col_end} ${@}"
+}
+
 err() {
   echo -e "${col_ylw}::${col_end} ${col_red}ERROR:${col_end} ${@}" >&2
 }
