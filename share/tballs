@@ -1,0 +1,115 @@
+#!/bin/bash
+
+source libbzsh
+
+# toggle these: ###############################################################
+opt_db=0 #debugging
+opt_vb=0 #verbose mode
+###############################################################################
+
+CONF_FILE="$@"
+# example conf file contents: #################################################
+#  job_name="Git Repo Backups" #name of backup to show up in logout put
+#  contents=('/home/git/repositories') #array of contents to be tarballed
+#  land_dir='/home/jzacsh/back/repos/' #directory for backups to land in
+#  chownusr='jzacsh' #user to chown the files owned to
+#  chowngrp='users'  #group to chwon thefiles to
+###############################################################################
+
+#exit codes:
+EC_NORM=0 # normal
+EC_FAIL=1 # irregular termination
+EC_PIDF=2 # PID file error
+EC_LAND=3 # problem with landing directory
+EC_REPO=4 # git, ssh, or repository issue
+EC_CONF=5 # configuration, startup issues
+EC_AUTH=6 # some ssh authentication issue
+
+die() {
+    dbg 'die() started'
+
+    #exit, possibly custom code:
+    local number='^[0-9]+([.][0-9]+)?$'
+    [[ $1 =~ $number || $1 -eq 0  ]] && exit $1 || exit ${EC_FAIL}
+}
+
+usage() {
+    dbg 'usage() started'
+
+    if (( $# ));then
+        err "$@"
+    fi
+
+    echo "
+    usage: $0 file
+      where file is a config equivelent to that commented-out a-top this script
+    " >&2
+
+    die $EC_FAIL
+
+    dbg 'usage() ended'
+}
+
+(( $# )) || usage "missing config file"
+
+# basic functions: ############################################################
+
+conf_read() {
+    dbg 'conf_read() started'
+
+    local conf_fail=0
+
+    #try to source config
+    if [[ -r $CONF_FILE ]]; then
+        dbg "attempting to source the following:\n\t$CONF_FILE"
+        source "$CONF_FILE" || conf_fail=1
+    else
+        dbg "the following conf is not readable, per \`-r\`:\n\t$CONF_FILE"
+        conf_fail=1
+    fi
+
+    #exit with message if anything failed
+    if (( $conf_fail )); then
+        err "failed to source configuration file, '$CONF_FILE'"
+        die $EC_CONF
+    fi
+
+    dbg 'conf_read() ended'
+}
+
+tarball() {
+    dbg 'tarball() started'
+
+    pkg=$(date --rfc-3339=date | sed -e 's/[:| ]/_/g' -e "s/$/_$(date +%A)/")
+    pkg="${land_dir}/${pkg}"
+
+    #create landing directory
+    if_verbose && params='v' || params=''
+    mkdir -p${params} $pkg && create_fail=0 || create_fail=1
+    if (( $create_fail )); then
+        err "failed to create the following landing dir:\n\t$pkg"
+        die $EC_LAND
+    fi
+
+    #create tarballs in landing directory
+    pushd $pkg &>/dev/null
+    if_verbose && params='v' || params=''
+    for file in ${contents[@]};do
+        tar -zc${params}f "$pkg/$(basename ${file})_packed.tgz" $file
+    done
+    popd $pkg &>/dev/null
+
+    #create landing directory
+    if_verbose && params='c' || params=''
+    chown -R${params} $chownusr:$chowngrp $land_dir
+
+    dbg 'tarball() ended'
+}
+
+# actual main sequence: #######################################################
+
+stamp "starting  tballer script, on $(uname -n)."
+conf_read
+echo -e "\tjob name:\"$job_name\""
+tarball
+stamp "finishing tballer script, on $(uname -n)."
