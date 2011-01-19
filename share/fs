@@ -3,7 +3,8 @@
 
 source ~/bin/share/libbzsh
 
-opt_debug=0
+opt_db=0
+opt_vb=0
 
 ####################################################################################
 
@@ -29,9 +30,13 @@ fi
 
 ####################################################################################
 
-if [[ $(declare -p CB &>/dev/null) || $(declare -p PROJECT_BASE &>/dev/null) ]];then
+#how to do this in bash?
+# if [[ ! $(declare -p CB &>/dev/null) ]] || [[ ! $(declare -p PROJECT_BASE &>/dev/null) ]];then
+
+# for now, PROJECT_BASE is a safe bet:
+if [[ ! $(declare -p PROJECT_BASE &>/dev/null) ]];then
     dbg 'found one of your env. vars'
-    if [[ $1 -eq '-m' ]];then
+    if [[ $1 == "-m" ]];then
         dbg 'setting "massive" search param'
         BASE=${PROJECT_BASE}
         shift
@@ -39,17 +44,27 @@ if [[ $(declare -p CB &>/dev/null) || $(declare -p PROJECT_BASE &>/dev/null) ]];
         dbg 'setting "$CB" search param'
         BASE=$CB
     fi
+else
+    dbg 'found NO env vars (CB or PROJECT_BASE).'
 fi
 
+#act as direct wrapping to grep
 if [[ -z $BASE ]];then
-    #act as direct wrapping to grep
-    BASE=''
-    if [[ ! if_debug ]] ;then
+    BASE='' #safe null
+    if [[ if_debug ]] ;then
         warn "no 'code base' env vars found..\n assuming you provided the files to search, see grep(1)."
     fi
 fi
 
-# declare -p CB #debug
+dbg "testing if PROJECT_BASE (project codebase) has been set:"
+if_debug && declare -p PROJECT_BASE
+
+dbg "testing if CB (main codebase) has been set:"
+if_debug && declare -p CB
+
+dbg "testing if BASE has been decided:"
+if_debug && declare -p BASE
 
 #grep "$@" $PROJECT_BASE/sites/all/{modules/{features,custom},themes/zagat}
-grep "$@" ${BASE}
+dbg "running the below:\n\tgrep ${@} ${BASE}"
+grep $@ ${BASE}
