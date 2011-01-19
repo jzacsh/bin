@@ -77,27 +77,46 @@ conf_read() {
     dbg 'conf_read() ended'
 }
 
-tarball() {
-    dbg 'tarball() started'
+prep_space() {
+    dbg 'prep_space() started'
 
-    pkg=$(date --rfc-3339=date | sed -e 's/[:| ]/_/g' -e "s/$/_$(date +%A)/")
-    pkg="${land_dir}/${pkg}"
+    local today="$(date +%A)"
+
+    #cleanup old tballs
+    if_verbose && params='v' || params=''
+    rm -rf${params} ${land_dir}/${today}
+
+    #setup tball location
+    local pkg_name=$(date --rfc-3339=date | sed -e 's/[:| ]/_/g' -e "s/$/_${today}/")
+    PKG="${land_dir}/${pkg_name}" #global
 
     #create landing directory
     if_verbose && params='v' || params=''
-    mkdir -p${params} $pkg && create_fail=0 || create_fail=1
+    mkdir -p${params} $PKG && create_fail=0 || create_fail=1
     if (( $create_fail )); then
-        err "failed to create the following landing dir:\n\t$pkg"
+        err "failed to create the following landing dir:\n\t$PKG"
         die $EC_LAND
     fi
 
+    dbg 'prep_space() ended'
+}
+
+tarball() {
+    dbg 'tarball() started'
+
     #create tarballs in landing directory
-    pushd $pkg &>/dev/null
+    pushd $PKG &>/dev/null
     if_verbose && params='v' || params=''
+    local tar_exit=0
     for file in ${contents[@]};do
-        tar -zc${params}f "$pkg/$(basename ${file})_packed.tgz" $file
+        tar -zc${params}f "$PKG/$(basename ${file})_packed.tgz" $file
+        tar_exit=$?
+        if (( $tar_exit ));then
+            err "\`tar\` exited abnormally with: $tar_exit"
+            die $EC_LAND
+        fi
     done
-    popd $pkg &>/dev/null
+    popd &>/dev/null
 
     #create landing directory
     if_verbose && params='c' || params=''
@@ -111,5 +130,6 @@ tarball() {
 stamp "starting  tballer script, on $(uname -n)."
 conf_read
 echo -e "\tjob name:\"$job_name\""
+prep_space
 tarball
 stamp "finishing tballer script, on $(uname -n)."
