@@ -33,7 +33,8 @@ usage() {
 ###############################################################################
 ## fiction start ##############################################################
 # should expand to HostName github.com in ~/.ssh/config [see ssh_config(5)]:
-git_server=${git_server:-github_serv}
+git_server=${git_server:-github_serv} #optional, only if used in git_repo
+git_service='gitolite' #currently only does something for gitolite
 git_repo=${git_repo:-${git_server}:jzacsh/anyproject}
 git_sshkey=${git_sshkey:-/srv/http/inc/botname_id_rsa}
 git_clone=${git_clone:-mess_dir-www}
@@ -142,13 +143,19 @@ conf_debug() {
       dbg "mess dir is: $mess"
       dbg "run file is: $runfile"
       dbg "git repo is: $git_repo"
+      dbg "git service: $git_service"
       dbg "ssh key is: $git_sshkey"
       dbg "git landing is: $git_land"
       ;;
     2)
       #test results of prep_env()
-      dbg 'printing git server access'
-      if_debug && ssh $git_server expand
+      dbg "printing git server access, for $git_service (if possible)"
+      case $git_service in
+          'gitolite')
+              if_debug && ssh $git_server expand
+              ;;
+              #@TOOD: put test for github
+      esac
       dbg 'printing all fingerprints in ssh agent'
       if_debug && ssh-add -l
       dbg 'finished conf_debug(), settings debugger.'
