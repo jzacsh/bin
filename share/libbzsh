@@ -4,6 +4,7 @@
 ###############################################################################
 
 #colors:
+#TOOD: wrap this "color" block in if statement in case run to a log file
 col_end='\033[0m' #cap
 col_blk='\e[0;30m'
 col_red='\e[1;31m'
