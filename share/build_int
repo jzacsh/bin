@@ -183,11 +183,15 @@ prep_env() {
   verb "current directory is: $PWD"
 
   verb "making sure the following ssh key is readable...\n\t$git_sshkey"
-  if [[ -r $git_sshkey ]];then
-    verb 'ssh key file exists and is readable.'
+  if (( $git_sshkey == '0' ));then
+      verb 'found git_sshkey set to "0". will not use key'
   else
-    err "cannot read below ssh key file...\n\t$git_sshkey"
-    die $EC_REPO
+      if [[ -r $git_sshkey ]];then
+        verb 'ssh key file exists and is readable.'
+      else
+        err "cannot read below ssh key file...\n\t$git_sshkey"
+        die $EC_REPO
+      fi
   fi
 
   local msg="ensuring the following 'landing directory' actually exists..."
