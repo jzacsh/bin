@@ -5,6 +5,8 @@
 # intended to run from /srv/http/inc/int
 ###############################################################################
 
+source libbzsh
+
 # basic vars, change these: ###################################################
 #change to non-zero to enable
 opt_debug=0
@@ -52,22 +54,10 @@ runfile="$mess/.running"
 git_land="$mess/$git_clone"
 param='' #cleared and used as necessary
 
-#colors:
-col_end='\033[0m' #cap
-col_blk='\e[0;30m'
-col_red='\e[1;31m'
-col_grn='\e[1;32m'
-col_ylw='\e[1;33m'
-col_blu='\e[1;34m'
-col_wht='\e[0;37m'
-#TOOD: wrap this "color" block in if statement in case run to a log file
 fresh=0 #indication that the repo is not new, and is to be compared upstream
 ###############################################################################
 
 # script helpers: #############################################################
-if_debug() { (( $opt_debug > 0)) && return 0 || return 1; }
-if_verbose() { (( $opt_verbose > 0)) && return 0 || return 1; }
-
 cleanup() {
   dbg 'starting cleanup().'
 
@@ -109,28 +99,6 @@ die() {
   # exit with optional error code param
   local number='^[0-9]+([.][0-9]+)?$'
   [[ $1 =~ $number || $1 -eq 0  ]] && exit $1 || exit ${clean_fail-$EC_FAIL}
-}
-
-printer() {
-  echo -e "${col_grn}::${col_end} ${@}"
-}
-
-stamp() {
-  printer "$(date --rfc-3339=seconds) ${col_ylw}::${col_end} ${@}"
-}
-
-err() {
-  echo -e "${col_ylw}::${col_end} ${col_red}ERROR:${col_end} ${@}" >&2
-}
-
-verb() {
-  if_verbose || return
-  echo -e "${col_ylw}::${col_end} ${@}"
-}
-
-dbg() {
-  if_debug || return
-  echo -e "${col_ylw}::${col_end} ${col_blu}DEBUG:${col_end} ${@}"
 }
 
 conf_debug() {
