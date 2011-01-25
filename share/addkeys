@@ -21,7 +21,7 @@ fi
 timeout=${passed:-$timeout_default}
 
 key_add() {
-    keychain --clear #cleanup, first
+   #keychain --clear #cleanup, first
     for key  in ~/.ssh/add/*.add ; do
       keychain --quiet --timeout $timeout $key
     done
