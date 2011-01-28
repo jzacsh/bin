@@ -1,7 +1,7 @@
 #!/bin/bash
 # easy "project" searching
 
-source ~/bin/share/libbzsh
+source libbzsh
 
 opt_db=0
 opt_vb=0
