@@ -16,23 +16,17 @@ if [[ $1 = '-h' || $1 = '--help' ]];then
     \tdefault: $timeout_default ($(( $timeout_default / 60 )) hours).
     \t[see keychain(1)]" >&2
     exit 2
-else [[ $1 == '-t' ]];then
+elif [[ $1 == '-t' ]];then
     passed=$1
     shift
 fi
 
 timeout=${passed:-$timeout_default}
 
-key_add() {
-    for key  in ; do
-        eval $(keychain --eval --timeout $timeout ~/.ssh/add/*.add ${@})
-    done
-}
+eval $(keychain --eval --timeout $timeout ~/.ssh/add/*.add ${@})
 
 # key_add && source ~/.keychain/$HOSTNAME-sh || exit 1
-if [[ key_add ]]; then
-    source ~/.keychain/$HOSTNAME-sh
-else
+if [[ -z $SSH_AGENT_PID ]]; then
     echo 'failed to `addkeys` to ssh-agent! see keychain(1)' >&2
     exit 1
 fi
