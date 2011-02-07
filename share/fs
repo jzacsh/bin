@@ -70,7 +70,7 @@ check_env() {
     if_debug && declare -p BASE
 }
 
-if (( $# == 0 )) && [[ $1 = '-n' ]]; then
+if (( $# == 1 )) && [[ $1 = '-n' ]]; then
     opt_db=1
     check_env
     exit 0
