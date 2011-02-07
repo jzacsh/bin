@@ -15,16 +15,19 @@ usage() {
     \tparameters:
     \t\tsearch_terms is a string you would like to find
     \toptional:
-    \t\t-m massive grep on all of PROJECT_BASE
-    \t\t-e used to indicate multiple search_terms
+    \t\t-e used to indicate multiple search_terms [see grep (1) ]
+    \t\t--massive run grep on all of PROJECT_BASE
+    \t\t-n clean-run: check for env vars that will be used and exit.
+    \t\t (NOTE: This option only works when no other params are passed).
     \t\t\`grep\` is run, by default on CB environment parameter." >&2
     exit 2
 }
 
+#sanity check:
 if (( $# < 1));then
     err 'not enough parameters.'
     usage
-elif [[ $1 == '-h' || $1 == '--help' ]]; then
+elif [[ $1 = '-h' || $1 = '--help' ]]; then
     usage
 fi
 
@@ -36,7 +39,7 @@ fi
 # for now, PROJECT_BASE is a safe bet:
 if [[ ! $(declare -p PROJECT_BASE &>/dev/null) ]];then
     dbg 'found one of your env. vars'
-    if [[ $1 == "-m" ]];then
+    if [[ $1 == "--massive" ]];then
         dbg 'setting "massive" search param'
         BASE=${PROJECT_BASE}
         shift
@@ -56,14 +59,22 @@ if [[ -z $BASE ]];then
     fi
 fi
 
-dbg "testing if PROJECT_BASE (project codebase) has been set:"
-if_debug && declare -p PROJECT_BASE
+check_env() {
+    dbg "testing if PROJECT_BASE (project codebase) has been set:"
+    if_debug && declare -p PROJECT_BASE
 
-dbg "testing if CB (main codebase) has been set:"
-if_debug && declare -p CB
+    dbg "testing if CB (main codebase) has been set:"
+    if_debug && declare -p CB
 
-dbg "testing if BASE has been decided:"
-if_debug && declare -p BASE
+    dbg "testing if BASE has been decided:"
+    if_debug && declare -p BASE
+}
+
+if (( $# == 0 )) && [[ $1 = '-n' ]]; then
+    opt_db=1
+    check_env
+    exit 0
+fi
 
 #grep "$@" $PROJECT_BASE/sites/all/{modules/{features,custom},themes/zagat}
 dbg "running the below:\n\tgrep ${@} ${BASE}"
