@@ -84,7 +84,7 @@ prep_space() {
 
     #cleanup old tballs
     if_verbose && params='v' || params=''
-    rm -rf${params} ${land_dir}/${today}
+    rm -rf${params} ${land_dir}/*${today}
 
     #setup tball location
     local pkg_name=$(date --rfc-3339=date | sed -e 's/[:| ]/_/g' -e "s/$/_${today}/")
