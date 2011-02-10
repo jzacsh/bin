@@ -9,7 +9,7 @@ source libbzsh
 
 # basic vars, change these: ###################################################
 #change to non-zero to enable
-opt_debug=0
+opt_debug=1
 opt_verbose=1
 
 #exit codes:
@@ -87,7 +87,7 @@ die() {
   local clean_fail
 
   # clean up PID file. dirty param, optional
-  if [[ $2 = 'd' ]]; then
+  if [[ $2 == 'd' ]]; then
     printer 'leaving PID file behind.'
   else
     cleanup || clean_fail=$EC_PIDF
@@ -158,7 +158,7 @@ prep_env() {
   verb "current directory is: $PWD"
 
   verb "making sure the following ssh key is readable...\n\t$git_sshkey"
-  if (( $git_sshkey == '0' ));then
+  if (( $git_sshkey = '0' ));then
       verb 'found git_sshkey set to "0". will not use key'
   else
       if [[ -r $git_sshkey ]];then
@@ -247,7 +247,7 @@ build_live() {
     verb 'copying any hidden files, as well...'
     for file in $git_land/.*; do
       local b=$(basename $file)
-      if [[ $b = '.' ]] || [[ $b = '..' ]] || [[ $b = '.git' ]];then
+      if [[ $b == '.' ]] || [[ $b == '..' ]] || [[ $b == '.git' ]];then
         dbg "skipping suspect file: $file"
       else
         dbg "copying: $file"
