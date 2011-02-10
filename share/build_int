@@ -9,8 +9,8 @@ source libbzsh
 
 # basic vars, change these: ###################################################
 #change to non-zero to enable
-opt_debug=1
-opt_verbose=1
+opt_db=1
+opt_vb=1
 
 #exit codes:
 EC_NORM=0 # normal
@@ -46,10 +46,10 @@ mess_dir=${mess_dir:-/tmp/}
 ###############################################################################
 
 # basic script setup ##########################################################
-opt_debug=${opt_debug-0}
-opt_verbose=${opt_verbose-0}
+opt_debug=${opt_debug:-0}
+opt_verbose=${opt_verbose:-0}
 #if not set, perhaps this script is CD'd somewhere before run:
-mess="${mess_dir-$PWD}"
+mess="${mess_dir:-$PWD}"
 runfile="$mess/.running"
 git_land="$mess/$git_clone"
 param='' #cleared and used as necessary
@@ -137,7 +137,33 @@ conf_debug() {
 prep_env() {
   dbg 'starting prep_env().'
 
+  if_verbose && param='v' || param=''
   conf_debug 1
+
+  verb "making sure PWD is the below expected location..\n\t$mess"
+  if [[ -d $git_land && -w $git_land ]]; then
+      cd $mess
+  else
+      verb "the following is either not a directory and/or not writeable; trying to create:\n\t$mess"
+      mkdir -p${param} $mess
+      if (( $? )); then
+          err "failed to create $mess"
+          die $EC_CONF
+      fi
+  fi
+  verb "current directory is: $PWD"
+
+  verb "making sure the following ssh key is readable...\n\t$git_sshkey"
+  if (( $git_sshkey = '0' ));then
+      verb 'found git_sshkey set to "0". will not use key'
+  else
+      if [[ -r $git_sshkey ]];then
+        verb 'ssh key file exists and is readable.'
+      else
+        err "cannot read below ssh key file...\n\t$git_sshkey"
+        die $EC_REPO
+      fi
+  fi
 
   verb 'creating PID file..'
   if [[ -f $runfile ]];then
@@ -151,22 +177,6 @@ prep_env() {
       err 'problem creating PID file..'
       die $EC_PIDF
     fi
-  fi
-
-  verb "making sure PWD is the below expected location..\n\t$mess"
-  cd $mess
-  verb "current directory is: $PWD"
-
-  verb "making sure the following ssh key is readable...\n\t$git_sshkey"
-  if (( $git_sshkey = '0' ));then
-      verb 'found git_sshkey set to "0". will not use key'
-  else
-      if [[ -r $git_sshkey ]];then
-        verb 'ssh key file exists and is readable.'
-      else
-        err "cannot read below ssh key file...\n\t$git_sshkey"
-        die $EC_REPO
-      fi
   fi
 
   local msg="ensuring the following 'landing directory' actually exists..."
@@ -286,5 +296,4 @@ prep_env
 get_latest
 build_live
 stamp "Cleaning up integration build of\n\t$git_repo"
-clean_key
 cleanup
