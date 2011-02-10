@@ -5,7 +5,7 @@
 # intended to run from /srv/http/inc/int
 ###############################################################################
 
-source libbzsh
+source $HOME/bin/lib/libbzsh
 
 # basic vars, change these: ###################################################
 #change to non-zero to enable
