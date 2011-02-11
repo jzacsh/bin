@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #convert flash files to mp3
 
 #sample: ffmpeg -i get_stream.flv -f mp3 -vn -acodec copy audio.mp3

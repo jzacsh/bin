@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # to use:######################################################################
 # - run `source [thisfile]` at the top of your script
