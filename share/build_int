@@ -9,8 +9,8 @@ source $HOME/bin/lib/libbzsh
 
 # basic vars, change these: ###################################################
 #change to non-zero to enable
-opt_db=1
-opt_vb=1
+OPT_DB=1
+OPT_VB=1
 
 #exit codes:
 EC_NORM=0 # normal

@@ -21,9 +21,9 @@ col_ylw='\e[1;33m'
 col_blu='\e[1;34m'
 col_wht='\e[0;37m'
 
-#these rely on opt_db and opt_vb booleans
-if_debug() { (( $opt_db > 0)) && return 0 || return 1; }
-if_verbose() { (( $opt_vb > 0)) && return 0 || return 1; }
+#these rely on OPT_DB and OPT_VB booleans
+if_debug() { (( $OPT_DB > 0)) && return 0 || return 1; }
+if_verbose() { (( $OPT_VB > 0)) && return 0 || return 1; }
 
 printer() {
   echo -e "${col_grn}::${col_end} ${@}"

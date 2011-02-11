@@ -3,8 +3,8 @@
 source libbzsh
 
 # toggle these: ###############################################################
-opt_db=0 #debugging
-opt_vb=0 #verbose mode
+OPT_DB=0 #debugging
+OPT_VB=0 #verbose mode
 ###############################################################################
 
 CONF_FILE="$@"
