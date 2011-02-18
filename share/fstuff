@@ -10,7 +10,7 @@ OPT_VB=0
 
 usage() {
     echo -e "
-    synopsis:\n\tfind stuff. wrapper to run grep on the usual code base.\n
+    synopsis:\n\t\`find\` code and stuff. wrapper to run grep on the usual code base.\n
     usage: $(basename $0) -[m] [grep opts] [-e] search_terms [grep params]
     \tparameters:
     \t\tsearch_terms is a string you would like to find
@@ -19,7 +19,8 @@ usage() {
     \t\t--massive run grep on all of PROJECT_BASE
     \t\t-n clean-run: check for env vars that will be used and exit.
     \t\t (NOTE: This option only works when no other params are passed).
-    \t\t\`grep\` is run, by default on CB environment parameter." >&2
+    \t\t\`grep\` is run, by default on CB environment parameter.
+    " >&2
     exit 2
 }
 
