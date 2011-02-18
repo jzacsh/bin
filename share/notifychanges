@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-HEADER='Someone Just Touched:'
 WATCH="${1:-$HOME/pub/drop}"
 INOTIFY='http://github.com/rvoicilas/inotify-tools'
 LIBNOTIFY='http://www.galago-project.org'
 depends=(inotifywait notify-send)
+HEADER="Someone Just Touched: $WATCH"
 
 usage() {
     echo -e "
@@ -12,11 +12,11 @@ usage() {
     using libnotify. You most likely will want to background this process and
     run it as a daemon.
 
-    usage: $0 [file_name ...]
+    usage: $(basename $0) [file_name ...]
         where file_name is the name of a dile or directory you'd like to be
         notified of changes to.
 
-        eg.: \`$0 ~/pub/drop\`
+        eg.: \`$(basename $0) ~/pub/drop\`
 
     NOTE:
         Multiple filename arguments has not been tested with this script.
