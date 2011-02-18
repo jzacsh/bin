@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+HEADER='Someone Just Touched:'
+WATCH="$HOME/pub/drop"
+
+while true;do
+    if [[ $(inotifywait --format '%e' $WATCH) ]];then
+#       declare -a suspects
+        declare suspects
+        tmpf=$(mktemp)
+
+        while read -r possible ;do
+            stamp=$(stat --format=%X "$possible")
+            tpast=$(( 10#$stamp - 10#$(date +%s) )) 
+#           (( tpast < 30 )) && suspects+=("$possible")
+            (( tpast < 30 )) && echo "$possible" >> $tmpf
+        done < <(find $WATCH -cmin 1)
+
+#       notify-send -t 15 "$HEADER" "${suspects[@]}"
+        notify-send -t 15 "$HEADER" "$(< $tmpf)"
+        rm $tmpf
+    fi
+done
