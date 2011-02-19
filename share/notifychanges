@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+WATCH="${1:-$HOME/pub/drop}"
+INOTIFY='http://github.com/rvoicilas/inotify-tools'
+LIBNOTIFY='http://www.galago-project.org'
+depends=(inotifywait notify-send)
+HEADER="Someone Just Touched: $WATCH"
+
+usage() {
+    echo -e "
+    Continuously watch a file (or directory) and notify you of changes using
+    using libnotify. You most likely will want to background this process and
+    run it as a daemon.
+
+    usage: $(basename $0) [file_name ...]
+        where file_name is the name of a dile or directory you'd like to be
+        notified of changes to.
+
+        eg.: \`$(basename $0) ~/pub/drop\`
+
+    NOTE:
+        Multiple filename arguments has not been tested with this script.
+        See: notify-send(1) $INOTIFY
+        See: inotifywait(1) $LIBNOTIFY
+    " >&2
+    exit 2
+}
+
+dependency() {
+    echo -e "$1 not found.\nPlease install all dependencies to this script." >&2
+    usage
+    exit 3
+}
+
+#for friends who don't like reading source code:
+if [[ $1 = '--help' || $1 = '-h' ]];then
+    usage
+fi
+
+#for the same friends
+for util in ${depends[@]}; do
+    type -p $util &>/dev/null
+    [[ $(type -p $util) ]] || dependency "$util"
+done
+
+#@TODO: repalce this loop with proper `inotifywait -m`
+#@TODO: read inotifywait(1) EVENTS section to figure out what you do and don't
+#       want to libnotify for
+while true;do
+    if [[ $(inotifywait -r --format '%e' $WATCH) ]];then
+#       declare -a suspects
+        declare suspects
+        tmpf=$(mktemp)
+
+        while read -r possible ;do
+            stamp=$(stat --format=%X "$possible")
+            tpast=$(( 10#$stamp - 10#$(date +%s) )) 
+#           (( tpast < 30 )) && suspects+=("$possible")
+            (( tpast < 30 )) && echo "$possible" >> $tmpf
+        done < <(find $WATCH -cmin 1)
+
+#       notify-send -t 15 "$HEADER" "${suspects[@]}"
+        notify-send -t 5 "$HEADER" "$(< $tmpf)"
+        rm $tmpf
+    fi
+done
