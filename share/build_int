@@ -126,10 +126,10 @@ conf_debug() {
       esac
       dbg 'printing all fingerprints in ssh agent'
       if_debug && ssh-add -l
-      dbg 'finished conf_debug(), settings debugger.'
       ;;
     esac
 
+    dbg 'finished conf_debug(), settings debugger.'
     echo
 }
 
