@@ -43,11 +43,21 @@ for util in ${depends[@]}; do
     [[ $(type -p $util) ]] || dependency "$util"
 done
 
+
+# if inotifywait is passed a non-existent directory,
+# it goes into a monsterous infinate loop instead of failing.
+if [[ -r $WATCH ]];then
+    recurse='-r'
+else
+    echo 'error: cannot find ' >&2
+    exit 3
+fi
+
 #@TODO: repalce this loop with proper `inotifywait -m`
 #@TODO: read inotifywait(1) EVENTS section to figure out what you do and don't
 #       want to libnotify for
 while true;do
-    if [[ $(inotifywait -r --format '%e' $WATCH) ]];then
+    if [[ $(inotifywait $recurse --format '%e' $WATCH) ]];then
 #       declare -a suspects
         declare suspects
         tmpf=$(mktemp)
