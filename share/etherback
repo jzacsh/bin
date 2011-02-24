@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+## CHANGE THESE STRING VALUES, ONLY: #############################################
+DOC_URI=${1:-'http://openetherpad.org/ep/pad/export/uvLNbZUotg/latest?format=txt'}
+BAK_DIR=${2:-"$HOME/dbox/edu/226/project/backup/"}
+
+DOC_PRE='todo_'
+DOC_SUF='.pad.bak'
+
+
+##################################################################################
+
+usage() {
+    echo "usage: $(basename $0) etherpad_text_uri backup_dir" >&2
+    exit 2
+}
+
+[[ (( $# > 2 )) || (( $# == 1 )) ]] && usage
+
+backup() {
+    curl -s "$DOC_URI" > "$BAK_DIR/${DOC_PRE}$(date --rfc-3339=date)_$(date +%s)${DOC_SUF}"
+}
+
+#only backup if necessary
+[[ $(diff <(curl -s "$DOC_URI") $(find "$BAK_DIR" -name "${DOC_PRE}*${DOC_SUF}" | sort | tail -n 1) >&/dev/null) ]] || exit 0
+backup
