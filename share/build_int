@@ -87,7 +87,7 @@ die() {
   local clean_fail
 
   # clean up PID file. dirty param, optional
-  if [[ $2 == 'd' ]]; then
+  if [[ $2 = 'd' ]]; then
     printer 'leaving PID file behind.'
   else
     cleanup || clean_fail=$EC_PIDF
@@ -257,7 +257,7 @@ build_live() {
     verb 'copying any hidden files, as well...'
     for file in $git_land/.*; do
       local b=$(basename $file)
-      if [[ $b == '.' ]] || [[ $b == '..' ]] || [[ $b == '.git' ]];then
+      if [[ $b = '.' ]] || [[ $b = '..' ]] || [[ $b = '.git' ]];then
         dbg "skipping suspect file: $file"
       else
         dbg "copying: $file"
