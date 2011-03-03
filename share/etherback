@@ -19,8 +19,9 @@ usage() {
 
 backup() {
     curl -s "$DOC_URI" > "$BAK_DIR/${DOC_PRE}$(date --rfc-3339=date)_$(date +%s)${DOC_SUF}"
+    (( $? )) && echo "backup failed, \`curl\` exited with $?" >&2 || return 0
 }
 
 #only backup if necessary
-[[ $(diff <(curl -s "$DOC_URI") $(find "$BAK_DIR" -name "${DOC_PRE}*${DOC_SUF}" | sort | tail -n 1) >&/dev/null) ]] || exit 0
-backup
+latest_bak=$(find "$BAK_DIR" -name "${DOC_PRE}*${DOC_SUF}" | sort | tail -n 1)
+diff <(curl -s "$DOC_URI") "$latest_bak" >&/dev/null || backup
