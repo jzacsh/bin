@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# change conf above this line. ################################################
+###############################################################################
+
+E_ERROR=1
+E_USAGE=64
+
+#@TODO:
+# use getopts
+OPTS=(abcd)
+
+die() {
+    exit ${1:-$E_ERROR}
+}
+
+help() {
+    usage
+#@TODO:
+## use an associative array with OPTS and store an explanation of each getopts
+# arg, loop through and print it here.
+    die
+}
+
+usage() {
+    local _n=$(basename $0)
+
+    echo "$_n - a time card utility. Punch in, out, get paid.
+
+    $_n [$(for opt in ${OPTS[@]}; do echo -n $opt; done)] [note...]
+
+    $_n generally takes a note of what you're currently working on and stores
+    that with a timestamp in your config file. Called with no arguments $_n
+    prints your current time on the clock.
+" >&2
+
+    die
+}
+
+#@TODO:
+## make no-arg print of current time.
+# make an option to have a clean print in epoch syntax
+
+#usage 99
