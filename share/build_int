@@ -9,7 +9,7 @@ source $HOME/bin/lib/libbzsh
 
 # basic vars, change these: ###################################################
 #change to non-zero to enable
-OPT_DB=1
+OPT_DB=0
 OPT_VB=1
 
 #exit codes:
@@ -22,16 +22,16 @@ EC_CONF=5 # configuration, startup issues
 EC_AUTH=6 # some ssh authentication issue
 
 usage() {
-  echo "usage: ${0} conf_file"
+  echo "usage: $(basename $0) conf_file"
   echo -e "\twhere conf_file is ascii providing necessary values"
   echo -e "\t[found at top script]"
-  #@TODO: print explanation that "ficticious value"-set at top of script is
+  #@TODO: print explanation that "ficticious" values towards top of script is
   # needed as seperate source file to be read at runtime
   exit $EC_CONF
 }
 
 #expecting replacement conf for below fictitious values
-[[ -r $1 ]] && source $1 || usage
+(( 10#$(stat --printf=%s $1 2>/dev/null) )) && source $1 || usage
 ###############################################################################
 ## fiction start ##############################################################
 # should expand to HostName github.com in ~/.ssh/config [see ssh_config(5)]:
