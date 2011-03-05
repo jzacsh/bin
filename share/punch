@@ -15,6 +15,9 @@ E_USAGE=64
 # use getopts
 #OPTS=(abcd)
 declare -A OPTS
+OPTS=([a]="punch in/out" [l]="list punches" [d]="delete a punch")
+# getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)"
+
 
 # functions: ##################################################################
 die() {
@@ -23,10 +26,28 @@ die() {
 
 help() {
     usage
-#@TODO:
-## use an associative array with OPTS and store an explanation of each getopts
-# arg, loop through and print it here.
-    die
+    #@TODO:
+    ## use an associative array with OPTS and store an explanation of
+    #each getopts
+    # arg, loop through and print it here.
+
+    #build the help sectoin
+    declare -a HELP
+    local i=0
+    IFS=\0; for opt in ${!OPTS[@]}; do
+        HELP[$i]=$opt
+        ((++i))
+    done
+    i=0
+    IFS=\0; for opt in ${OPTS[@]}; do
+        HELP[$i]="-${HELP[$i]}\t${opt}"
+        ((++i))
+    done
+
+    #print help section
+    for help in ${HELP[@]}; do echo -e "\t$help" >&2 ;done
+
+    die ${@}
 }
 
 usage() {
@@ -34,7 +55,7 @@ usage() {
 
     echo "$_n - a time card utility. Punch in, out, get paid.
 
-    $_n [$(for opt in ${OPTS[@]}; do echo -n $opt; done)] [note...]
+    $_n [$(for opt in ${!OPTS[@]}; do echo -n $opt; done)] [note...]
 
     $_n generally takes a note of what you're currently working on and stores
     that with a timestamp in your config file. Called with no arguments $_n
@@ -50,19 +71,4 @@ usage() {
 ## make no-arg print of current time.
 # make an option to have a clean print in epoch syntax
 
-
-OPTS=([a]="punch in/out" [l]="list punches" [d]="delete a punch")
-declare -a HELP
-i=0
-IFS=\0; for opt in ${!OPTS[@]}; do
-    HELP[$i]=$opt
-    ((++i))
-done
-i=0
-IFS=\0; for opt in ${OPTS[@]}; do
-    HELP[$i]="${HELP[$i]} - ${opt}"
-    ((++i))
-done
-
-for help in ${HELP[@]}; do echo $help ;done
-die 99
+help 99
