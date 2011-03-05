@@ -1,15 +1,22 @@
 #!/bin/bash
 
-# change conf above this line. ################################################
+# also configurable via environement variables.
+PUNCH_CARD=${PUNCH_CARD:-"~/.config/punchcard"}
+PUNCH_DELIM=${PUNCH_DELIM:-'|'}
+
+# change default conf above this line. ########################################
 ###############################################################################
 
 E_ERROR=1
 E_USAGE=64
 
+# getops conf: ################################################################
 #@TODO:
 # use getopts
-OPTS=(abcd)
+#OPTS=(abcd)
+declare -A OPTS
 
+# functions: ##################################################################
 die() {
     exit ${1:-$E_ERROR}
 }
@@ -34,11 +41,28 @@ usage() {
     prints your current time on the clock.
 " >&2
 
-    die
+    (( $? )) && die ${@}
 }
+
+# logic: ######################################################################
 
 #@TODO:
 ## make no-arg print of current time.
 # make an option to have a clean print in epoch syntax
 
-#usage 99
+
+OPTS=([a]="punch in/out" [l]="list punches" [d]="delete a punch")
+declare -a HELP
+i=0
+IFS=\0; for opt in ${!OPTS[@]}; do
+    HELP[$i]=$opt
+    ((++i))
+done
+i=0
+IFS=\0; for opt in ${OPTS[@]}; do
+    HELP[$i]="${HELP[$i]} - ${opt}"
+    ((++i))
+done
+
+for help in ${HELP[@]}; do echo $help ;done
+die 99
