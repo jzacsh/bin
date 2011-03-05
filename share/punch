@@ -45,21 +45,23 @@ help() {
     done
 
     #print help section
-    for help in ${HELP[@]}; do echo -e "\t$help" >&2 ;done
+    for help in ${HELP[@]}; do echo -e "    $help" >&2 ;done
 
     die ${@}
 }
 
 usage() {
     local _n=$(basename $0)
+    local flags=$(for opt in ${!OPTS[@]}; do echo -n $opt; done)
 
-    echo "$_n - a time card utility. Punch in, out, get paid.
+    echo "$_n [$flags] [ -c client [note...] ]
+    Simple time card utility, letting you punch in, out and get paid.
 
-    $_n [$(for opt in ${!OPTS[@]}; do echo -n $opt; done)] [note...]
+    ${_n^} generally takes a client/subject of what you're working *for* and
+    optionaly a quick note of what you're working *on*, then stores a timestamp
+    on your local punch-card.
 
-    $_n generally takes a note of what you're currently working on and stores
-    that with a timestamp in your config file. Called with no arguments $_n
-    prints your current time on the clock.
+    Called with no arguments ${_n^} prints your current time on the clock.
 " >&2
 
     (( $? )) && die ${@}
