@@ -45,7 +45,9 @@ help() {
     done
 
     #print help section
-    for help in ${HELP[@]}; do echo -e "    $help" >&2 ;done
+    echo "\
+    Help Section:" >&2
+    for help in ${HELP[@]}; do echo -e "\t$help" >&2 ;done
 
     die ${@}
 }
@@ -62,9 +64,10 @@ usage() {
     on your local punch-card.
 
     Called with no arguments ${_n^} prints your current time on the clock.
+    See -h/--help for more.
 " >&2
 
-    (( $? )) && die ${@}
+    (( $# )) && die ${@}
 }
 
 # logic: ######################################################################
@@ -73,4 +76,6 @@ usage() {
 ## make no-arg print of current time.
 # make an option to have a clean print in epoch syntax
 
-help 99
+
+#@TODO: remove this testing line!
+(( $# )) && help 99 || usage 99
