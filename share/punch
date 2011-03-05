@@ -1,4 +1,5 @@
 #!/bin/bash
+ #@TODO: use this! #!/usr/bin/env bash
 
 # also configurable via environement variables.
 PUNCH_CARD=${PUNCH_CARD:-"~/.config/punchcard"}
