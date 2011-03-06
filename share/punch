@@ -18,8 +18,8 @@ E_USAGE=64
 declare -A OPTS
 OPTS=(
     [:c]="name  Punch in/out on for a client/project of 'name'."
-    [l]="list time-card entries."
     [d]="delete a time-card entry."
+    [l]="list time-card entries."
 )
 #getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" OPT
 
@@ -73,15 +73,17 @@ usage() {
         i=0
         for opt in ${!OPTS[@]}; do
             if [[ ${opt:0:1} = : ]];then
-                echo -en "-${opt/:/}\t"
+                echo -en "-${opt/:/} "
                 n=0
-                for opt in ${OPTS[@]}; do
+                local boop=$IFS
+                IFS=\0; for arg in ${OPTS[@]}; do
                     if (( n == i ));then
-                        echo -en "-$opt\t"
+                        echo -en "${arg%% *}"
                         break;
                     fi
                     ((++n))
                 done
+                IFS=$boop
             fi
             ((++i))
         done
