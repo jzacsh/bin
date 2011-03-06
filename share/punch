@@ -169,7 +169,7 @@ reset() {
 
 # sanity-checks: ##############################################################
 
-if [[ $(file -L $PUNCH_CARD 2>/dev/null | grep -i 'sqlite') ]];then
+if [[ $(file -bL $PUNCH_CARD 2>/dev/null | grep -i 'sqlite') ]];then
     #punch card looks like an sqlite file.
     if [[ ! -w $PUNCH_CARD ]];then
         error "No write-access to punch-card."
@@ -179,7 +179,7 @@ else
     #punch card does not look like an sqlite file.
     if [[ -f $PUNCH_CARD ]];then
         #punch card at least likes like _some_ kind of file.
-        if (( 10#$(stat --printf='%s' $PUNCH_CARD 2>/dev/null) ));then
+        if (( 10#$(stat -L --printf='%s' $PUNCH_CARD 2>/dev/null) ));then
             #punch card has something else in it.
             error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
         else
