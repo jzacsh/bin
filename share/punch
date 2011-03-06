@@ -11,29 +11,18 @@ PUNCH_DELIM=${PUNCH_DELIM:-'|'}
 E_ERROR=1
 E_USAGE=64
 
-# getops conf: ################################################################
-#@TODO:
-# use getopts
-#OPTS=(abcd)
-declare -A OPTS
-OPTS=(
-    [c:]="name  Punch in/out on for a client/project of 'name'."
-    [d]="delete a time-card entry."
-    [l]="list time-card entries."
-)
-getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" OPT
-
 # functions: ##################################################################
+error() {
+    echo -e "Error: ${@}" >&2
+}
+
 die() {
     exit ${1:-$E_ERROR}
 }
 
 help() {
+    #print the regular usage
     usage
-    #@TODO:
-    ## use an associative array with OPTS and store an explanation of
-    #each getopts
-    # arg, loop through and print it here.
 
     #build the help sectoin
     declare -a HELP
@@ -94,11 +83,48 @@ usage() {
     on your local punch-card.
 
     Called with no arguments ${_n^} prints your current time on the clock.
-    See -h/--help for more.
+    See -h for extended help message.
 " >&2
 
     (( $# )) && die ${@}
 }
+
+# getops configuration: #######################################################
+declare -A OPTS
+OPTS=(
+    [h]="help message."
+    [c:]="name  Punch in/out on for a client/project of 'name'."
+    [d]="delete a time-card entry."
+    [l]="list time-card entries."
+)
+while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
+    case $option in
+        c)
+            error "-$option not yet implemented"
+            die $E_ERROR
+            ;;
+        d)
+            error "-$option not yet implemented"
+            die $E_ERROR
+            ;;
+        h)
+            help
+            die
+            ;;
+        l)
+            error "-$option not yet implemented"
+            die $E_ERROR
+            ;;
+        \?)
+            error "-$OPTARG is not a valid option. See -h for more."
+            die $E_USAGE
+            ;;
+        :)
+            error "-$OPTARG requires an argument. See -h for more."
+            die $E_USAGE
+            ;;
+    esac
+done
 
 # logic: ######################################################################
 
@@ -108,4 +134,4 @@ usage() {
 
 
 #@TODO: remove this testing line!
-(( $# )) && help 99 || usage 89
+error "the script has not yet been written :("
