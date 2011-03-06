@@ -96,24 +96,130 @@ usage() {
 declare -A OPTS
 OPTS=(
     [c:]="name  Punch in/out on for a client/project of '__'."
-    [d:]="timestamp  Delete a time-card entry at '__'."
+    [d:]="timestamp  Delete a time-card entry at '__'. Note, this deletes in and out entries."
     [h]="Help message."
-    [l]="List existing time-card entries."
+    [l]="List all existing time-card entries."
+    [q:]="name  Query time-card for listing of all entries under project '__'."
+    [r:]="name  Delete all time-card entries made under project '__'."
+    [s]="output any timestamps in epoch format, useful for immediate interpretation."
+    [t:]="name  Sum of time-card entries to-date under project '__'."
 )
+
+# logic: ######################################################################
+
+#@TODO:
+## make no-arg print of current time.
+# make an option to have a clean print in epoch syntax
+
+punchin() {
+    #@TODO:
+    error "$_() not yet implemented
+    will:
+      create a database entry with current time stamp in the
+      \$OPT_PROJECT table, either the in or out entry, depending on what is
+      currently in the database.
+    "
+    #@TODO: must respect the $OPT_CLEAN
+}
+
+delete() {
+    #@TODO:
+    error "$_() not yet implemented
+    will:
+        remove an entire database table for the passed PROJECT
+    "
+}
+
+list() {
+    #@TODO:
+    error "$_() not yet implemented
+    will:
+        list all existing timecard entries in the database
+    "
+    #@TODO: must respect the $OPT_CLEAN
+}
+
+projects() {
+    #@TODO:
+    error "$_() not yet implemented
+    will:
+        list all PROJECTS on your timecard in two columns, eg.:
+        [project] [total time]
+        ...
+    "
+    #@TODO: must respect the $OPT_CLEAN
+}
+
+query() {
+    #@TODO:
+    error "$_() not yet implemented
+    will:
+        get a listing of all timecard entries for a given PROJECT
+    "
+}
+
+remove() {
+    #@TODO:
+    error "$_() not yet implemented
+    will:
+        remove the in and out entries for a given timestamp
+    "
+}
+
+spent() {
+    #@TODO:
+    error "$_() not yet implemented
+    will:
+        report a sum of time spent on a given PROJECT
+    "
+    #@TODO: must respect the $OPT_CLEAN, by outputting a sum in seconds.
+}
+
+# main: #######################################################################
+if (( ! $# ));then
+    current
+    die $?
+fi
 while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
     case $option in
         c)
-            error "-$option not yet implemented. arg was: $OPTARG"
+            declare -r OPT_PROJECT=$OPTARG
+            punchin
+            die $?
             ;;
         d)
-            error "-$option not yet implemented. arg was: $OPTARG"
+            declare -r OPT_DELETE=$OPTARG
+            delete
+            die $?
             ;;
         h)
             help
-            die
             ;;
         l)
-            error "-$option not yet implemented."
+            list
+            die $?
+            ;;
+        p)
+            projects
+            die $?
+            ;;
+        q)
+            declare -r OPT_PROJECT=$OPTARG
+            query
+            die $?
+            ;;
+        r)
+            declare -r OPT_PROJECT=$OPTARG
+            remove
+            die $?
+            ;;
+        s)
+            declare -r OPT_CLEAN=1
+            ;;
+        t)
+            declare -r OPT_PROJECT=$OPTARG
+            spent
+            die $?
             ;;
         \?)
             error "-$OPTARG is not a valid option. See -h for more."
@@ -125,17 +231,3 @@ while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
             ;;
     esac
 done
-
-# logic: ######################################################################
-
-#@TODO:
-## make no-arg print of current time.
-# make an option to have a clean print in epoch syntax
-
-#@TODO:
-# human readable print of total hours for a category
-# clean epoch print of total hours for a category
-
-
-#@TODO: remove this testing line!
-error "the script has not yet been written :("
