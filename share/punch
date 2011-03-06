@@ -64,7 +64,7 @@ usage() {
                 local boop=$IFS
                 IFS=\0; for arg in ${OPTS[@]}; do
                     if (( n == i ));then
-                        echo -en "${arg%% *}"
+                        echo -en "${arg%% *} "
                         break;
                     fi
                     ((++n))
@@ -75,7 +75,7 @@ usage() {
         done
     )
 
-    echo "$_n [$flags] [ $argflags [note...] ]
+    echo "$_n [$flags] [ $argflags[note...] ]
     Simple time card utility, lets you punch in, out and get paid.
 
     ${_n^} generally takes a client/subject of what you're working *for* and
@@ -92,10 +92,10 @@ usage() {
 # getops configuration: #######################################################
 declare -A OPTS
 OPTS=(
-    [h]="help message."
+    [h]="Help message."
     [c:]="name  Punch in/out on for a client/project of 'name'."
-    [d]="delete a time-card entry."
-    [l]="list time-card entries."
+    [d:]="timestamp  Delete a time-card entry."
+    [l]="List time-card entries."
 )
 while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
     case $option in
