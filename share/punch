@@ -99,7 +99,7 @@ OPTS=(
     [l]="List all existing time-card entries."
     [q:]="name  Query time-card for listing of all entries under project '__'."
     [r:]="name  Delete all time-card entries made under project '__'."
-    [s]="output any timestamps in epoch format, useful for immediate interpretation."
+    [s]="Output all timestamps in epoch format, useful for immediate interpretation."
     [t:]="name  Sum of time-card entries to-date under project '__'."
 )
 
