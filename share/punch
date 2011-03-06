@@ -33,7 +33,9 @@ help() {
     done
     i=0
     IFS=\0; for opt in ${OPTS[@]}; do
-        HELP[$i]="-${HELP[$i]}\t${opt}"
+        local keyword=${opt%%  *}
+        local explain=${opt/'__'/$keyword}
+        HELP[$i]="-${HELP[$i]}\t${explain/  / - }"
         ((++i))
     done
 
@@ -93,9 +95,9 @@ usage() {
 declare -A OPTS
 OPTS=(
     [h]="Help message."
-    [c:]="name  Punch in/out on for a client/project of 'name'."
-    [d:]="timestamp  Delete a time-card entry."
-    [l]="List time-card entries."
+    [c:]="name  Punch in/out on for a client/project of '__'."
+    [d:]="timestamp  Delete a time-card entry at '__'."
+    [l]="List existing time-card entries."
 )
 while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
     case $option in
