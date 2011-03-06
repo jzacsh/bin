@@ -66,7 +66,8 @@ usage() {
                 n=0
                 for arg in "${OPTS[@]}"; do
                     if (( n == i ));then
-                        echo -en "${arg%% *}"
+                        arg=${arg%% *}
+                        echo -en "${arg,,}"
                         break;
                     fi
                     ((++n))
