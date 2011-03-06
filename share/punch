@@ -182,6 +182,7 @@ else
         if (( 10#$(stat -L --printf='%s' $PUNCH_CARD 2>/dev/null) ));then
             #punch card has something else in it.
             error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
+            die $E_DATAF
         else
             #punch card is an empty file. create tables?
             [[ -w $PUNCH_CARD && -r $PUNCH_CARD ]] && create_db || die $?
