@@ -111,9 +111,20 @@ OPTS=(
 ## make no-arg print of current time.
 # make an option to have a clean print in epoch syntax
 
+current() {
+    #@TODO:
+    error "$FUNCNAME() not yet implemented
+    will:
+      report on current punch-card status.
+      - are you punched into a project? how long, so far and which project?
+      - not punched into anything? print a message saying so and exit non-zero
+    "
+    #@TODO: must respect the $OPT_CLEAN, and not print PROJECT name
+}
+
 punchin() {
     #@TODO:
-    error "$_() not yet implemented
+    error "$FUNCNAME() not yet implemented
     will:
       create a database entry with current time stamp in the
       \$OPT_PROJECT table, either the in or out entry, depending on what is
@@ -124,7 +135,7 @@ punchin() {
 
 delete() {
     #@TODO:
-    error "$_() not yet implemented
+    error "$FUNCNAME() not yet implemented
     will:
         remove an entire database table for the passed PROJECT
     "
@@ -132,7 +143,7 @@ delete() {
 
 list() {
     #@TODO:
-    error "$_() not yet implemented
+    error "$FUNCNAME() not yet implemented
     will:
         list all existing timecard entries in the database
     "
@@ -141,7 +152,7 @@ list() {
 
 projects() {
     #@TODO:
-    error "$_() not yet implemented
+    error "$FUNCNAME() not yet implemented
     will:
         list all PROJECTS on your timecard in two columns, eg.:
         [project] [total time]
@@ -152,7 +163,7 @@ projects() {
 
 query() {
     #@TODO:
-    error "$_() not yet implemented
+    error "$FUNCNAME() not yet implemented
     will:
         get a listing of all timecard entries for a given PROJECT
     "
@@ -160,7 +171,7 @@ query() {
 
 remove() {
     #@TODO:
-    error "$_() not yet implemented
+    error "$FUNCNAME() not yet implemented
     will:
         remove the in and out entries for a given timestamp
     "
@@ -168,7 +179,7 @@ remove() {
 
 spent() {
     #@TODO:
-    error "$_() not yet implemented
+    error "$FUNCNAME() not yet implemented
     will:
         report a sum of time spent on a given PROJECT
     "
@@ -176,58 +187,61 @@ spent() {
 }
 
 # main: #######################################################################
-if (( ! $# ));then
+if (( $# ));then
+    #parse arguments
+    while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
+        case $option in
+            c)
+                declare -r OPT_PROJECT=$OPTARG
+                punchin
+                die $?
+                ;;
+            d)
+                declare -r OPT_DELETE=$OPTARG
+                delete
+                die $?
+                ;;
+            h)
+                help
+                ;;
+            l)
+                list
+                die $?
+                ;;
+            p)
+                projects
+                die $?
+                ;;
+            q)
+                declare -r OPT_PROJECT=$OPTARG
+                query
+                die $?
+                ;;
+            r)
+                declare -r OPT_PROJECT=$OPTARG
+                remove
+                die $?
+                ;;
+            s)
+                declare -r OPT_CLEAN=1
+                ;;
+            t)
+                declare -r OPT_PROJECT=$OPTARG
+                spent
+                die $?
+                ;;
+            \?)
+                error "-$OPTARG is not a valid option. See -h for more."
+                die $E_USAGE
+                ;;
+            :)
+                error "-$OPTARG requires an argument. See -h for more."
+                die $E_USAGE
+                ;;
+        esac
+    done
+else
+    #no arguments were passed
     current
     die $?
 fi
-while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
-    case $option in
-        c)
-            declare -r OPT_PROJECT=$OPTARG
-            punchin
-            die $?
-            ;;
-        d)
-            declare -r OPT_DELETE=$OPTARG
-            delete
-            die $?
-            ;;
-        h)
-            help
-            ;;
-        l)
-            list
-            die $?
-            ;;
-        p)
-            projects
-            die $?
-            ;;
-        q)
-            declare -r OPT_PROJECT=$OPTARG
-            query
-            die $?
-            ;;
-        r)
-            declare -r OPT_PROJECT=$OPTARG
-            remove
-            die $?
-            ;;
-        s)
-            declare -r OPT_CLEAN=1
-            ;;
-        t)
-            declare -r OPT_PROJECT=$OPTARG
-            spent
-            die $?
-            ;;
-        \?)
-            error "-$OPTARG is not a valid option. See -h for more."
-            die $E_USAGE
-            ;;
-        :)
-            error "-$OPTARG requires an argument. See -h for more."
-            die $E_USAGE
-            ;;
-    esac
-done
