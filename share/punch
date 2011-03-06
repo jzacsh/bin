@@ -132,6 +132,10 @@ done
 ## make no-arg print of current time.
 # make an option to have a clean print in epoch syntax
 
+#@TODO:
+# human readable print of total hours for a category
+# clean epoch print of total hours for a category
+
 
 #@TODO: remove this testing line!
 error "the script has not yet been written :("
