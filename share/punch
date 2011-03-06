@@ -21,7 +21,7 @@ OPTS=(
     [d]="delete a time-card entry."
     [l]="list time-card entries."
 )
-#getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" OPT
+getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" OPT
 
 
 # functions: ##################################################################
@@ -48,8 +48,6 @@ help() {
         HELP[$i]="-${HELP[$i]}\t${opt}"
         ((++i))
     done
-
-#       [[ ${help:1:1} = : ]] || echo -e "\t$help" >&2
 
     #print help section
     echo "\
@@ -111,4 +109,4 @@ usage() {
 
 
 #@TODO: remove this testing line!
-(( $# )) && help 99 || usage 99
+(( $# )) && help 99 || usage 89
