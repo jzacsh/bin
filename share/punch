@@ -27,7 +27,7 @@ help() {
     #print the regular usage
     usage
 
-    #build the help sectoin
+    #build the help section
     declare -a HELP
     local i=0
     for opt in "${!OPTS[@]}"; do
