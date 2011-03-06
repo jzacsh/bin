@@ -17,7 +17,7 @@ error() {
 }
 
 die() {
-    exit ${1:-$E_ERROR}
+    exit ${1:-'0'}
 }
 
 help() {
@@ -46,7 +46,7 @@ help() {
         echo -e "\t$help" >&2
     done
 
-    die ${@}
+    die $1
 }
 
 usage() {
@@ -61,12 +61,13 @@ usage() {
         i=0
         for opt in ${!OPTS[@]}; do
             if [[ ${opt:1:1} = : ]];then
-                echo -en "-${opt/:/} "
+                (( i )) && OR=' | '
+                echo -en "$OR-${opt/:/} "
                 n=0
                 local boop=$IFS
                 IFS=\0; for arg in ${OPTS[@]}; do
                     if (( n == i ));then
-                        echo -en "${arg%% *} "
+                        echo -en "${arg%% *}"
                         break;
                     fi
                     ((++n))
@@ -77,12 +78,12 @@ usage() {
         done
     )
 
-    echo "$_n [$flags] [ $argflags[note...] ]
+    echo "$_n [$flags] [ $argflags [note...] ]
     Simple time card utility, lets you punch in, out and get paid.
 
     ${_n^} generally takes a client/subject of what you're working *for* and
     optionaly a quick note of what you're working *on*, then stores a timestamp
-    on your local punch-card.
+    in your local punch-card database.
 
     Called with no arguments ${_n^} prints your current time on the clock.
     See -h for extended help message.
