@@ -27,12 +27,12 @@ help() {
     #build the help sectoin
     declare -a HELP
     local i=0
-    IFS=\0; for opt in ${!OPTS[@]}; do
+    for opt in "${!OPTS[@]}"; do
         HELP[$i]=${opt/:/}
         ((++i))
     done
     i=0
-    IFS=\0; for opt in ${OPTS[@]}; do
+    for opt in "${OPTS[@]}"; do
         local keyword=${opt%%  *}
         local explain=${opt/'__'/$keyword}
         HELP[$i]="-${HELP[$i]}\t${explain/  / - }"
@@ -42,7 +42,7 @@ help() {
     #print help section
     echo "\
     Help Section:" >&2
-    for help in ${HELP[@]}; do
+    for help in "${HELP[@]}"; do
         echo -e "\t$help" >&2
     done
 
@@ -64,15 +64,13 @@ usage() {
                 (( i )) && OR=' | '
                 echo -en "$OR-${opt/:/} "
                 n=0
-                local boop=$IFS
-                IFS=\0; for arg in ${OPTS[@]}; do
+                for arg in ${OPTS[@]}; do
                     if (( n == i ));then
                         echo -en "${arg%% *}"
                         break;
                     fi
                     ((++n))
                 done
-                IFS=$boop
             fi
             ((++i))
         done
