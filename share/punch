@@ -138,8 +138,8 @@ punchin() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-      create a database entry with current time stamp in the
-      \$OPT_PROJECT table, either the in or out entry, depending on what is
+      create a database entry with current time stamp for
+      \$OPT_PROJECT, either the in or out entry, depending on what is
       currently in the database.
     "
     #@TODO: must respect the $OPT_CLEAN
@@ -149,7 +149,7 @@ delete() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-        remove an entire database table for the passed PROJECT
+        remove all entries for PROJECT
     "
 }
 
