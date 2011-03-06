@@ -87,7 +87,7 @@ usage() {
     )
 
     echo "$_n [$flags] [ $argflags [note...] ]
-    Simple time card utility, letting you punch in, out and get paid.
+    Simple time card utility, lets you punch in, out and get paid.
 
     ${_n^} generally takes a client/subject of what you're working *for* and
     optionaly a quick note of what you're working *on*, then stores a timestamp
