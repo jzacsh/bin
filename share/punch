@@ -17,12 +17,11 @@ E_USAGE=64
 #OPTS=(abcd)
 declare -A OPTS
 OPTS=(
-    [:c]="name  Punch in/out on for a client/project of 'name'."
+    [c:]="name  Punch in/out on for a client/project of 'name'."
     [d]="delete a time-card entry."
     [l]="list time-card entries."
 )
 getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" OPT
-
 
 # functions: ##################################################################
 die() {
@@ -63,14 +62,14 @@ usage() {
     local _n=$(basename $0)
     local flags=$(
         for opt in ${!OPTS[@]}; do
-            [[ ${opt:0:1} = : ]] || echo -n $opt
+            [[ ${opt:1:1} = : ]] || echo -n $opt
         done
     )
     local i n
     local argflags=$(
         i=0
         for opt in ${!OPTS[@]}; do
-            if [[ ${opt:0:1} = : ]];then
+            if [[ ${opt:1:1} = : ]];then
                 echo -en "-${opt/:/} "
                 n=0
                 local boop=$IFS
