@@ -111,18 +111,42 @@ OPTS=(
 
 # helpers: ####################################################################
 
+#@TODO:
+# make tiny note here about schema
+CREATE_TABLE="
+CREATE TABLE punch (
+    punch       INTEGER PRIMARY KEY,
+    status      INTEGER,
+    project     TEXT,
+    note        TEXT
+);
+"
+
 db_sql() {
     sqlite3 $PUNCH_CARD "${@}"
 }
 
-db_create() {
-    db_sql "
-    CREATE TABLE punch (
-        punch       INTEGER PRIMARY KEY,
-        project     TEXT,
-        note        TEXT
-    );
+db_schema() {
+    #@TODO:
+    error "$FUNCNAME() not yet implemented
+    will:
+        (somehow) check \$CREATE_TABLE against sqlite3's '.schema' command
     "
+    return 99
+}
+
+db_create() {
+    db_sql $CREATE_TABLE
+}
+
+db_punch() {
+    #@TODO:
+    error "$FUNCNAME() not yet implemented
+    will:
+      will INSERT into DB with notes, after taking care of logic:
+      - what is state of timecard? in or out?
+    "
+    return 99
 }
 
 create_db() {
@@ -179,7 +203,7 @@ current() {
     #@TODO: must respect the $OPT_CLEAN, and not print PROJECT name
 }
 
-punchin() {
+punch() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
@@ -187,7 +211,6 @@ punchin() {
       \$OPT_PROJECT, either the in or out entry, depending on what is
       currently in the database.
     "
-    #@TODO: must respect the $OPT_CLEAN
 }
 
 delete() {
@@ -251,7 +274,7 @@ if (( $# ));then
         case $option in
             c)
                 declare -r OPT_PROJECT=$OPTARG
-                punchin
+                punch
                 die $?
                 ;;
             d)
