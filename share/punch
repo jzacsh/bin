@@ -16,8 +16,12 @@ E_USAGE=64
 # use getopts
 #OPTS=(abcd)
 declare -A OPTS
-OPTS=([a]="punch in/out" [l]="list punches" [d]="delete a punch")
-# getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)"
+OPTS=(
+    [:c]="name  Punch in/out on for a client/project of 'name'."
+    [l]="list time-card entries."
+    [d]="delete a time-card entry."
+)
+#getopts "$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" OPT
 
 
 # functions: ##################################################################
@@ -36,7 +40,7 @@ help() {
     declare -a HELP
     local i=0
     IFS=\0; for opt in ${!OPTS[@]}; do
-        HELP[$i]=$opt
+        HELP[$i]=${opt/:/}
         ((++i))
     done
     i=0
@@ -45,19 +49,45 @@ help() {
         ((++i))
     done
 
+#       [[ ${help:1:1} = : ]] || echo -e "\t$help" >&2
+
     #print help section
     echo "\
     Help Section:" >&2
-    for help in ${HELP[@]}; do echo -e "\t$help" >&2 ;done
+    for help in ${HELP[@]}; do
+        echo -e "\t$help" >&2
+    done
 
     die ${@}
 }
 
 usage() {
     local _n=$(basename $0)
-    local flags=$(for opt in ${!OPTS[@]}; do echo -n $opt; done)
+    local flags=$(
+        for opt in ${!OPTS[@]}; do
+            [[ ${opt:0:1} = : ]] || echo -n $opt
+        done
+    )
+    local i n
+    local argflags=$(
+        i=0
+        for opt in ${!OPTS[@]}; do
+            if [[ ${opt:0:1} = : ]];then
+                echo -en "-${opt/:/}\t"
+                n=0
+                for opt in ${OPTS[@]}; do
+                    if (( n == i ));then
+                        echo -en "-$opt\t"
+                        break;
+                    fi
+                    ((++n))
+                done
+            fi
+            ((++i))
+        done
+    )
 
-    echo "$_n [$flags] [ -c client [note...] ]
+    echo "$_n [$flags] [ $argflags [note...] ]
     Simple time card utility, letting you punch in, out and get paid.
 
     ${_n^} generally takes a client/subject of what you're working *for* and
