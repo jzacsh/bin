@@ -19,6 +19,7 @@ error() {
 }
 
 die() {
+    #@TODO: make a call to same ROLLBACK func. used by TRAP
     exit ${1:-'0'}
 }
 
@@ -94,6 +95,7 @@ usage() {
 }
 
 # getops configuration: #######################################################
+
 declare -A OPTS
 OPTS=(
     [c:]="name  Punch in/out on for a client/project of '__'."
@@ -106,22 +108,63 @@ OPTS=(
     [t:]="name  Sum of time-card entries to-date under project '__'."
 )
 
-# logic: ######################################################################
 
-if [[ $(file $PUNCH_CARD 2>/dev/null | grep -i 'sqlite3') ]];then
+# helpers: ####################################################################
+
+db_sql() {
+    sqlite3 $PUNCH_CARD "${@}"
+}
+
+db_create() {
+    db_sql "
+    CREATE TABLE punch (
+        punch       INTEGER PRIMARY KEY,
+        project     TEXT,
+        note        TEXT
+    );
+    "
+}
+
+create_db() {
+    #@TODO: interactive func. to attempt creation of new db + relevant tables
+    error "$FUNCNAME() not yet implemented
+    will:
+      create a database tables and any other configuration.
+    "
+    return 99
+}
+
+reset() {
+    #@TODO: create a ROLLBACK call for call by TRAP and DIE
+}
+
+# sanity-checks: ##############################################################
+
+if [[ $(file -L $PUNCH_CARD 2>/dev/null | grep -i 'sqlite') ]];then
+    #punch card looks like an sqlite file.
     if [[ ! -w $PUNCH_CARD ]];then
         error "No write-access to punch-card."
         die $E_DATAF
     fi
 else
+    #punch card does not look like an sqlite file.
     if [[ -f $PUNCH_CARD ]];then
-        error "punch-card does not seem to be an sqlite3 database."
+        #punch card at least likes like _some_ kind of file.
+        if (( 10#$((stat --printf='%s' $PUNCH_CARD 2>/dev/null)) ));then
+            #punch card has something else in it.
+            error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
+        else
+            #punch card is an empty file. create tables?
+            [[ -w $PUNCH_CARD && -r $PUNCH_CARD ]] && create_db || die $?
+        fi
     else
+        #punch card does not exist. create it?
         error "Could not find punch-card\n\twas expecting: '$PUNCH_CARD'."
+        [[ -w $(dirname $PUNCH_CARD) ]] && create_db || die $?
     fi
-
-    die $E_DATAF
 fi
+
+# punchcard tools: ############################################################
 
 current() {
     #@TODO:
@@ -131,6 +174,8 @@ current() {
       - are you punched into a project? how long, so far and which project?
       - not punched into anything? print a message saying so and exit non-zero
     "
+
+    db_sql "SELECT strftime('%s', 'now');" #@TODO: remove this line!
     #@TODO: must respect the $OPT_CLEAN, and not print PROJECT name
 }
 
@@ -199,6 +244,7 @@ spent() {
 }
 
 # main: #######################################################################
+#@TODO: create a TRAP that will rollback transactions, `reset`
 if (( $# ));then
     #parse arguments
     while getopts ":$(printf "%s" "${!OPTS[@]}")" option; do
