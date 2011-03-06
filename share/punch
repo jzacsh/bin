@@ -103,11 +103,9 @@ while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
     case $option in
         c)
             error "-$option not yet implemented"
-            die $E_ERROR
             ;;
         d)
             error "-$option not yet implemented"
-            die $E_ERROR
             ;;
         h)
             help
@@ -115,7 +113,6 @@ while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
             ;;
         l)
             error "-$option not yet implemented"
-            die $E_ERROR
             ;;
         \?)
             error "-$OPTARG is not a valid option. See -h for more."
