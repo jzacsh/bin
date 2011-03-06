@@ -3,7 +3,7 @@
 
 # also configurable via environement variables.
 PUNCH_CARD=${PUNCH_CARD:-"~/.config/punchcard"}
-PUNCH_DELIM=${PUNCH_DELIM:-'|'}
+PUNCH_DELIM=${PUNCH_DELIM:-' '}
 
 # change default conf above this line. ########################################
 ###############################################################################
