@@ -159,7 +159,12 @@ create_db() {
 }
 
 reset() {
-    #@TODO: create a ROLLBACK call for call by TRAP and DIE
+    #@TODO:
+    error "$FUNCNAME() not yet implemented
+    will:
+        create a ROLLBACK call for call by TRAP and DIE.
+    "
+    return 99
 }
 
 # sanity-checks: ##############################################################
