@@ -102,17 +102,17 @@ OPTS=(
 while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
     case $option in
         c)
-            error "-$option not yet implemented"
+            error "-$option not yet implemented. arg was: $OPTARG"
             ;;
         d)
-            error "-$option not yet implemented"
+            error "-$option not yet implemented. arg was: $OPTARG"
             ;;
         h)
             help
             die
             ;;
         l)
-            error "-$option not yet implemented"
+            error "-$option not yet implemented."
             ;;
         \?)
             error "-$OPTARG is not a valid option. See -h for more."
