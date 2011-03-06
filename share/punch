@@ -113,14 +113,14 @@ OPTS=(
 
 #@TODO:
 # make tiny note here about schema
-CREATE_TABLE="
+CREATE_TABLE='
 CREATE TABLE punch (
     punch       INTEGER PRIMARY KEY,
     status      INTEGER,
     project     TEXT,
     note        TEXT
 );
-"
+'
 
 db_sql() {
     sqlite3 $PUNCH_CARD "${@}"
@@ -150,12 +150,13 @@ db_punch() {
 }
 
 create_db() {
-    #@TODO: interactive func. to attempt creation of new db + relevant tables
-    error "$FUNCNAME() not yet implemented
-    will:
-      create a database tables and any other configuration.
-    "
-    return 99
+    local initialize
+    echo -en "Would you like to initialize a punch-card, here:
+\t$PUNCH_CARD ?"
+    local prompt=" [Y\n]  "
+    read -p $prompt initialize
+    [[ -z $initialize || ${initialize,,} = y ]] || return 1
+    db_sql "$CREATE_TABLE"
 }
 
 reset() {
