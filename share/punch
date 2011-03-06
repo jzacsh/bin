@@ -2,14 +2,16 @@
  #@TODO: use this! #!/usr/bin/env bash
 
 # also configurable via environement variables.
-PUNCH_CARD=${PUNCH_CARD:-"~/.config/punchcard"}
+PUNCH_CARD=${PUNCH_CARD:-~/.config/punchcard}
 PUNCH_DELIM=${PUNCH_DELIM:-' '}
 
 # change default conf above this line. ########################################
 ###############################################################################
 
-E_ERROR=1
-E_USAGE=64
+#see /usr/include/sysexits.h
+E_ERROR=1  #general error
+E_USAGE=64 #command line usage error
+E_DATAF=65 #data format error
 
 # functions: ##################################################################
 error() {
@@ -105,6 +107,21 @@ OPTS=(
 )
 
 # logic: ######################################################################
+
+if [[ $(file $PUNCH_CARD 2>/dev/null | grep -i 'sqlite3') ]];then
+    if [[ ! -w $PUNCH_CARD ]];then
+        error "No write-access to punch-card."
+        die $E_DATAF
+    fi
+else
+    if [[ -f $PUNCH_CARD ]];then
+        error "punch-card does not seem to be an sqlite3 database."
+    else
+        error "Could not find punch-card\n\twas expecting: '$PUNCH_CARD'."
+    fi
+
+    die $E_DATAF
+fi
 
 current() {
     #@TODO:
