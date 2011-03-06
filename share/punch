@@ -94,9 +94,9 @@ usage() {
 # getops configuration: #######################################################
 declare -A OPTS
 OPTS=(
-    [h]="Help message."
     [c:]="name  Punch in/out on for a client/project of '__'."
     [d:]="timestamp  Delete a time-card entry at '__'."
+    [h]="Help message."
     [l]="List existing time-card entries."
 )
 while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
