@@ -229,11 +229,11 @@ if (( $# ));then
                 die $?
                 ;;
             \?)
-                error "-$OPTARG is not a valid option. See -h for more."
+                error "-$OPTARG is not a valid option. See -h for help."
                 die $E_USAGE
                 ;;
             :)
-                error "-$OPTARG requires an argument. See -h for more."
+                error "-$OPTARG requires an argument. See -h for help."
                 die $E_USAGE
                 ;;
         esac
