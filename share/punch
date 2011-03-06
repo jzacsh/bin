@@ -64,7 +64,7 @@ usage() {
                 (( i )) && OR=' | '
                 echo -en "$OR-${opt/:/} "
                 n=0
-                for arg in ${OPTS[@]}; do
+                for arg in "${OPTS[@]}"; do
                     if (( n == i ));then
                         echo -en "${arg%% *}"
                         break;
@@ -187,7 +187,7 @@ spent() {
 # main: #######################################################################
 if (( $# ));then
     #parse arguments
-    while getopts ":$(for opt in ${!OPTS[@]}; do echo -n $opt ;done)" option; do
+    while getopts ":$(printf "%s" "${!OPTS[@]}")" option; do
         case $option in
             c)
                 declare -r OPT_PROJECT=$OPTARG
