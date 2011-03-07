@@ -37,12 +37,12 @@ help() {
     i=0
     for opt in "${OPTS[@]}"; do
         local keyword=${opt%%  *}
+        #@TODO: get the first keyword in output to capitalize.
         keyword=${keyword^^}
         local explain=${opt/'__'/$keyword}
         HELP[$i]="-${HELP[$i]}\t${explain/  / - }"
         ((++i))
     done
-    #@TODO: get he kwyword in output to capitalize.
 
     #print help section
     echo "\
@@ -82,7 +82,7 @@ usage() {
         done
     )
 
-    echo "$_n [$flags] [ $argflags ]
+    echo "$_n [$flags] [ $argflags ] [ note... ]
     Simple time card utility, lets you punch in, out and get paid.
 
     ${_n^} generally takes a client/subject of what you're working *for* and
@@ -99,17 +99,17 @@ usage() {
 
 declare -A OPTS
 OPTS=(
-    [c]='Punch in/out for a "client"/"project" being referenced. See -p.'
+    [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
     [d:]='timestamp  Delete all in/out time-card entries at epoch "__".'
     [h]='Help message.'
     [l]='List all time-card entries, for every project.'
-    [L]='List all time-card made under a project. See -p.'
-    [n:]='note  Note about this particular card-punch "__". See -c.'
-    [p:]='project  Specify the project being referenced, "__".'
+    [L]='List all time-card made under a project. See -c.'
+#   [n:]='note  Note about this particular card-punch "__". See -p.'
+    [c:]='client  Specify the project/client being referenced, "__".'
     [q]='Quiet mode, print minimal output and even fail quietly.'
-    [r]='name  Delete all time-card entries made under a project. See -p.'
+    [r]='name  Delete all time-card entries made under a project. See -c.'
     [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
-    [t]='Sum of total time-card entries under project. See -p.'
+    [t]='Sum of total time-card entries under project. See -c.'
 )
 
 
@@ -238,7 +238,7 @@ list() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-        list all existing timecard entries in the database
+        list all existing timecard entries in the database, optionally under a
     "
     #@TODO: must respect the $OPT_CLEAN
 }
@@ -279,61 +279,49 @@ spent() {
     #@TODO: must respect the $OPT_CLEAN, by outputting a sum in seconds.
 }
 
-# main: #######################################################################
-#@TODO: fix all the below calls and above functions to match the new getopts
-# string
-#@TODO: make sure multiple flags can be passed and they'll all be  processed
-# correctly. This means not exiting immediately after an operation.
+# parse args: #################################################################
 #@TODO: create a TRAP that will rollback transactions, `reset`
 if (( $# ));then
     #parse arguments
+    declare -a OPT_RUN
     while getopts ":$(printf "%s" "${!OPTS[@]}")" option; do
         case $option in
             c)
                 declare -r OPT_PROJECT=$OPTARG
-                init
-                punch
-                die $?
                 ;;
             d)
                 declare -r OPT_DELETE=$OPTARG
-                init
-                delete
-                die $?
+                #delete()
+                OPT_RUN+=($option)
                 ;;
             h)
                 help
                 ;;
             l)
-                init
-                list
-                die $?
+                #list()
+                OPT_RUN+=($option)
+                ;;
+            L)
+                #list()
+                OPT_RUN+=($option)
                 ;;
             p)
-                init
-                projects
-                die $?
+                #punch()
+                OPT_RUN+=($option)
                 ;;
             q)
-                declare -r OPT_PROJECT=$OPTARG
-                init
-                query
-                die $?
+                declare -r OPT_QUIET=1
                 ;;
             r)
-                declare -r OPT_PROJECT=$OPTARG
-                init
-                remove
-                die $?
+                #remove()
+                OPT_RUN+=($option)
                 ;;
             s)
                 declare -r OPT_CLEAN=1
                 ;;
             t)
-                declare -r OPT_PROJECT=$OPTARG
-                init
-                spent
-                die $?
+                #spent()
+                OPT_RUN+=($option)
                 ;;
             \?)
                 error "-$OPTARG is not a valid option. See -h for help."
@@ -345,8 +333,17 @@ if (( $# ));then
                 ;;
         esac
     done
+    delcare -r OPT_NOTE=${@}
 else
     #no arguments were passed
+    init
     current
     die $?
 fi
+
+# main: #######################################################################
+init
+echo -e "OPT_RUN is:\n\t${OPT_RUN[@]}"
+#@TODO: fix all the below calls and above functions to match the new getopts
+# string
+#@TODO: run in_array() style checks to see how to behave next.
