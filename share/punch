@@ -37,10 +37,12 @@ help() {
     i=0
     for opt in "${OPTS[@]}"; do
         local keyword=${opt%%  *}
+        keyword=${keyword^^}
         local explain=${opt/'__'/$keyword}
         HELP[$i]="-${HELP[$i]}\t${explain/  / - }"
         ((++i))
     done
+    #@TODO: get he kwyword in output to capitalize.
 
     #print help section
     echo "\
