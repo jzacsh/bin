@@ -1,12 +1,13 @@
 #!/bin/bash
  #@TODO: use this! #!/usr/bin/env bash
 
-# also configurable via environement variables.
-PUNCH_CARD=${PUNCH_CARD:-~/.config/punchcard}
-PUNCH_DELIM=${PUNCH_DELIM:-' '}
-
-# change default conf above this line. ########################################
 ###############################################################################
+_CARD=~/.config/punchcard
+_DELIM=' '
+
+PUNCH_CARD=${PUNCH_CARD:-$_CARD}
+PUNCH_DELIM=${PUNCH_DELIM:-$_DELIM}
+OPT_PROJECT=${PUNCH_CLIENT}
 
 #see /usr/include/sysexits.h
 E_ERROR=1  #general error
@@ -63,7 +64,7 @@ help() {
 
     #print help section
     echo "\
-    Help Section:" >&2
+    OPTIONS:" >&2
     for help in "${HELP[@]}"; do
         echo -e "\t$help" >&2
     done
@@ -107,6 +108,11 @@ usage() {
     in your local punch-card database.
 
     Called with no arguments ${_n^} prints your current time on the clock.
+
+    ENVIRONMENT VARIABLES
+        PUNCH_CARD  - location of your punch-card database. Defaults to $_CARD.
+        PUNCH_DELIM - field-separator for data output. Defaults to '$_DELIM'.
+        OPT_PROJECT - Client/Project name to use. See -c.
 " >&2
 
     (( $# )) && die ${@}
@@ -174,11 +180,11 @@ reset() {
 
 # punchcard tools: ############################################################
 
-init() {
+init_storage() {
     if [[ $(file -bL $PUNCH_CARD 2>/dev/null | grep -i 'sqlite') ]];then
         #punch card looks like an sqlite file.
         if [[ ! -w $PUNCH_CARD ]];then
-            (( OPT_QUIET )) || error "No write-access to punch-card."
+            error "No write-access to punch-card."
             die $E_DATAF
         fi
     else
@@ -187,7 +193,7 @@ init() {
             #punch card at least likes like _some_ kind of file.
             if (( 10#$(stat -L --printf='%s' $PUNCH_CARD 2>/dev/null) ));then
                 #punch card has something else in it.
-                (( OPT_QUIET )) || error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
+                error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
                 die $E_DATAF
             else
                 #punch card is an empty file. create tables?
@@ -195,9 +201,16 @@ init() {
             fi
         else
             #punch card does not exist. create it?
-            (( OPT_QUIET )) || error "Could not find punch-card\n\twas expecting: '$PUNCH_CARD'."
+            error "Could not find punch-card\n\twas expecting: '$PUNCH_CARD'."
             [[ -w $(dirname $PUNCH_CARD) ]] && create_db || die $?
         fi
+    fi
+}
+
+need_client() {
+    if [[ -z $OPT_PROJECT ]];then
+        error "Client not specified, expected -c. See -h for more."
+        die $E_USAGE
     fi
 }
 
@@ -339,12 +352,42 @@ if (( $# ));then
   # echo -e "OPT_NOTE is:\n\t${OPT_NOTE}"
 else
     #no arguments were passed
-    init
+    init_storage
     current
     die $?
 fi
 
 # main: #######################################################################
-init
-echo -e "OPT_RUN is:\n\t${OPT_RUN[@]}"
-#@TODO: run in_array() style checks to see how to behave next.
+
+#
+# Some sanity checking.
+#
+
+init_storage
+
+#functions that need a client to be specified:
+if (( OPT_RUN[t] ||
+    OPT_RUN[r] ||
+    OPT_RUN[p] ||
+    OPT_RUN[l] ||
+    OPT_RUN[L] ));then
+    need_client
+fi
+
+#
+# Run one-off functions and die.
+#
+# for cleanliness of output
+# that that covers all the db content should not be run with other functions.
+#
+
+if (( OPT_RUN[C] ));then
+    projects
+    die $?
+fi
+
+if (( OPT_RUN[L] ));then
+    need_client
+    projects
+    die $?
+fi
