@@ -13,6 +13,23 @@ E_ERROR=1  #general error
 E_USAGE=64 #command line usage error
 E_DATAF=65 #data format error
 
+# getops configuration: #######################################################
+
+declare -A OPTS
+OPTS=(
+    [c:]='client  Specify the project/client being referenced, "__".'
+    [C]='List all project/clients on time-card.'
+    [d:]='timestamp  Delete all in/out time-card entries at epoch "__".'
+    [h]='Help message.'
+    [l]='List all time-card entries, for every project.'
+    [L]='List all time-card made under a project. See -c.'
+    [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
+    [q]='Quiet mode, print minimal output and even fail quietly.'
+    [r]='Delete all time-card entries made under a project. See -c.'
+    [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
+    [t]='Sum of total time-card entries under project. See -c.'
+)
+
 # functions: ##################################################################
 error() {
     (( OPT_QUIET )) || echo -e "Error: ${@}" >&2
@@ -94,24 +111,6 @@ usage() {
 
     (( $# )) && die ${@}
 }
-
-# getops configuration: #######################################################
-
-declare -A OPTS
-OPTS=(
-    [c:]='client  Specify the project/client being referenced, "__".'
-    [C]='List all project/clients on time-card.'
-    [d:]='timestamp  Delete all in/out time-card entries at epoch "__".'
-    [h]='Help message.'
-    [l]='List all time-card entries, for every project.'
-    [L]='List all time-card made under a project. See -c.'
-    [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
-    [q]='Quiet mode, print minimal output and even fail quietly.'
-    [r]='Delete all time-card entries made under a project. See -c.'
-    [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
-    [t]='Sum of total time-card entries under project. See -c.'
-)
-
 
 # helpers: ####################################################################
 
