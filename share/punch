@@ -61,12 +61,11 @@ usage() {
             [[ ${opt:1:1} = : ]] || echo -n $opt
         done
     )
-    local i n
+    local i=0 n x=0
     local argflags=$(
-        i=0
         for opt in ${!OPTS[@]}; do
             if [[ ${opt:1:1} = : ]];then
-                (( i )) && OR=' | '
+                (( x )) && OR=' | '
                 echo -en "$OR-${opt/:/} "
                 n=0
                 for arg in "${OPTS[@]}"; do
@@ -77,8 +76,9 @@ usage() {
                     fi
                     ((++n))
                 done
-                ((++i))
+                ((++x))
             fi
+            ((++i))
         done
     )
 
@@ -99,13 +99,14 @@ usage() {
 
 declare -A OPTS
 OPTS=(
-    [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
+    [c:]='client  Specify the project/client being referenced, "__".'
+    [C]='List all project/clients on time-card.'
     [d:]='timestamp  Delete all in/out time-card entries at epoch "__".'
     [h]='Help message.'
     [l]='List all time-card entries, for every project.'
     [L]='List all time-card made under a project. See -c.'
 #   [n:]='note  Note about this particular card-punch "__". See -p.'
-    [c:]='client  Specify the project/client being referenced, "__".'
+    [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
     [q]='Quiet mode, print minimal output and even fail quietly.'
     [r]='name  Delete all time-card entries made under a project. See -c.'
     [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
@@ -288,6 +289,10 @@ if (( $# ));then
         case $option in
             c)
                 declare -r OPT_PROJECT=$OPTARG
+                ;;
+            C)
+                #projects()
+                OPT_RUN+=($option)
                 ;;
             d)
                 declare -r OPT_DELETE=$OPTARG
