@@ -273,8 +273,14 @@ spent() {
 # parse args: #################################################################
 #@TODO: create a TRAP that will rollback transactions, `reset`
 if (( $# ));then
+
+    #build an array of possible options, all set to false
+    declare -A OPT_RUN
+    for option in "${!OPTS[@]}"; do
+        OPT_RUN["${option/:/}"]=0
+    done
+
     #parse arguments
-    declare -a OPT_RUN
     while getopts ":$(printf "%s" "${!OPTS[@]}")" option; do
         case $option in
             c)
@@ -282,41 +288,41 @@ if (( $# ));then
                 ;;
             C)
                 #projects()
-                OPT_RUN+=($option)
+                OPT_RUN[$option]=1
                 ;;
             d)
                 declare -r OPT_DELETE=$OPTARG
                 #delete()
-                OPT_RUN+=($option)
+                OPT_RUN[$option]=1
                 ;;
             h)
                 help
                 ;;
             l)
                 #list()
-                OPT_RUN+=($option)
+                OPT_RUN[$option]=1
                 ;;
             L)
                 #list()
-                OPT_RUN+=($option)
+                OPT_RUN[$option]=1
                 ;;
             p)
                 #punch()
-                OPT_RUN+=($option)
+                OPT_RUN[$option]=1
                 ;;
             q)
                 declare -r OPT_QUIET=1
                 ;;
             r)
                 #remove()
-                OPT_RUN+=($option)
+                OPT_RUN[$option]=1
                 ;;
             s)
                 declare -r OPT_CLEAN=1
                 ;;
             t)
                 #spent()
-                OPT_RUN+=($option)
+                OPT_RUN[$option]=1
                 ;;
             \?)
                 error "-$OPTARG is not a valid option. See -h for help."
