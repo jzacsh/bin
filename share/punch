@@ -218,19 +218,18 @@ current() {
     error "$FUNCNAME() not yet implemented
     will:
       report on current punch-card status.
-      - are you punched into a project? how long, so far and which project?
+      - are you punched into a project? how long, so far and which project(s)?
       - not punched into anything? print a message saying so and exit non-zero
     "
-
-    db_sql "SELECT strftime('%s', 'now');" #@TODO: remove this line!
     #@TODO: must respect the $OPT_CLEAN, and not print PROJECT name
+    #@TODO: must respect PUNCH_DELIM
 }
 
 delete() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-        remove all entries for PROJECT
+        remove all entries for a given project, '$OPT_PROJECT'
     "
 }
 
@@ -238,19 +237,36 @@ list() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-        list all existing timecard entries in the database, optionally under a
+        list all existing timecard entries, for a given project, '$OPT_PROJECT'.
+        [project] [total time]
     "
     #@TODO: must respect the $OPT_CLEAN
+    #@TODO: must respect PUNCH_DELIM
 }
 
 punch() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-      create a database entry with current time stamp for
-      \$OPT_PROJECT, either the in or out entry, depending on what is
+      create a database entry with current time stamp for given project,
+      '$OPT_PROJECT', either the in or out entry, depending on what is
       currently in the database.
     "
+}
+data_dump() {
+    #@TODO:
+    error "$FUNCNAME() not yet implemented
+    will:
+        list all entries timecard in two columns, sorted exactly in sequence of
+        entry.:
+        [project A] [time in]
+        [project B] [time in]
+        [project A] [time out]
+        [project B] [time out]
+        ...
+    "
+    #@TODO: must respect the $OPT_CLEAN
+    #@TODO: must respect PUNCH_DELIM
 }
 
 projects() {
@@ -262,13 +278,15 @@ projects() {
         ...
     "
     #@TODO: must respect the $OPT_CLEAN
+    #@TODO: must respect the $OPT_QUIET, by not outputting "total time"
+    #@TODO: must respect PUNCH_DELIM
 }
 
 remove() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-        remove the in and out entries for a given timestamp
+        remove the in and out entries for a given timestamp, '$OPT_DELETE'
     "
 }
 
@@ -276,9 +294,10 @@ spent() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
-        report a sum of time spent on a given PROJECT
+        report a sum of time spent on a given project, '$OPT_PROJECT'
     "
     #@TODO: must respect the $OPT_CLEAN, by outputting a sum in seconds.
+    #@TODO: must respect PUNCH_DELIM
 }
 
 # parse args: #################################################################
@@ -357,6 +376,7 @@ else
 fi
 
 # main: #######################################################################
+# - Try to run functions in a sensible sequence. ##############################
 
 #
 # Some sanity checking.
@@ -368,8 +388,7 @@ init_storage
 if (( OPT_RUN[t] ||
     OPT_RUN[d] ||
     OPT_RUN[p] ||
-    OPT_RUN[l] ||
-    OPT_RUN[L] ));then
+    OPT_RUN[l] ));then
     need_client
 fi
 
@@ -386,14 +405,17 @@ if (( OPT_RUN[C] ));then
 fi
 
 if (( OPT_RUN[L] ));then
-    need_client
-    projects
+    data_dump
     die $?
 fi
 
 #
 # Make all changes before running any queries.
 #
+
+if (( OPT_RUN[p] ));then
+    punch
+fi
 
 if (( OPT_RUN[d] ));then
     delete
@@ -403,6 +425,14 @@ if (( OPT_RUN[D] ));then
     remove
 fi
 
-if (( OPT_RUN[p] ));then
-    punch
+#
+# Calculate and output all reporting.
+#
+
+if (( OPT_RUN[l] ));then
+    list
+fi
+
+if (( OPT_RUN[t] ));then
+    spent
 fi
