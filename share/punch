@@ -107,7 +107,7 @@ OPTS=(
     [L]='List all time-card made under a project. See -c.'
     [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
     [q]='Quiet mode, print minimal output and even fail quietly.'
-    [r]='name  Delete all time-card entries made under a project. See -c.'
+    [r]='Delete all time-card entries made under a project. See -c.'
     [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
     [t]='Sum of total time-card entries under project. See -c.'
 )
