@@ -333,7 +333,7 @@ if (( $# ));then
                 ;;
         esac
     done
-    delcare -r OPT_NOTE=${@}
+    declare -r OPT_NOTE=${@}
 else
     #no arguments were passed
     init
