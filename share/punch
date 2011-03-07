@@ -15,7 +15,7 @@ E_DATAF=65 #data format error
 
 # functions: ##################################################################
 error() {
-    echo -e "Error: ${@}" >&2
+    (( OPT_QUIET )) || echo -e "Error: ${@}" >&2
 }
 
 die() {
@@ -154,12 +154,13 @@ db_punch() {
 }
 
 create_db() {
+    (( OPT_QUIET )) && return $E_DATAF
     local initialize
     echo -en "Would you like to initialize a punch-card, here:
 \t$PUNCH_CARD ?"
     local prompt=" [Y\n]  "
     read -p $prompt initialize
-    [[ -z $initialize || ${initialize,,} = y ]] || return 1
+    [[ -z $initialize || ${initialize,,} = y ]] || return $E_DATAF
     db_sql "$CREATE_TABLE"
 }
 
@@ -178,7 +179,7 @@ init() {
     if [[ $(file -bL $PUNCH_CARD 2>/dev/null | grep -i 'sqlite') ]];then
         #punch card looks like an sqlite file.
         if [[ ! -w $PUNCH_CARD ]];then
-            error "No write-access to punch-card."
+            (( OPT_QUIET )) || error "No write-access to punch-card."
             die $E_DATAF
         fi
     else
@@ -187,7 +188,7 @@ init() {
             #punch card at least likes like _some_ kind of file.
             if (( 10#$(stat -L --printf='%s' $PUNCH_CARD 2>/dev/null) ));then
                 #punch card has something else in it.
-                error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
+                (( OPT_QUIET )) || error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
                 die $E_DATAF
             else
                 #punch card is an empty file. create tables?
@@ -195,7 +196,7 @@ init() {
             fi
         else
             #punch card does not exist. create it?
-            error "Could not find punch-card\n\twas expecting: '$PUNCH_CARD'."
+            (( OPT_QUIET )) || error "Could not find punch-card\n\twas expecting: '$PUNCH_CARD'."
             [[ -w $(dirname $PUNCH_CARD) ]] && create_db || die $?
         fi
     fi
@@ -341,6 +342,4 @@ fi
 # main: #######################################################################
 init
 echo -e "OPT_RUN is:\n\t${OPT_RUN[@]}"
-#@TODO: fix all the below calls and above functions to match the new getopts
-# string
 #@TODO: run in_array() style checks to see how to behave next.
