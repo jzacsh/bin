@@ -172,7 +172,7 @@ reset() {
     return 99
 }
 
-# sanity-checks: ##############################################################
+# punchcard tools: ############################################################
 
 init() {
     if [[ $(file -bL $PUNCH_CARD 2>/dev/null | grep -i 'sqlite') ]];then
@@ -201,8 +201,6 @@ init() {
     fi
 }
 
-# punchcard tools: ############################################################
-
 current() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
@@ -214,16 +212,6 @@ current() {
 
     db_sql "SELECT strftime('%s', 'now');" #@TODO: remove this line!
     #@TODO: must respect the $OPT_CLEAN, and not print PROJECT name
-}
-
-punch() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-      create a database entry with current time stamp for
-      \$OPT_PROJECT, either the in or out entry, depending on what is
-      currently in the database.
-    "
 }
 
 delete() {
@@ -243,6 +231,16 @@ list() {
     #@TODO: must respect the $OPT_CLEAN
 }
 
+punch() {
+    #@TODO:
+    error "$FUNCNAME() not yet implemented
+    will:
+      create a database entry with current time stamp for
+      \$OPT_PROJECT, either the in or out entry, depending on what is
+      currently in the database.
+    "
+}
+
 projects() {
     #@TODO:
     error "$FUNCNAME() not yet implemented
@@ -252,14 +250,6 @@ projects() {
         ...
     "
     #@TODO: must respect the $OPT_CLEAN
-}
-
-query() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        get a listing of all timecard entries for a given PROJECT
-    "
 }
 
 remove() {
