@@ -19,7 +19,7 @@ E_DATAF=65 #data format error
 declare -rA OPTS=(
     [c:]='client  Specify the client/project being referenced, "__".'
     [C]='List all clients/projects on time-card.'
-    [D:]='timestamp  Delete all in/out time-card entries at epoch "__".'
+    [D:]='timestamp  Delete all in/out time-card entries at epoch, "__".'
     [h]='Help message.'
     [L]='List all entries, for every project, on time-card.'
     [l]='List all time-card made under a project. See -c.'
@@ -301,9 +301,9 @@ if (( $# ));then
                 #projects()
                 OPT_RUN[$option]=1
                 ;;
-            d)
+            D)
                 declare -r OPT_DELETE=$OPTARG
-                #delete()
+                #remove()
                 OPT_RUN[$option]=1
                 ;;
             h)
@@ -324,8 +324,8 @@ if (( $# ));then
             q)
                 declare -r OPT_QUIET=1
                 ;;
-            r)
-                #remove()
+            d)
+                #delete()
                 OPT_RUN[$option]=1
                 ;;
             s)
@@ -366,7 +366,7 @@ init_storage
 
 #functions that need a client to be specified:
 if (( OPT_RUN[t] ||
-    OPT_RUN[r] ||
+    OPT_RUN[d] ||
     OPT_RUN[p] ||
     OPT_RUN[l] ||
     OPT_RUN[L] ));then
@@ -397,6 +397,10 @@ fi
 
 if (( OPT_RUN[d] ));then
     delete
+fi
+
+if (( OPT_RUN[D] ));then
+    remove
 fi
 
 if (( OPT_RUN[p] ));then
