@@ -105,7 +105,6 @@ OPTS=(
     [h]='Help message.'
     [l]='List all time-card entries, for every project.'
     [L]='List all time-card made under a project. See -c.'
-#   [n:]='note  Note about this particular card-punch "__". See -p.'
     [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
     [q]='Quiet mode, print minimal output and even fail quietly.'
     [r]='name  Delete all time-card entries made under a project. See -c.'
