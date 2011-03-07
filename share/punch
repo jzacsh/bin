@@ -337,7 +337,10 @@ if (( $# ));then
                 ;;
         esac
     done
-    declare -r OPT_NOTE=${@}
+  #@TODO: figure out how to make this work, only store non-getopts stuff:
+  # shift $((OPTIND+1))
+  # declare -r OPT_NOTE="${@}"
+  # echo -e "OPT_NOTE is:\n\t${OPT_NOTE}"
 else
     #no arguments were passed
     init
