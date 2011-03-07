@@ -75,12 +75,12 @@ usage() {
                     fi
                     ((++n))
                 done
+                ((++i))
             fi
-            ((++i))
         done
     )
 
-    echo "$_n [$flags] [ $argflags [note...] ]
+    echo "$_n [$flags] [ $argflags ]
     Simple time card utility, lets you punch in, out and get paid.
 
     ${_n^} generally takes a client/subject of what you're working *for* and
@@ -88,7 +88,6 @@ usage() {
     in your local punch-card database.
 
     Called with no arguments ${_n^} prints your current time on the clock.
-    See -h for extended help message.
 " >&2
 
     (( $# )) && die ${@}
@@ -98,17 +97,17 @@ usage() {
 
 declare -A OPTS
 OPTS=(
-    [c]="Punch in/out for a 'client'/'project' being referenced. See -p."
-    [d:]="timestamp  Delete a time-card entry at '__'. Note, this deletes in and out entries."
-    [h]="Help message."
-    [l]="List all time-card entries, for every project."
-    [L]="List all time-card made under a project. See -p."
-    [n:]="note  Note about this particular card-punch '__'. See -c."
-    [p:]="name  Specify the project being referenced, as project '__'."
-    [q]="Quiet mode, print minimal output and even fail quietly."
-    [r]="name  Delete all time-card entries made under a project. See -p."
-    [s]="Output timestamps as epoch, intended as shell input. See eval(1p)."
-    [t]="Sum of total time-card entries under project. See -p."
+    [c]='Punch in/out for a "client"/"project" being referenced. See -p.'
+    [d:]='timestamp  Delete all in/out time-card entries at epoch "__".'
+    [h]='Help message.'
+    [l]='List all time-card entries, for every project.'
+    [L]='List all time-card made under a project. See -p.'
+    [n:]='note  Note about this particular card-punch "__". See -c.'
+    [p:]='project  Specify the project being referenced, "__".'
+    [q]='Quiet mode, print minimal output and even fail quietly.'
+    [r]='name  Delete all time-card entries made under a project. See -p.'
+    [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
+    [t]='Sum of total time-card entries under project. See -p.'
 )
 
 
