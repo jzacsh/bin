@@ -16,13 +16,12 @@ E_DATAF=65 #data format error
 
 # getops configuration: #######################################################
 
-declare -A OPTS
-OPTS=(
-    [c:]='client  Specify the project/client being referenced, "__".'
-    [C]='List all project/clients on time-card.'
+declare -rA OPTS=(
+    [c:]='client  Specify the client/project being referenced, "__".'
+    [C]='List all clients/projects on time-card.'
     [d:]='timestamp  Delete all in/out time-card entries at epoch "__".'
     [h]='Help message.'
-    [L]='List all time-card entries, for every project.'
+    [L]='List all entries, for every project, on time-card.'
     [l]='List all time-card made under a project. See -c.'
     [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
     [q]='Quiet mode, print minimal output and even fail quietly.'
@@ -110,9 +109,9 @@ usage() {
     Called with no arguments ${_n^} prints your current time on the clock.
 
     ENVIRONMENT VARIABLES
-        PUNCH_CARD  - location of your punch-card database. Defaults to $_CARD.
-        PUNCH_DELIM - field-separator for data output. Defaults to '$_DELIM'.
-        OPT_PROJECT - Client/Project name to use. See -c.
+        PUNCH_CARD   - location of your punch-card database. Defaults to $_CARD.
+        PUNCH_DELIM  - field delimeter for data output. Defaults to '$_DELIM'.
+        PUNCH_CLIENT - Client/Project name to use. See -c.
 " >&2
 
     (( $# )) && die ${@}
@@ -390,4 +389,16 @@ if (( OPT_RUN[L] ));then
     need_client
     projects
     die $?
+fi
+
+#
+# Make all changes before running any queries.
+#
+
+if (( OPT_RUN[d] ));then
+    delete
+fi
+
+if (( OPT_RUN[p] ));then
+    punch
 fi
