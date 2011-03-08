@@ -121,14 +121,15 @@ usage() {
 
 #@TODO:
 # make tiny note here about schema
-CREATE_TABLE='
-CREATE TABLE punch (
+DB_TABLE_NAME='punchcard'
+DB_CREATE_TABLE="
+CREATE TABLE $DB_TABLE_NAME (
     punch       INTEGER PRIMARY KEY,
     status      INTEGER,
     project     TEXT,
     note        TEXT
 );
-'
+"
 
 db_sql() {
     sqlite3 $PUNCH_CARD "${@}"
@@ -143,8 +144,10 @@ db_schema() {
     return 99
 }
 
-db_create() {
-    db_sql $CREATE_TABLE
+db_out_sanitize() {
+    while read line;do
+        [[ -n $line ]] && echo "$line"
+    done
 }
 
 db_punch() {
@@ -165,7 +168,7 @@ create_db() {
     local prompt=" [Y\n]  "
     read -p $prompt initialize
     [[ -z $initialize || ${initialize,,} = y ]] || return $E_DATAF
-    db_sql "$CREATE_TABLE"
+    db_sql "$DB_CREATE_TABLE"
 }
 
 reset() {
@@ -192,10 +195,11 @@ init_storage() {
             #punch card at least likes like _some_ kind of file.
             if (( 10#$(stat -L --printf='%s' $PUNCH_CARD 2>/dev/null) ));then
                 #punch card has something else in it.
-                error "punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
+                error "Punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
                 die $E_DATAF
             else
                 #punch card is an empty file. create tables?
+                error "Punch-card is not yet formatted."
                 [[ -w $PUNCH_CARD && -r $PUNCH_CARD ]] && create_db || die $?
             fi
         else
@@ -203,6 +207,15 @@ init_storage() {
             error "Could not find punch-card\n\twas expecting: '$PUNCH_CARD'."
             [[ -w $(dirname $PUNCH_CARD) ]] && create_db || die $?
         fi
+    fi
+}
+
+check_schema() {
+    #@TODO: this if fragile. there must be a _proper_, standard way to do this.
+    # this will fail if even the columns are created in a different order.
+    if [[ $(diff -u <(echo "$DB_CREATE_TABLE" | db_out_sanitize) <(db_sql ".schema $DB_TABLE_NAME" | db_out_sanitize)) ]];then
+        error "Punch-card does not seem to be in proper format:\n\t$PUNCH_CARD"
+        die $E_DATAF
     fi
 }
 
@@ -382,8 +395,6 @@ fi
 # Some sanity checking.
 #
 
-init_storage
-
 #functions that need a client to be specified:
 if (( OPT_RUN[t] ||
     OPT_RUN[d] ||
@@ -391,6 +402,9 @@ if (( OPT_RUN[t] ||
     OPT_RUN[l] ));then
     need_client
 fi
+
+init_storage
+check_schema
 
 #
 # Run one-off functions and die.
