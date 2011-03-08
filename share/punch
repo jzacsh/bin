@@ -146,7 +146,11 @@ CREATE TABLE $DB_TABLE_NAME (
 "
 
 db_sql() {
-    sqlite3 \
+    local opts=' '
+    (( OPT_QUIET )) && opts='-noheader' || opts="-header"
+
+    #run query
+    sqlite3 $opts \
         -separator "$PUNCH_DELIM" \
         $PUNCH_CARD "${@}"
 }
