@@ -147,7 +147,7 @@ CREATE TABLE $DB_TABLE_NAME (
 
 db_sql() {
     local opts=' '
-    (( OPT_QUIET )) && opts='-noheader' || opts="-header"
+#   (( OPT_QUIET )) && opts='-noheader' || opts="-header"
 
     #run query
     sqlite3 $opts \
