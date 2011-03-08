@@ -1,6 +1,9 @@
 #!/bin/bash
  #@TODO: use this! #!/usr/bin/env bash
 
+ #@TODO: change all user-facing wording to use "punch-card" as verbage instead
+ # of "time-card"
+
 ###############################################################################
 _CARD=~/.config/punchcard
 _DELIM=' '
@@ -289,7 +292,9 @@ projects() {
         list all PROJECTS on your timecard in two columns, eg.:
         [project] [total time]
         ...
+    ###################################################################
     "
+    db_sql "SELECT project FROM $DB_TABLE_NAME;"
     #@TODO: must respect the $OPT_CLEAN
     #@TODO: must respect the $OPT_QUIET, by not outputting "total time"
     #@TODO: must respect PUNCH_DELIM
