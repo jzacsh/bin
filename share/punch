@@ -282,20 +282,13 @@ punch() {
       currently in the database.
     "
 }
+
 data_dump() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        list all entries timecard in two columns, sorted exactly in sequence of
-        entry.:
-        [project A] [time in]
-        [project B] [time in]
-        [project A] [time out]
-        [project B] [time out]
-        ...
-    "
     #@TODO: must respect the $OPT_CLEAN
-    #@TODO: must respect PUNCH_DELIM
+    # will only (not) do so when not using a stupidly-slow wholy-bash function.
+    local q
+    q="SELECT * FROM $DB_TABLE_NAME ORDER BY punch ASC;"
+    db_sql "$q"
 }
 
 projects() {
