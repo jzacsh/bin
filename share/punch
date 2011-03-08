@@ -331,7 +331,7 @@ punch() {
             fi
         done < <(db_sql "$list")
 
-        if [[ -z $insert_project && -n $in_projects ]];then
+        if [[ -n $in_projects ]];then
             #loop through each project that was found, and allow user to choose:
             echo 'You are currently punched-in for multiple projects.'
             while true;do
@@ -364,7 +364,7 @@ punch() {
                     continue
                 fi
             done
-        else
+        elif [[ -z $insert_project ]];then
             error "You are not punched into any projects, cannot assume what
             you would like to punch out of. Please see -c to specify a project
             to punch into."
@@ -376,7 +376,7 @@ punch() {
     if [[ -z $insert_status ]] ;then
         #@TODO: this should not happen, or should at lesat prompt the user to
         # help resolve the issue. remove this block when above code is solid
-        error "Logic to auto-determine insertion status has not been build.
+        error "Logic to auto-determine insertion status has not been built.
         Could not determine punch-card status as previously 'in' or 'out'."
         die $E_ERROR
     fi
