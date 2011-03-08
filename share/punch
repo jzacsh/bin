@@ -297,17 +297,23 @@ punch() {
     local q i=0 proj_punched=0
     declare -a in_projects
 
+    local stat_return
     if [[ -n $OPT_PROJECT ]];then
-        insert_project=${OPT_PROJECT}
-        q="
-            SELECT status
-            FROM $DB_TABLE_NAME
-            WHERE PROJECT='$insert_project'
-            ORDER BY PUNCH DESC
-            LIMIT 0,1
-        ;"
+        insert_project=$OPT_PROJECT
+        #determine if we need to punch in or out for this project.
+        stat_return=$(project_status "$OPT_PROJECT")
+        echo "last punch status for $OPT_PROJECT was: $stat_return"
+        if [[ $stat_return =~ $NUMERIC_REGEX ]];then
+            insert_status=$(( 10#$stat_return ))
+            insert_status=$(( ! $insert_status ))
+        else
+            #we are punching in, there is no previous record of this project
+            insert_status=1
+        fi
+        echo "last punch status for $OPT_PROJECT will be: $insert_status"
     else
         #project not specified, implied punching out, figure out which project.
+        insert_status=0
         local list="
             SELECT DISTINCT project
             FROM $DB_TABLE_NAME
@@ -333,6 +339,7 @@ punch() {
 
         if [[ -n $in_projects ]];then
             #loop through each project that was found, and allow user to choose:
+            #@TODO: options listed in prompt are not complete. fix this
             echo 'You are currently punched-in for multiple projects.'
             while true;do
                 echo 'Which project would you like to punch out of?'
@@ -372,14 +379,6 @@ punch() {
         fi
     fi
 
-    # check query params ######################################
-    if [[ -z $insert_status ]] ;then
-        #@TODO: this should not happen, or should at lesat prompt the user to
-        # help resolve the issue. remove this block when above code is solid
-        error "Logic to auto-determine insertion status has not been built.
-        Could not determine punch-card status as previously 'in' or 'out'."
-        die $E_ERROR
-    fi
 
     # run query ###############################################
     local q="
@@ -391,6 +390,7 @@ punch() {
             $insert_note
         );
     "
+    db_sql "$q"
 }
 
 data_dump() {
@@ -411,7 +411,8 @@ project_status() {
         ORDER BY PUNCH DESC
         LIMIT 0,1
     ;"
-    db_sql "$q"
+    local stat=$(db_sql "$q")
+    [[ -z $stat ]] && echo 'none' || echo $stat
 }
 
 projects() {
