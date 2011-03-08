@@ -34,6 +34,9 @@ declare -rA OPTS=(
 )
 
 # functions: ##################################################################
+
+NUMERIC_REGEX='^[0-9]+([.][0-9]+)?$'
+
 error() {
     (( OPT_QUIET )) || echo -e "Error: ${@}" >&2
 }
@@ -283,40 +286,93 @@ punch() {
     # checking in
 
     # build query #############################################
-    local insert_project=${OPT_PROJECT}
+    local insert_project
     local insert_status #punch in, by default
     local insert_note=${OPT_NOTE:-'NULL'}
-    local q i=0 stat=0
+    local q i=0 proj_punched=0
+    declare -a in_projects
 
     if [[ -n $OPT_PROJECT ]];then
+        insert_project=${OPT_PROJECT}
         q="
             SELECT status
             FROM $DB_TABLE_NAME
-            WHERE PROJECT='$OPT_PROJECT'
+            WHERE PROJECT='$insert_project'
             ORDER BY PUNCH DESC
             LIMIT 0,1
         ;"
     else
-        q="
+        #project not specified, implied punching out, figure out which project.
+        local list="
             SELECT DISTINCT project
             FROM $DB_TABLE_NAME
             ORDER BY punch
         ;"
+
+        #check each project to find out what's punched into
         while read project; do
-            stat=0
-            stat=$(( 10#$(project_status "$project") ))
-            #@TODO: now is the time to do a check for repeats (more than one
-            # checked into)
-            if (( stat )) && insert_project=$project
-        done < <(db_sql "$q")
+            proj_punched=0
+            proj_punched=$(( 10#$(project_status "$project") ))
+            if (( proj_punched ));then
+                if [[ -n $insert_project ]];then
+                    # another project is also punched into. which are we
+                    # punching out of?
+                    (( OPT_QUIET )) && die $E_USAGE
+                    in_projects+=($project)
+                else
+                    # this is the only known punched-into project, so far.
+                    insert_project=$project
+                fi
+            fi
+        done < <(db_sql "$list")
+
+        if [[ -z $insert_project && -n $in_projects ]];then
+            #loop through each project that was found, and allow user to choose:
+            echo 'You are currently punched-in for multiple projects.'
+            while true;do
+                echo 'Which project would you like to punch out of?'
+                i=0
+                for proj in "$in_projects";do
+                    #show a listing of possible projects
+                    ((++i))
+                    echo -e "[$i]:\t$proj"
+                done
+                #prompt user
+                local prompt='[#|q]? '
+                read -p $prompt ans
+
+                #process and verify user-input
+                [[ -z $ans || $ans = q ]] && die $E_ERROR
+                if [[ ! "$ans" =~ $NUMERIC_REGEX ]];then
+                    #user input was not numeric
+                    error "'$ans' is not a number in the list."
+                    continue
+                fi
+                ans=$(( 10#$ans ))
+                if (( ans > 0 && ans <= "${#in_projects[@]}" ));then
+                    #user chose a project
+                    insert_project="${in_project[$(( --ans ))]}"
+                    break;
+                else
+                    #user input was out of range
+                    error "Please choose an item number in the list."
+                    continue
+                fi
+            done
+        else
+            error "You are not punched into any projects, cannot assume what
+            you would like to punch out of. Please see -c to specify a project
+            to punch into."
+            die $E_ERROR
+        fi
     fi
-    exit 99
 
     # check query params ######################################
     if [[ -z $insert_status ]] ;then
         #@TODO: this should not happen, or should at lesat prompt the user to
-        # help resolve the issue
-        error "Could not determine punch-card status as previously 'in' or 'out'."
+        # help resolve the issue. remove this block when above code is solid
+        error "Logic to auto-determine insertion status has not been build.
+        Could not determine punch-card status as previously 'in' or 'out'."
         die $E_ERROR
     fi
 
@@ -371,8 +427,7 @@ projects() {
 
 date_fmt_colon() {
     #@TODO: where the hell is the "wheel" on this one??
-    local number='^[0-9]+([.][0-9]+)?$'
-    [[ "$1" =~ $number ]] || return 1
+    [[ "$1" =~ $NUMERIC_REGEX ]] || return 1
     declare -r stamp=$(( 10#$1 ))
     declare -A analog=(
         [y]=0
