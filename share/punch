@@ -278,12 +278,57 @@ list() {
 }
 
 punch() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-      create a database entry with current time stamp for given project,
-      '$OPT_PROJECT', either the in or out entry, depending on what is
-      currently in the database.
+    #@TODO: make this fail/ask user which project he's checking out of. if none
+    # have been checked into, fail - saying you need to specify a client when
+    # checking in
+
+    # build query #############################################
+    local insert_project=${OPT_PROJECT}
+    local insert_status #punch in, by default
+    local insert_note=${OPT_NOTE:-'NULL'}
+    local q i=0 stat=0
+
+    if [[ -n $OPT_PROJECT ]];then
+        q="
+            SELECT status
+            FROM $DB_TABLE_NAME
+            WHERE PROJECT='$OPT_PROJECT'
+            ORDER BY PUNCH DESC
+            LIMIT 0,1
+        ;"
+    else
+        q="
+            SELECT DISTINCT project
+            FROM $DB_TABLE_NAME
+            ORDER BY punch
+        ;"
+        while read project; do
+            stat=0
+            stat=$(( 10#$(project_status "$project") ))
+            #@TODO: now is the time to do a check for repeats (more than one
+            # checked into)
+            if (( stat )) && insert_project=$project
+        done < <(db_sql "$q")
+    fi
+    exit 99
+
+    # check query params ######################################
+    if [[ -z $insert_status ]] ;then
+        #@TODO: this should not happen, or should at lesat prompt the user to
+        # help resolve the issue
+        error "Could not determine punch-card status as previously 'in' or 'out'."
+        die $E_ERROR
+    fi
+
+    # run query ###############################################
+    local q="
+        INSERT INTO $DB_TABLE_NAME
+        VALUES (
+            strftime('%s', 'now'),
+            $insert_status,
+            '$insert_project',
+            $insert_note
+        );
     "
 }
 
@@ -292,6 +337,19 @@ data_dump() {
     # will only (not) do so when not using a stupidly-slow wholy-bash function.
     local q
     q="SELECT * FROM $DB_TABLE_NAME ORDER BY punch ASC;"
+    db_sql "$q"
+}
+
+project_status() {
+    [[ -z $OPT_PROJECT && -z $1 ]] && return 1
+    local project="${1:-$OPT_PROJECT}"
+    local q="
+        SELECT status
+        FROM $DB_TABLE_NAME
+        WHERE PROJECT='$project'
+        ORDER BY PUNCH DESC
+        LIMIT 0,1
+    ;"
     db_sql "$q"
 }
 
@@ -461,7 +519,6 @@ fi
 #functions that need a client to be specified:
 if (( OPT_RUN[t] ||
     OPT_RUN[d] ||
-    OPT_RUN[p] ||
     OPT_RUN[l] ));then
     need_client
 fi
