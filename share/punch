@@ -298,30 +298,51 @@ data_dump() {
 
 projects() {
     local t q r
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        list all PROJECTS on your timecard in two columns, eg.:
-        [project] [total time]
-        ...
-    ###################################################################
-    "
     q="SELECT DISTINCT project FROM $DB_TABLE_NAME ORDER BY project ASC;"
 
-    (( OPT_CLEAN )) && t='' || t='%Y-%m-%d %H:%M:%S'
     while read result ;do
-        t=$(project_total "$result")
-        echo "$result $t"
+        echo -n "$result"
+        if (( ! OPT_QUIET ));then
+            t=$(project_total "$result")
+            (( OPT_CLEAN )) || t=$(date_fmt_colon "$t")
+            echo "${PUNCH_DELIM}$t"
+        else
+            echo
+        fi
     done < <(db_sql "$q")
-    #@TODO: must respect the $OPT_CLEAN
-    #@TODO: must respect the $OPT_QUIET, by not outputting "total time"
-    #@TODO: must respect PUNCH_DELIM
+}
+
+date_fmt_colon() {
+    #@TODO: where the hell is the "wheel" on this one??
+    local number='^[0-9]+([.][0-9]+)?$'
+    [[ "$1" =~ $number ]] || return 1
+    declare -r stamp=$(( 10#$1 ))
+    declare -A analog=(
+        [y]=0
+        [w]=0
+        [d]=0
+        [h]=0
+        [m]=0
+        [s]=0
+    )
+    analog[y]=$(( stamp / $(( 60 * 60 * 24 * 365 )) ))
+    analog[w]=$(( stamp / $(( 60 * 60 * 24 * 7 )) ))
+    analog[d]=$(( stamp / $(( 60 * 60 * 24 )) ))
+    analog[h]=$(( stamp / $(( 60 * 60 )) ))
+    analog[m]=$(( stamp / 60 ))
+    analog[s]=$(( stamp % 60 ))
+
+    local time=''
+    (( analog[y] )) && time="${analog[y]} year(s), "
+    (( analog[w] )) && time="${time}${analog[w]} week(s), "
+    (( analog[d] )) && time="${time}${analog[d]} day(s), "
+    echo "${time}${analog[h]}:${analog[m]}:${analog[s]}"
 }
 
 project_total() {
     local p=$1 i=1 s total=0
     [[ -z $p ]] && return 1
-    local q="SELECT punch FROM $DB_TALBE_NAME where project='$p' ORDER BY punch"
+    local q="SELECT punch FROM $DB_TABLE_NAME WHERE project='$p' ORDER BY punch"
 
     #loop through each punch
     while read stamp;do
