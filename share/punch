@@ -122,14 +122,25 @@ usage() {
 
 # helpers: ####################################################################
 
-#@TODO:
-# make tiny note here about schema
+## schema: ###################################
+#   unix timestamp of the "punch"
+# - punch       INTEGER NOT NULL PRIMARY KEY,
+#
+#   0 or 1. 0: punched out; 1: punch in
+# - status      INTEGER NOT NULL,
+#
+#   project/client for which this work is for.
+# - project     TEXT NOT NULL,
+#
+#   optional text note describing this work.
+# - note        TEXT
+##############################################
 DB_TABLE_NAME='punchcard'
 DB_CREATE_TABLE="
 CREATE TABLE $DB_TABLE_NAME (
-    punch       INTEGER PRIMARY KEY,
-    status      INTEGER,
-    project     TEXT,
+    punch       INTEGER NOT NULL PRIMARY KEY,
+    status      INTEGER NOT NULL,
+    project     TEXT NOT NULL,
     note        TEXT
 );
 "
@@ -286,6 +297,7 @@ data_dump() {
 }
 
 projects() {
+    local t q r
     #@TODO:
     error "$FUNCNAME() not yet implemented
     will:
@@ -294,10 +306,36 @@ projects() {
         ...
     ###################################################################
     "
-    db_sql "SELECT project FROM $DB_TABLE_NAME;"
+    q="SELECT DISTINCT project FROM $DB_TABLE_NAME ORDER BY project ASC;"
+
+    (( OPT_CLEAN )) && t='' || t='%Y-%m-%d %H:%M:%S'
+    while read result ;do
+        t=$(project_total "$result")
+        echo "$result $t"
+    done < <(db_sql "$q")
     #@TODO: must respect the $OPT_CLEAN
     #@TODO: must respect the $OPT_QUIET, by not outputting "total time"
     #@TODO: must respect PUNCH_DELIM
+}
+
+project_total() {
+    local p=$1 i=1 s total=0
+    [[ -z $p ]] && return 1
+    local q="SELECT punch FROM $DB_TALBE_NAME where project='$p' ORDER BY punch"
+
+    #loop through each punch
+    while read stamp;do
+        if (( i % 2 ));then
+            #on "start" stamp
+            s="$stamp"
+        else
+            #on "end" stamp
+            total=$(( total + $(( stamp - s )) ))
+        fi
+        (( ++i ))
+    done < <(db_sql "$q")
+
+    echo $total
 }
 
 remove() {
