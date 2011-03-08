@@ -1,8 +1,8 @@
 #!/bin/bash
  #@TODO: use this! #!/usr/bin/env bash
 
-if [[ ! $(type sqlite3 &>/dev/null) ]];then
-    echo "${0^} relies on sqlite3, which was not found on this system." >&2
+ if [[ $(type sqlite3 &>/dev/null ) ]];then
+     echo "$(basename $0) relies on sqlite3, which was not found on this system." >&2
     exit 1
 fi
 
