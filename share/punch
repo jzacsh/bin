@@ -467,10 +467,16 @@ date_fmt_colon() {
     digital[m]=$(( $(( stamp - $(( digital[h] * seconds[h] )) )) / seconds[m] ))
     digital[s]=$(( stamp % seconds[m] ))
 
+    local plural
     local time=''
-    (( digital[y] )) && time="${digital[y]} year(s), "
-    (( digital[w] )) && time="${time}${digital[w]} week(s), "
-    (( digital[d] )) && time="${time}${digital[d]} day(s), "
+    (( digital[y] > 1 )) && plural='s' || plural=''
+    (( digital[y] )) && time="${digital[y]} year${plural}, "
+
+    (( digital[w] > 1 )) && plural='s' || plural=''
+    (( digital[w] )) && time="${time}${digital[w]} week${plural}, "
+
+    (( digital[d] > 1 )) && plural='s' || plural=''
+    (( digital[d] )) && time="${time}${digital[d]} day${plural}, "
     echo "${time}${digital[h]}:${digital[m]}:${digital[s]}"
 }
 
