@@ -441,7 +441,7 @@ date_fmt_colon() {
     #@TODO: where the hell is the "wheel" on this one??
     [[ "$1" =~ $NUMERIC_EXPR ]] || return 1
     declare -r stamp=$(( 10#$1 ))
-    declare -A analog=(
+    declare -A digital=(
         [y]=0
         [w]=0
         [d]=0
@@ -449,18 +449,29 @@ date_fmt_colon() {
         [m]=0
         [s]=0
     )
-    analog[y]=$(( stamp / $(( 60 * 60 * 24 * 365 )) ))
-    analog[w]=$(( stamp / $(( 60 * 60 * 24 * 7 )) ))
-    analog[d]=$(( stamp / $(( 60 * 60 * 24 )) ))
-    analog[h]=$(( stamp / $(( 60 * 60 )) ))
-    analog[m]=$(( stamp / 60 ))
-    analog[s]=$(( stamp % 60 ))
+    declare -rA seconds=(
+        [y]=$(( 60 * 60 * 24 * 365 ))
+        [w]=$(( 60 * 60 * 24 * 7 ))
+        [d]=$(( 60 * 60 * 24 ))
+        [h]=$(( 60 * 60 ))
+        [m]=60
+    )
+
+    #@TODO: this won't work unless i cummulatively count the seconds left that
+    # haven't been chopped. i don't want to. this function shouldn't exit.
+    # where the hell is my wheel!?
+    digital[y]=$(( stamp / seconds[y] ))
+    digital[w]=$(( $(( stamp - $(( digital[y] * seconds[y] )) )) / seconds[w] ))
+    digital[d]=$(( $(( stamp - $(( digital[w] * seconds[w] )) )) / seconds[d] ))
+    digital[h]=$(( $(( stamp - $(( digital[d] * seconds[d] )) )) / seconds[h] ))
+    digital[m]=$(( $(( stamp - $(( digital[h] * seconds[h] )) )) / seconds[m] ))
+    digital[s]=$(( stamp % seconds[m] ))
 
     local time=''
-    (( analog[y] )) && time="${analog[y]} year(s), "
-    (( analog[w] )) && time="${time}${analog[w]} week(s), "
-    (( analog[d] )) && time="${time}${analog[d]} day(s), "
-    echo "${time}${analog[h]}:${analog[m]}:${analog[s]}"
+    (( digital[y] )) && time="${digital[y]} year(s), "
+    (( digital[w] )) && time="${time}${digital[w]} week(s), "
+    (( digital[d] )) && time="${time}${digital[d]} day(s), "
+    echo "${time}${digital[h]}:${digital[m]}:${digital[s]}"
 }
 
 project_total() {
