@@ -40,7 +40,7 @@ declare -rA OPTS=(
 
 # functions: ##################################################################
 
-NUMERIC_REGEX='^[0-9]+([.][0-9]+)?$'
+NUMERIC_EXPR='^[0-9]+([.][0-9]+)?$'
 
 error() {
     (( OPT_QUIET )) || echo -e "Error: ${@}" >&2
@@ -301,7 +301,7 @@ punch() {
         #determine if we need to punch in or out for this project.
         stat_return=$(project_status "$OPT_PROJECT")
         echo "last punch status for $OPT_PROJECT was: $stat_return"
-        if [[ $stat_return =~ $NUMERIC_REGEX ]];then
+        if [[ $stat_return =~ $NUMERIC_EXPR ]];then
             insert_status=$(( 10#$stat_return ))
             insert_status=$(( ! $insert_status ))
         else
@@ -359,7 +359,7 @@ punch() {
 
                 #process and verify user-input
                 [[ -z $ans || $ans = q ]] && die $E_ERROR
-                if [[ ! "$ans" =~ $NUMERIC_REGEX ]];then
+                if [[ ! "$ans" =~ $NUMERIC_EXPR ]];then
                     #user input was not numeric
                     error "'$ans' is not a number in the list."
                     continue
@@ -438,7 +438,7 @@ projects() {
 
 date_fmt_colon() {
     #@TODO: where the hell is the "wheel" on this one??
-    [[ "$1" =~ $NUMERIC_REGEX ]] || return 1
+    [[ "$1" =~ $NUMERIC_EXPR ]] || return 1
     declare -r stamp=$(( 10#$1 ))
     declare -A analog=(
         [y]=0
