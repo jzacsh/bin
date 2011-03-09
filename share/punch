@@ -510,13 +510,8 @@ remove() {
 }
 
 spent() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        report a sum of time spent on a given project, '$OPT_PROJECT'
-    "
-    #@TODO: must respect the $OPT_CLEAN, by outputting a sum in seconds.
-    #@TODO: must respect PUNCH_DELIM
+    local t=$(project_total "$OPT_PROJECT")
+    (( OPT_CLEAN )) && echo "$t" || date_fmt_colon "$t"
 }
 
 # parse args: #################################################################
