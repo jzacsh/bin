@@ -256,15 +256,24 @@ need_client() {
 }
 
 current() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-      report on current punch-card status.
-      - are you punched into a project? how long, so far and which project(s)?
-      - not punched into anything? print a message saying so and exit non-zero
-    "
     #@TODO: must respect the $OPT_CLEAN, and not print PROJECT name
-    #@TODO: must respect PUNCH_DELIM
+    local q stamp status time
+
+    while read project;do
+        q="
+            SELECT punch, status
+            FROM $DB_TABLE_NAME
+            WHERE project='$project'
+            ORDER BY punch ASC
+            LIMIT 0,1
+        ;"
+        read stamp status < <(db_sql "$q")
+      #@TODO: use subshell:
+      # db_sql "$q" | { read -d "$PUNCH_DELIM" -a fields
+        (( status )) || continue
+        (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon "$stamp")
+        echo "$project $time and counting... "
+    done < <(db_sql "SELECT DISTINCT project FROM $DB_TABLE_NAME;")
 }
 
 delete() {
