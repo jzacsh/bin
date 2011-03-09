@@ -321,6 +321,7 @@ punch() {
         ;"
 
         #check each project to find out what's punched into
+        local first
         while read project; do
             proj_punched=0
             proj_punched=$(( 10#$(project_status "$project") ))
@@ -329,25 +330,30 @@ punch() {
                     # another project is also punched into. which are we
                     # punching out of?
                     (( OPT_QUIET )) && die $E_USAGE
+                    if [[ -n $first ]];then
+                        in_projects+=($first)
+                        unset first
+                    fi
                     in_projects+=($project)
                 else
                     # this is the only known punched-into project, so far.
+                    (( n )) || first=$project #incase needed
                     insert_project=$project
                 fi
+                ((++n))
             fi
         done < <(db_sql "$list")
 
         if [[ -n $in_projects ]];then
             #loop through each project that was found, and allow user to choose:
-            #@TODO: options listed in prompt are not complete. fix this
             echo 'You are currently punched-in for multiple projects.'
             while true;do
                 echo 'Which project would you like to punch out of?'
                 i=0
-                for proj in "$in_projects";do
+                for proj in "${in_projects[@]}";do
                     #show a listing of possible projects
+                    echo -e "[$(( $i+1 ))]:\t$proj"
                     ((++i))
-                    echo -e "[$i]:\t$proj"
                 done
                 #prompt user
                 local prompt='[#|q]? '
@@ -363,7 +369,8 @@ punch() {
                 ans=$(( 10#$ans ))
                 if (( ans > 0 && ans <= "${#in_projects[@]}" ));then
                     #user chose a project
-                    insert_project="${in_project[$(( --ans ))]}"
+                    insert_project="${in_projects[$(( --ans ))]}"
+                    echo "punching out of $insert_project"
                     break;
                 else
                     #user input was out of range
