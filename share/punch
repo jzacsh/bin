@@ -484,11 +484,12 @@ project_total() {
 }
 
 remove() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        remove the in and out entries for a given timestamp, '$OPT_DELETE'
-    "
+    if [[ "$OPT_DELETE" =~ $NUMERIC_EXPR ]];then
+        db_sql "DELETE FROM $DB_TABLE_NAME WHERE punch='$OPT_DELETE';"
+    else
+        error "'$OPT_DELETE' is not a valid timestamp. Numeric characters only."
+        die $E_USAGE
+    fi
 }
 
 spent() {
