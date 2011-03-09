@@ -274,14 +274,16 @@ delete() {
 }
 
 list() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        list all existing timecard entries, for a given project, '$OPT_PROJECT'.
-        [project] [total time]
-    "
-    #@TODO: must respect the $OPT_CLEAN
-    #@TODO: must respect PUNCH_DELIM
+    local i local q="
+        SELECT punch, project
+        FROM $DB_TABLE_NAME
+        WHERE project='$OPT_PROJECT'
+        ORDER BY punch DESC
+    ;"
+    while read punch project;do
+        (( OPT_CLEAN )) && time="$punch" || time=$(date_fmt_colon "$punch")
+        printf "%s%s%s\n" "$project" "$PUNCH_DELIM" "$time"
+    done < <(db_sql "$q")
 }
 
 punch() {
@@ -301,7 +303,6 @@ punch() {
         insert_project=$OPT_PROJECT
         #determine if we need to punch in or out for this project.
         stat_return=$(project_status "$OPT_PROJECT")
-        echo "last punch status for $OPT_PROJECT was: $stat_return"
         if [[ $stat_return =~ $NUMERIC_EXPR ]];then
             insert_status=$(( 10#$stat_return ))
             insert_status=$(( ! $insert_status ))
@@ -309,7 +310,6 @@ punch() {
             #we are punching in, there is no previous record of this project
             insert_status=1
         fi
-        echo "last punch status for $OPT_PROJECT will be: $insert_status"
     else
         #project not specified, implied punching out, figure out which project.
         insert_status=0
