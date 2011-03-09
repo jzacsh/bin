@@ -267,11 +267,9 @@ current() {
 }
 
 delete() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        remove all entries for a given project, '$OPT_PROJECT'
-    "
+    #@TODO: do i want to warn the user they're trying to delete rows that don't
+    # exist, eg.: 'non-existent-project'
+    db_sql "DELETE from $DB_TABLE_NAME WHERE project='$OPT_PROJECT';"
 }
 
 list() {
