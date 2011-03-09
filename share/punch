@@ -36,6 +36,7 @@ declare -rA OPTS=(
     [d]='Delete all time-card entries made under a project. See -c.'
     [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
     [t]='Sum of total time-card entries under project. See -c.'
+    [u]='Usage statement.'
 )
 
 # functions: ##################################################################
@@ -54,6 +55,7 @@ die() {
 help() {
     #print the regular usage
     usage
+    echo
 
     #build the help section
     declare -a HELP
@@ -122,8 +124,7 @@ usage() {
     ENVIRONMENT VARIABLES
         PUNCH_CARD   - location of your punch-card database. Defaults to $_CARD.
         PUNCH_DELIM  - field delimeter for data output. Defaults to '$_DELIM'.
-        PUNCH_CLIENT - Client/Project name to use. See -c.
-" >&2
+        PUNCH_CLIENT - Client/Project name to use. See -c." >&2
 
     (( $# )) && die ${@}
 }
@@ -553,6 +554,9 @@ if (( $# ));then
             t)
                 #spent()
                 OPT_RUN[$option]=1
+                ;;
+            u)
+                usage 0
                 ;;
             \?)
                 error "-$OPTARG is not a valid option. See -h for help."
