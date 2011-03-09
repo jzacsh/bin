@@ -533,14 +533,14 @@ if (( $# ));then
     while getopts ":$(printf "%s" "${!OPTS[@]}")" option; do
         case $option in
             c)
-                declare -r OPT_PROJECT=$OPTARG
+                declare -r OPT_PROJECT=$OPTARG 2>/dev/null
                 ;;
             C)
                 #projects()
                 OPT_RUN[$option]=1
                 ;;
             D)
-                declare -r OPT_DELETE=$OPTARG
+                declare -r OPT_DELETE=$OPTARG 2>/dev/null
                 #remove()
                 OPT_RUN[$option]=1
                 ;;
@@ -560,14 +560,14 @@ if (( $# ));then
                 OPT_RUN[$option]=1
                 ;;
             q)
-                declare -r OPT_QUIET=1
+                declare -r OPT_QUIET=1 2>/dev/null
                 ;;
             d)
                 #delete()
                 OPT_RUN[$option]=1
                 ;;
             s)
-                declare -r OPT_CLEAN=1
+                declare -r OPT_CLEAN=1 2>/dev/null
                 ;;
             t)
                 #spent()
