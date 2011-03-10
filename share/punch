@@ -277,13 +277,7 @@ list() {
 }
 
 punch() {
-    #@TODO: make this fail/ask user which project he's checking out of. if none
-    # have been checked into, fail - saying you need to specify a client when
-    # checking in
-
-    # build query #############################################
-    local insert_project
-    local insert_status #punch in, by default
+    local insert_project insert_status
     local insert_note=${OPT_NOTE:-'NULL'}
     local q i=0 proj_punched=0
     declare -a in_projects
@@ -390,10 +384,9 @@ punch() {
 }
 
 data_dump() {
-    #@TODO: must respect the $OPT_CLEAN
+    #@TODO: must respect the $OPT_CLEAN - use `date_fmt_colon`
     # will only (not) do so when not using a stupidly-slow wholy-bash function.
-    local q
-    q="SELECT * FROM $DB_TABLE_NAME ORDER BY punch ASC;"
+    local q="SELECT * FROM $DB_TABLE_NAME ORDER BY punch ASC;"
     db_sql "$q"
 }
 
