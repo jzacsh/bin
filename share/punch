@@ -237,22 +237,23 @@ need_client() {
 }
 
 current() {
-    local q verbage=''
+    local q stat stamp note verbage=''
 
     while read project;do
         q="
-            SELECT status, punch
+            SELECT status, punch, note
             FROM $DB_TABLE_NAME
             WHERE project='$project'
             ORDER BY punch ASC
             LIMIT 0,1
         ;"
         db_sql "$q" | {
-            read $PUNCH_DELIM stat stamp
+            read $PUNCH_DELIM stat stamp note
             (( stat )) || continue
             (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon $stamp)
-            (( OPT_QUIET )) || verbage=" and counting..."
-            printf "%s %s%s\n" "$project ${time}$verbage"
+            (( OPT_QUIET )) && verbage='' || verbage="${PUNCH_DELIM}${note}"
+            printf "%s%s%s%s\n" \
+                "$project" "$PUNCH_DELIM" "$time" "$verbage"
         }
     done < <(db_sql "SELECT DISTINCT project FROM $DB_TABLE_NAME;")
 }
@@ -264,21 +265,23 @@ delete() {
 }
 
 list() {
-    local i local q="
-        SELECT punch, project
+    local i note project punch q="
+        SELECT punch, project, note
         FROM $DB_TABLE_NAME
         WHERE project='$OPT_PROJECT'
         ORDER BY punch DESC
     ;"
-    while read punch project;do
+    while read punch project note;do
+        (( OPT_QUIET )) && note='' || note="${PUNCH_DELIM}${note}"
         (( OPT_CLEAN )) && time="$punch" || time=$(date_fmt_colon "$punch")
-        printf "%s%s%s\n" "$project" "$PUNCH_DELIM" "$time"
+        printf "%s%s%s%s\n" \
+            "$project" "$PUNCH_DELIM" \
+            "$time" "$note"
     done < <(db_sql "$q")
 }
 
 punch() {
     local insert_project insert_status
-    local insert_note=${OPT_NOTE:-'NULL'}
     local q i=0 proj_punched=0
     declare -a in_projects
 
@@ -377,7 +380,7 @@ punch() {
             strftime('%s', 'now'),
             $insert_status,
             '$insert_project',
-            $insert_note
+            '$OPT_NOTE'
         );
     "
     db_sql "$q"
@@ -421,7 +424,8 @@ projects() {
 }
 
 date_fmt_colon() {
-    #@TODO: where the hell is the "wheel" on this one??
+    #@TODO: this is broked!
+
     [[ "$1" =~ $NUMERIC_EXPR ]] || return 1
     declare -r stamp=$(( 10#$1 ))
     declare -A digital=(
@@ -578,7 +582,7 @@ fi
 # - Try to run functions in a sensible sequence. ##############################
 
 #if nothing functional was run, do the default `current`
-(( $(IFS='+'; printf '%s' "${OPT_RUN[*]}") )) && { current ; die $?; }
+(( $(IFS='+'; printf '%s' "${OPT_RUN[*]}") )) || { current ; die $?; }
 
 #
 # Some sanity checking.
