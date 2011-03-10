@@ -258,9 +258,9 @@ current() {
 }
 
 delete() {
-    #@TODO: do i want to warn the user they're trying to delete rows that don't
-    # exist, eg.: 'non-existent-project'
-    db_sql "DELETE from $DB_TABLE_NAME WHERE project='$OPT_PROJECT';"
+    local exists=$(db_sql "SELECT count(1) FROM $DB_TABLE_NAME WHERE project='$OPT_PROJECT';")
+    (( exists )) || error "No punches for any project named, '$OPT_PROJECT'."
+    (( exists )) && db_sql "DELETE from $DB_TABLE_NAME WHERE project='$OPT_PROJECT';"
 }
 
 list() {
