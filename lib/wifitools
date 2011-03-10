@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
-# tools for setting up wireless in archlinux
-eval $(grep WIRELESS_INTERFACE /etc/rc.conf)
+# tools for setting up wireless without a desktop env.
+wfiface() { export $(eval $(grep WIRELESS_INTERFACE /etc/rc.conf)); }
 
 wfreset() {
-#   if (( $UID ));then
-#       echo 'error: $_ requires elevated priveleges.' >&2
-#       return 1
-#   fi
+    (( UID )) && sudo echo -n > /dev/null
+
+    wfiface
     echo 'setting wireless config back to defaults...'
     declare -rA confs=(
         [freq]='auto'
@@ -32,11 +31,9 @@ wfreset() {
 }
 
 wfls() {
-#   if (( $UID ));then
-#       echo 'error: $_ requires elevated priveleges.' >&2
-#       return 1
-#   fi
+    (( UID )) && sudo echo -n > /dev/null
 
+    wfiface
     local fail=0
 
     if (( $# ));then
@@ -66,7 +63,7 @@ wfls() {
     if [[ "$1" = e ]];then
         #encryption table
         local cell=0
-        sudo ifconfig wlan0 up
+        sudo ifconfig $WIRELESS_INTERFACE up
         while read stuff; do
             if (( cell == 2 ));then
                 cell=0
@@ -74,20 +71,18 @@ wfls() {
             fi
             echo "$stuff" | grep -i -e encryption -e essid
             (( $? )) || (( ++cell ))
-        done < <(sudo iwlist wlan0 scan)
+        done < <(sudo iwlist $WIRELESS_INTERFACE scan)
     else
-        sudo ifconfig wlan0 up
+        sudo ifconfig $WIRELESS_INTERFACE up
         [[ "$1" = p ]] && local view="$PAGER" || local view='grep ESSID'
-        sudo iwlist wlan0 scan | "$view"
+        sudo iwlist $WIRELESS_INTERFACE scan | "$view"
     fi
 }
 
 wfon() {
-#   if (( $UID ));then
-#       echo 'error: $_ requires elevated priveleges.' >&2
-#       return 1
-#   fi
+    (( UID )) && sudo echo -n > /dev/null
 
+    wfiface
     (( $# )) || return 2
     echo "setting a wifi network... '$@'"
     if [[ "$1" = -a ]];then
@@ -96,30 +91,30 @@ wfon() {
     else
         local attr='essid'
     fi
-    sudo iwconfig wlan0 "$attr" "$@"
+    sudo iwconfig $WIRELESS_INTERFACE "$attr" "$@"
 }
 
 wfnp() {
-#   if (( $UID ));then
-#       echo 'error: $_ requires elevated priveleges.' >&2
-#       return 1
-#   fi
+    (( UID )) && sudo echo -n > /dev/null
 
+    wfiface
     echo "releasing ip..."
-    sudo dhcpcd -k wlan0
+    sudo dhcpcd -k $WIRELESS_INTERFACE
 }
 
 wfip() {
-#   if (( $UID ));then
-#       echo 'error: $_ requires elevated priveleges.' >&2
-#       return 1
-#   fi
+    (( UID )) && sudo echo -n > /dev/null
 
+    wfiface
     if [[ "$1" = f ]]; then
         echo -en "\t"
         wfnp
     fi
     echo "requesting an IP from dhcpc server..."
-    sudo dhcpcd wlan0
+    sudo dhcpcd $WIRELESS_INTERFACE
 }
 
+wifi() {
+    wfiface
+    wfls
+}
