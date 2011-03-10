@@ -268,9 +268,10 @@ current() {
         ;"
         db_sql "$q" | {
             read $PUNCH_DELIM stat stamp
-            (( stat )) || continue
+            (( stat )) && continue
             (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon $stamp)
-            echo "$project $time and counting... "
+            (( OPT_QUIET )) || statement=" and counting..."
+            echo "$project ${time}$statement"
         }
     done < <(db_sql "SELECT DISTINCT project FROM $DB_TABLE_NAME;")
 }
@@ -603,14 +604,14 @@ fi
 # main: #######################################################################
 # - Try to run functions in a sensible sequence. ##############################
 
-#no functional arguments were passed:
-for passed in "${passed[@]}";do
-    if (( passed ));then
+#if nothing functional was run, do the default `current`
+for pass in "${OPT_RUN[@]}";do
+    if (( pass ));then
+        something=1
         break;
     fi
 done
-(( passed )) || { current && die $?; }
-
+(( something )) || { current ; die $?; }
 
 #
 # Some sanity checking.
