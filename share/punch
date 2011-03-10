@@ -237,7 +237,7 @@ need_client() {
 }
 
 current() {
-    local q
+    local q verbage=''
 
     while read project;do
         q="
@@ -249,10 +249,10 @@ current() {
         ;"
         db_sql "$q" | {
             read $PUNCH_DELIM stat stamp
-            (( stat )) && continue
+            (( stat )) || continue
             (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon $stamp)
-            (( OPT_QUIET )) || statement=" and counting..."
-            echo "$project ${time}$statement"
+            (( OPT_QUIET )) || verbage=" and counting..."
+            printf "%s %s%s\n" "$project ${time}$verbage"
         }
     done < <(db_sql "SELECT DISTINCT project FROM $DB_TABLE_NAME;")
 }
