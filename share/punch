@@ -164,29 +164,10 @@ db_sql() {
         $PUNCH_CARD "${@}"
 }
 
-db_schema() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        (somehow) check \$CREATE_TABLE against sqlite3's '.schema' command
-    "
-    return 99
-}
-
 db_out_sanitize() {
     while read line;do
         [[ -n $line ]] && echo "$line"
     done
-}
-
-db_punch() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-      will INSERT into DB with notes, after taking care of logic:
-      - what is state of timecard? in or out?
-    "
-    return 99
 }
 
 create_db() {
