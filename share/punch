@@ -578,13 +578,7 @@ fi
 # - Try to run functions in a sensible sequence. ##############################
 
 #if nothing functional was run, do the default `current`
-for pass in "${OPT_RUN[@]}";do
-    if (( pass ));then
-        something=1
-        break;
-    fi
-done
-(( something )) || { current ; die $?; }
+(( $(IFS='+'; printf '%s' "${OPT_RUN[*]}") )) && { current ; die $?; }
 
 #
 # Some sanity checking.
