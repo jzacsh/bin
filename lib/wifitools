@@ -1,43 +1,53 @@
 #!/usr/bin/env bash
 
-echo 'not yet implemented. find out how to make funcs usable in sudo' >&2
-exit 1
-
 # tools for setting up wireless in archlinux
 eval $(grep WIRELESS_INTERFACE /etc/rc.conf)
 
 wfreset() {
-    if (( $UID ));then
-        echo 'error: $_ requires elevated priveleges.' >&2
-        return 1
-    fi
+#   if (( $UID ));then
+#       echo 'error: $_ requires elevated priveleges.' >&2
+#       return 1
+#   fi
     echo 'setting wireless config back to defaults...'
-    local confs=(freq rate)
-    for conf in ${confs[@]}; do
-        echo -n "... setting \`iwconfig $conf\` back to auto ... "
-        iwconfig $WIRELESS_INTERFACE $conf 'auto' && echo 'Done.' || echo 'Failed.'
+    declare -rA confs=(
+        [freq]='auto'
+        [rate]='auto'
+        [ap]='any'
+    )
+    local i=0 n=0 config
+    declare -a dots=(.)
+    for conf in "${!confs[@]}"; do
+        echo "... setting \`iwconfig $conf\` back to auto ... "
+        n=0
+        for setting in "${confs[@]}";do
+            if (( n == i ));then
+                config="$setting"
+                break;
+            fi
+            (( ++n ))
+        done
+        sudo iwconfig "$WIRELESS_INTERFACE" "$conf" "$config" && echo 'Done.' || echo 'Failed.'
+        (( ++i ))
     done
-    echo -n "... setting \`iwconfig ap\` back to any ... "
-    iwconfig $WIRELESS_INTERFACE ap 'any' && echo 'Done.' || echo 'Failed.'
 }
 
 wfls() {
-    if (( $UID ));then
-        echo 'error: $_ requires elevated priveleges.' >&2
-        return 1
-    fi
+#   if (( $UID ));then
+#       echo 'error: $_ requires elevated priveleges.' >&2
+#       return 1
+#   fi
 
     local fail=0
 
     if (( $# ));then
-        if [[ $1 != 'e' && $1 != 'p' ]];then
+        if [[ "$1" != e && "$1" != p ]];then
             fail=1
         fi
     fi
 
     if (( fail ));then
         echo "
-    usage [$0] [e | p]
+    usage [$FUNCNAME] [e | p]
         list broadcasted ESSIDs
         e  listing by encryption
         p  spill all available data to pager
@@ -46,70 +56,70 @@ wfls() {
     fi
 
     local ret=$?
-    if (( $ret ));then
+    if (( ret ));then
         echo 'failed to bring up your wireless device!' >&2
-        return $ret
+        return "$ret"
     else
         echo "printing available wifi networks:"
     fi
 
-    if [[ $1 = 'e' ]];then
+    if [[ "$1" = e ]];then
         #encryption table
         local cell=0
-        ifconfig wlan0 up
+        sudo ifconfig wlan0 up
         while read stuff; do
             if (( cell == 2 ));then
                 cell=0
                 echo #readability
             fi
-            echo $stuff | grep -i -e encryption -e essid
+            echo "$stuff" | grep -i -e encryption -e essid
             (( $? )) || (( ++cell ))
-        done < <(iwlist wlan0 scan)
+        done < <(sudo iwlist wlan0 scan)
     else
-        ifconfig wlan0 up
-        [[ $1 = 'p' ]] && local view="$PAGER" || local view='grep ESSID'
-        iwlist wlan0 scan | $view
+        sudo ifconfig wlan0 up
+        [[ "$1" = p ]] && local view="$PAGER" || local view='grep ESSID'
+        sudo iwlist wlan0 scan | "$view"
     fi
 }
 
 wfon() {
-    if (( $UID ));then
-        echo 'error: $_ requires elevated priveleges.' >&2
-        return 1
-    fi
+#   if (( $UID ));then
+#       echo 'error: $_ requires elevated priveleges.' >&2
+#       return 1
+#   fi
 
     (( $# )) || return 2
     echo "setting a wifi network... '$@'"
-    if [[ $1 = '-a' ]];then
+    if [[ "$1" = -a ]];then
         local attr='ap'
         shift
     else
         local attr='essid'
     fi
-    iwconfig wlan0 $attr "$@"
+    sudo iwconfig wlan0 "$attr" "$@"
 }
 
 wfnp() {
-    if (( $UID ));then
-        echo 'error: $_ requires elevated priveleges.' >&2
-        return 1
-    fi
+#   if (( $UID ));then
+#       echo 'error: $_ requires elevated priveleges.' >&2
+#       return 1
+#   fi
 
     echo "releasing ip..."
-    dhcpcd -k wlan0
+    sudo dhcpcd -k wlan0
 }
 
 wfip() {
-    if (( $UID ));then
-        echo 'error: $_ requires elevated priveleges.' >&2
-        return 1
-    fi
+#   if (( $UID ));then
+#       echo 'error: $_ requires elevated priveleges.' >&2
+#       return 1
+#   fi
 
-    if [[ $1 = 'f' ]]; then
+    if [[ "$1" = f ]]; then
         echo -en "\t"
         wfnp
     fi
     echo "requesting an IP from dhcpc server..."
-    dhcpcd wlan0
+    sudo dhcpcd wlan0
 }
 
