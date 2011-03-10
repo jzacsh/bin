@@ -256,23 +256,22 @@ need_client() {
 }
 
 current() {
-    #@TODO: must respect the $OPT_CLEAN, and not print PROJECT name
-    local q stamp status time
+    local q
 
     while read project;do
         q="
-            SELECT punch, status
+            SELECT status, punch
             FROM $DB_TABLE_NAME
             WHERE project='$project'
             ORDER BY punch ASC
             LIMIT 0,1
         ;"
-        read stamp status < <(db_sql "$q")
-      #@TODO: use subshell:
-      # db_sql "$q" | { read -d "$PUNCH_DELIM" -a fields
-        (( status )) || continue
-        (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon "$stamp")
-        echo "$project $time and counting... "
+        db_sql "$q" | {
+            read $PUNCH_DELIM stat stamp
+            (( stat )) || continue
+            (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon $stamp)
+            echo "$project $time and counting... "
+        }
     done < <(db_sql "SELECT DISTINCT project FROM $DB_TABLE_NAME;")
 }
 
@@ -603,6 +602,15 @@ fi
 
 # main: #######################################################################
 # - Try to run functions in a sensible sequence. ##############################
+
+#no functional arguments were passed:
+for passed in "${passed[@]}";do
+    if (( passed ));then
+        break;
+    fi
+done
+(( passed )) || { current && die $?; }
+
 
 #
 # Some sanity checking.
