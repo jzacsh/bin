@@ -15,6 +15,7 @@ _DELIM=' '
 
 PUNCH_CARD=${PUNCH_CARD:-$_CARD}
 PUNCH_DELIM=${PUNCH_DELIM:-$_DELIM}
+OPT_CLEAN=${PUNCH_CLEAN:-'0'}
 OPT_PROJECT=${PUNCH_CLIENT}
 
 #see /usr/include/sysexits.h
@@ -122,8 +123,9 @@ usage() {
     Called with no arguments ${_n^} prints your current time on the clock.
 
     ENVIRONMENT VARIABLES
-        PUNCH_CARD   - location of your punch-card database. Defaults to $_CARD.
-        PUNCH_DELIM  - field delimeter for data output. Defaults to '$_DELIM'.
+        PUNCH_CARD   - Location of your punch-card database. Defaults to $_CARD.
+        PUNCH_DELIM  - Field delimeter for data output. Defaults to '$_DELIM'.
+        PUNCH_CLEAN  - Set to '1' enables stamp output for times. See -s.
         PUNCH_CLIENT - Client/Project name to use. See -c." >&2
 
     (( $# )) && die ${@}
