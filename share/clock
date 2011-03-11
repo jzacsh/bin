@@ -5,19 +5,11 @@ m=$((10#$(date +%M)))
 s=$((10#$(date +%S)))
 analog=({00..59})
 
-S=$s
-
-#@TODO: remove this debug block:
-S=57
-m=58
-h=23
-#@TODO: fix borkensess
-
 while true; do
     #need one space to avoid your cursor.
-    printf ' %s\r' "${h}:${m}:${S}"
-    if (( $(( 10#$S )) == 59 ));then
-        S=${analog[0]}
+    printf ' %s\r' "${h}:${m}:${s}"
+    if (( $(( 10#$s )) == 59 ));then
+        s=${analog[0]}
         if (( $(( 10#$m )) == 59 ));then
             m=${analog[0]}
             if (( $(( 10#$h )) == 23 ));then
@@ -29,7 +21,7 @@ while true; do
             m=${analog[$(( $(( 10#$m )) + 1 ))]}
         fi
     else
-        S=${analog[$(( $(( 10#$S )) + 1 ))]}
+        s=${analog[$(( $(( 10#$s )) + 1 ))]}
     fi
     sleep 1s
 done
