@@ -266,7 +266,10 @@ current() {
         ;"
         db_sql "$q" | {
             read $PUNCH_DELIM stat stamp note
+            echo "(current) stamp: $stamp"
             (( stat )) || continue
+            #@TODO: make sure that time is rewritten to represent t a
+            # *difference* between _it_ and the current timestamp
             (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon $stamp)
             (( OPT_QUIET )) && verbage='' || verbage="${PUNCH_DELIM}${note}"
             printf "%s%s%s%s\n" \
@@ -282,6 +285,8 @@ delete() {
 }
 
 list() {
+    #@TODO: totally rewrite to output in twos - in/out should be combined to a
+    # single printed line of the _total_
     local i note project punch q="
         SELECT punch, project, note
         FROM $DB_TABLE_NAME
@@ -289,8 +294,9 @@ list() {
         ORDER BY punch DESC
     ;"
     while read punch project note;do
+        echo "(list) stamp: $punch"
         (( OPT_QUIET )) && note='' || note="${PUNCH_DELIM}${note}"
-        (( OPT_CLEAN )) && time="$punch" || time=$(date_fmt_colon "$punch")
+        (( OPT_CLEAN )) && time="$punch" || time=$(date_fmt_colon $punch)
         printf "%s%s%s%s\n" \
             "$project" "$PUNCH_DELIM" \
             "$time" "$note"
@@ -406,6 +412,9 @@ punch() {
 data_dump() {
     #@TODO: must respect the $OPT_CLEAN - use `date_fmt_colon`
     # will only (not) do so when not using a stupidly-slow wholy-bash function.
+
+    #@TODO: must rewrite to pass `time` through human-readable sqlite function
+    # if ! OPT_CLEAN
     local q="SELECT * FROM $DB_TABLE_NAME ORDER BY punch ASC;"
     db_sql "$q"
 }
