@@ -12,9 +12,12 @@ OPT_CLEAN=${PUNCH_CLEAN:-'0'}
 OPT_PROJECT=${PUNCH_CLIENT}
 
 #see /usr/include/sysexits.h
-E_ERROR=1  #general error
-E_USAGE=64 #command line usage error
-E_DATAF=65 #data format error
+E_ERROR=1   #general error
+E_DIRTY=3   #general error
+E_USAGE=64  #command line usage error
+E_DATAF=65  #data format error
+E_NPERM=77  #configuration error
+E_CONFG=78  #configuration error
 
 # early fails: ################################################################
 #make sure sqlite3 is available.
@@ -64,7 +67,7 @@ error() {
 }
 
 die() {
-    #@TODO: make a call to same ROLLBACK func. used by TRAP
+    db_sql "ROLLBACK;"
     exit ${1:-'0'}
 }
 
@@ -179,6 +182,7 @@ db_sql() {
     sqlite3 $opts \
         -separator "$PUNCH_DELIM" \
         $PUNCH_CARD "${@}"
+    (( $? )) && db_sql "ROLLBACK;"
 }
 
 db_out_sanitize() {
@@ -188,13 +192,13 @@ db_out_sanitize() {
 }
 
 create_db() {
-    (( OPT_QUIET )) && return $E_DATAF
+    (( OPT_QUIET )) && return $E_CONFG
     local initialize
     echo -en "Would you like to initialize a punch-card, here:
 \t$PUNCH_CARD ?"
     local prompt=" [Y\n]  "
     read -p $prompt initialize
-    [[ -z $initialize || ${initialize,,} = y ]] || return $E_DATAF
+    [[ -z $initialize || ${initialize,,} = y ]] || return $E_CONFG
     db_sql "$DB_CREATE_TABLE"
 }
 
@@ -214,7 +218,7 @@ init_storage() {
         #punch card looks like an sqlite file.
         if [[ ! -w $PUNCH_CARD ]];then
             error "No write-access to punch-card."
-            die $E_DATAF
+            die $E_NPERM
         fi
     else
         #punch card does not look like an sqlite file.
@@ -223,7 +227,7 @@ init_storage() {
             if (( 10#$(stat -L --printf='%s' $PUNCH_CARD 2>/dev/null) ));then
                 #punch card has something else in it.
                 error "Punch-card does not seem to be an sqlite3 database:\n\t$(file -L $PUNCH_CARD)"
-                die $E_DATAF
+                die $E_CONFG
             else
                 #punch card is an empty file. create tables?
                 error "Punch-card is not yet formatted."
@@ -531,7 +535,7 @@ spent() {
 }
 
 # parse args: #################################################################
-#@TODO: create a TRAP that will rollback transactions, `reset`
+trap die $E_DIRTY SIGINT
 if (( $# ));then
 
     #build an array of possible options, all set to false
