@@ -1,15 +1,8 @@
 #!/bin/bash
  #@TODO: use this! #!/usr/bin/env bash
 
-if ! type sqlite3 &>/dev/null;then
-    echo "$(basename $0) relies on sqlite3, which was not found on this system." >&2
-    exit 1
-fi
+# early conf ##################################################################
 
- #@TODO: change all user-facing wording to use "punch-card" as verbage instead
- # of "time-card"
-
-###############################################################################
 _CARD=~/.config/punchcard
 _DELIM=' '
 
@@ -23,8 +16,30 @@ E_ERROR=1  #general error
 E_USAGE=64 #command line usage error
 E_DATAF=65 #data format error
 
-# getops configuration: #######################################################
+# early fails: ################################################################
+#make sure sqlite3 is available.
+if ! type sqlite3 &>/dev/null;then
+    echo "$(basename $0) relies on sqlite3, which was not found on this system." >&2
+    exit "$E_ERROR"
+fi
 
+#make sure bash version 4 is being used.
+bashv=$(bash --version | {
+        read; printf '%s' ${REPLY/*version /} | {
+            IFS='.'
+            read num _
+            printf "%s" "$num"
+        }
+    })
+if (( bashv != 4 ));then
+    printf '%s relies heavily on bash version 4 features.
+    Your bash version looks to be %s.' $(basename $0) "$bashv" >&2
+    exit "$E_ERROR"
+else
+    unset num _ bashv
+fi
+
+# getops configuration: #######################################################
 declare -rA OPTS=(
     [c:]='client  Specify the client/project being referenced, "__".'
     [C]='List all clients/projects on time-card. Exits immediately.'
@@ -644,3 +659,6 @@ fi
 if (( OPT_RUN[t] ));then
     spent
 fi
+
+#@TODO: change all user-facing wording to use "punch-card" as verbage instead
+# of "time-card"
