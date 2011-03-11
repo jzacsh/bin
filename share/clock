@@ -6,21 +6,24 @@ s=$((10#$(date +%S)))
 analog=({00..59})
 
 S=$s
+
+#@TODO: remove this debug block:
+S=57
+m=58
+h=23
+#@TODO: fix borkensess
+
 while true; do
-#@TODO: whaa?
-#   /home/jzacsh/bin/share/clock: line 21: 08: value too great for base (error token is "08")
-#   if (( S > 59 ));then
-    if (( $(( 10#$S )) > 59 ));then
-        S=${analog[0]}
-        (( ++m ))
-        if (( m > 59 ));then
-            m=${analog[0]}
-            (( ++h ))
-            (( h > 24 )) && h=${analog[0]}
-        fi
-    fi
     #need one space to avoid your cursor.
     printf ' %s\r' "${h}:${m}:${S}"
-    S=${analog[++S]}
+    if (( $(( 10#$S )) == 59 ));then
+        m=${analog[$(( $(( 10#$m )) + 1 ))]}
+        echo "m: (new) $m" >&2 #@TODO: remove this debug line
+        if (( $(( 10#$m )) == 59 ));then
+            h=${analog[$(( $(( 10#$h )) + 1 ))]}
+            (( $(( 10#$h )) > 24 )) && h=${analog[0]}
+        fi
+    fi
+    S=${analog[$(( $(( 10#$S )) + 1 ))]}
     sleep 1s
 done
