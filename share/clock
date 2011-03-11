@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#get the current time
 h=$((10#$(date +%H)))
 m=$((10#$(date +%M)))
 s=$((10#$(date +%S)))
