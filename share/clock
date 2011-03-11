@@ -17,13 +17,19 @@ while true; do
     #need one space to avoid your cursor.
     printf ' %s\r' "${h}:${m}:${S}"
     if (( $(( 10#$S )) == 59 ));then
-        m=${analog[$(( $(( 10#$m )) + 1 ))]}
-        echo "m: (new) $m" >&2 #@TODO: remove this debug line
+        S=${analog[0]}
         if (( $(( 10#$m )) == 59 ));then
-            h=${analog[$(( $(( 10#$h )) + 1 ))]}
-            (( $(( 10#$h )) > 24 )) && h=${analog[0]}
+            m=${analog[0]}
+            if (( $(( 10#$h )) == 23 ));then
+                h=${analog[0]}
+            else
+                h=${analog[$(( $(( 10#$h )) + 1 ))]}
+            fi
+        else
+            m=${analog[$(( $(( 10#$m )) + 1 ))]}
         fi
+    else
+        S=${analog[$(( $(( 10#$S )) + 1 ))]}
     fi
-    S=${analog[$(( $(( 10#$S )) + 1 ))]}
     sleep 1s
 done
