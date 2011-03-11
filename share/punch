@@ -452,7 +452,11 @@ projects() {
 }
 
 date_fmt_colon() {
-    #@TODO: this is broked!
+    # @NOTE: before assuming this function is broken!
+    # Take a look at the function tha tpasses numbers in here.. is that
+    # funciton passing raw epoch times? if so, you need to _instead_ be passing
+    # in the result of this arithmetic: `$(date +%s) - raw_epoch_output` --
+    # otherwise, you'll get back results like "41 years, etc. etc".
 
     [[ "$1" =~ $NUMERIC_EXPR ]] || return 1
     declare -r stamp=$(( 10#$1 ))
@@ -472,9 +476,6 @@ date_fmt_colon() {
         [m]=60
     )
 
-    #@TODO: this won't work unless i cummulatively count the seconds left that
-    # haven't been chopped. i don't want to. this function shouldn't exit.
-    # where the hell is my wheel!?
     digital[y]=$(( stamp / seconds[y] ))
     digital[w]=$(( $(( stamp - $(( digital[y] * seconds[y] )) )) / seconds[w] ))
     digital[d]=$(( $(( stamp - $(( digital[w] * seconds[w] )) )) / seconds[d] ))
