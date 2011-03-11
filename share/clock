@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+h=$((10#$(date +%H)))
+m=$((10#$(date +%M)))
+s=$((10#$(date +%S)))
+analog=({00..59})
+
+S=$s
+while true; do
+    if (( S > 59 ));then
+        S=${analog[0]}
+        (( ++m ))
+        if (( m > 59 ));then
+            m=${analog[0]}
+            (( ++h ))
+            (( h > 24 )) && h=${analog[0]}
+        fi
+    fi
+    #need one space to avoid your cursor.
+    printf ' %s\r' "${h}:${m}:${S}"
+    S=${analog[++S]}
+    sleep 1s
+done
