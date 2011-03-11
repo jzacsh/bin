@@ -266,12 +266,10 @@ current() {
         ;"
         db_sql "$q" | {
             read $PUNCH_DELIM stat stamp note
-            echo "(current) stamp: $stamp"
             (( stat )) || continue
-            #@TODO: make sure that time is rewritten to represent t a
-            # *difference* between _it_ and the current timestamp
+            stamp=$(( 10#$(date +%s) - stamp ))
             (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon $stamp)
-            (( OPT_QUIET )) && verbage='' || verbage="${PUNCH_DELIM}${note}"
+            (( OPT_QUIET )) && verbage='' || verbage="${PUNCH_DELIM}note: '${note}'"
             printf "%s%s%s%s\n" \
                 "$project" "$PUNCH_DELIM" "$time" "$verbage"
         }
