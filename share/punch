@@ -261,7 +261,7 @@ current() {
             SELECT status, punch, note
             FROM $DB_TABLE_NAME
             WHERE project='$project'
-            ORDER BY punch ASC
+            ORDER BY punch DESC
             LIMIT 0,1
         ;"
         db_sql "$q" | {
