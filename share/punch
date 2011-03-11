@@ -67,7 +67,6 @@ error() {
 }
 
 die() {
-    db_sql "ROLLBACK;"
     exit ${1:-'0'}
 }
 
@@ -182,7 +181,6 @@ db_sql() {
     sqlite3 $opts \
         -separator "$PUNCH_DELIM" \
         $PUNCH_CARD "${@}"
-    (( $? )) && db_sql "ROLLBACK;"
 }
 
 db_out_sanitize() {
@@ -534,8 +532,8 @@ spent() {
     (( OPT_CLEAN )) && echo "$t" || date_fmt_colon "$t"
 }
 
-# parse args: #################################################################
 trap die $E_DIRTY SIGINT
+# parse args: #################################################################
 if (( $# ));then
 
     #build an array of possible options, all set to false
