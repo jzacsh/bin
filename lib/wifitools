@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # tools for setting up wireless without a desktop env.
-wfiface() { export $(eval $(grep WIRELESS_INTERFACE /etc/rc.conf)); }
+wfiface() { export $(grep WIRELESS_INTERFACE /etc/rc.conf); }
 
 wfreset() {
     (( UID )) && sudo echo -n > /dev/null
