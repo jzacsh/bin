@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 #get the current time
-h=$((10#$(date +%H)))
-m=$((10#$(date +%M)))
-s=$((10#$(date +%S)))
 analog=({00..59})
+h=${analog[ 10#$(date +%H) ]}
+m=${analog[ 10#$(date +%M) ]}
+s=${analog[ 10#$(date +%S) ]}
 
 while true; do
     #need one space to avoid your cursor.
