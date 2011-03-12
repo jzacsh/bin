@@ -199,15 +199,6 @@ create_db() {
     db_sql "$DB_CREATE_TABLE"
 }
 
-reset() {
-    #@TODO:
-    error "$FUNCNAME() not yet implemented
-    will:
-        create a ROLLBACK call for call by TRAP and DIE.
-    "
-    return 99
-}
-
 # punchcard tools: ############################################################
 
 init_storage() {
