@@ -85,7 +85,6 @@ help() {
     i=0
     for opt in "${OPTS[@]}"; do
         local keyword=${opt%%  *}
-        #@TODO: get the first keyword in output to capitalize.
         keyword=${keyword^^}
         local explain=${opt/'__'/$keyword}
         HELP[$i]="-${HELP[$i]}\t${explain/  / - }"
