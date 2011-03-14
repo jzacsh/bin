@@ -265,7 +265,15 @@ current() {
             (( stat )) || continue
             stamp=$(( 10#$(date +%s) - stamp ))
             (( OPT_CLEAN )) && time=$stamp || time=$(date_fmt_colon $stamp)
-            (( OPT_QUIET )) && verbage='' || verbage="${PUNCH_DELIM}note: '${note}'"
+            if (( OPT_QUIET ));then
+                verbage=''
+            else
+                if [[ -n "$note" ]];then
+                    verbage="${PUNCH_DELIM}note: '${note}'"
+                else
+                    verbage=''
+                fi
+            fi
             printf "%s%s%s%s\n" \
                 "$project" "$PUNCH_DELIM" "$time" "$verbage"
         }
