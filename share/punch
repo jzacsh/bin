@@ -408,13 +408,7 @@ punch() {
 }
 
 data_dump() {
-    #@TODO: must respect the $OPT_CLEAN - use `date_fmt_colon`
-    # will only (not) do so when not using a stupidly-slow wholy-bash function.
-
-    #@TODO: must rewrite to pass `time` through human-readable sqlite function
-    # if ! OPT_CLEAN
-    local q="SELECT * FROM $DB_TABLE_NAME ORDER BY punch ASC;"
-    db_sql "$q"
+    db_sql "SELECT * FROM $DB_TABLE_NAME ORDER BY punch ASC;"
 }
 
 project_status() {
