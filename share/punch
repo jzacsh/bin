@@ -1,9 +1,10 @@
 #!/bin/bash
  #@TODO: use this! #!/usr/bin/env bash
 
- #@TODO: make this pluggable via a web api. think sockets, /proc/tcp and
- # single "cloud" sqlite3 file, to access the same data from each machine i use
- # punch on.
+ #@TODO:
+ # add a "update"/"note" function the update the note for a current punch-in.
+ # this should take into consideration multiple current punch-in's and prompt
+ # if necessary.
 
 # early conf ##################################################################
 
