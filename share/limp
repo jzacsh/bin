@@ -1,18 +1,23 @@
 #!/usr/bin/env python
-import sys, urllib, getpass
+import sys, os, urllib, getpass, datetime
 
-#global conf:
 class ImporterAccounts:
     """Generic base-class to handle imports to ledger's format from various popular banks."""
     def __init__(self):
         self.accts=('Checking' 'Saving')
     def prompt_creds(self):
         """Get user's credentials for a given bank login."""
+    def download_export(self, type='csv'):
+        """Download the latest bank history exported as file TYPE"""
 
 class ImporterTdbank(ImporterAccounts):
     """Handle import of various TDBank banking accounts."""
     def __init__(self, usr=getpass.getuser(), pas=None):
         self.creds = {'usr': usr}
+        strtime = datetime.datetime.utcnow()
+        strtime = datetime.datetime.isoformat(strtime)
+        strtime = strtime.replace('T', '_').replace(':', '').replace('.', '-')
+        self.save_as = os.getcwd() + '_' + strtime
         self.bank = {
             'name': 'TD Bank',
             'url': 'https://onlinebanking.tdbank.com/',
@@ -21,11 +26,21 @@ class ImporterTdbank(ImporterAccounts):
         self.creds['pas'] = None #learn python's getopts and make this possible
 
     def prompt_creds(self):
-        print 'Please enter your credentails (press ENTER for [default] values)'
-        self.creds['usr'] = raw_input('username ["%s"]: ' % (self.creds['usr']))
-        self.creds['pas'] = getpass.getpass('password: ')
+        print 'Enter your credentails (ENTER for [default] values).'
+        usr = raw_input('username ["%s"]: ' % (self.creds['usr']))
+        if usr: self.creds['usr'] = usr
+
+        while True:
+            self.creds['pas'] = getpass.getpass('password: ')
+            if self.creds['pas']:
+                break
+            else:
+                sys.stderr.write("Error: could not read password.")
+
+        #@TODO: more concise approach to this?
         if not self.creds['usr']: return False
         if not self.creds['pas']: return False
+
         return True
 
     #just fiddling around:
@@ -34,11 +49,20 @@ class ImporterTdbank(ImporterAccounts):
         s.close()
         return s.read()
 
+    def download_export(self, output=None, type='csv'):
+        """Download the latest TDBank history exported as file TYPE"""
+        if not self.prompt_creds():
+            sys.stderr.write("failll\n")
+            sys.exit(1)
+        if output:
+            self.save_as = output
+        else:
+            save_as = raw_input("path of download? ['%s']: " % (self.save_as))
+            if save_as: self.save_as = save_as
+
+
 if __name__ == '__main__':
     tdbank = ImporterTdbank()
+    tdbank.download_export()
+
     print 'Getting exports for "%s"...' % (tdbank.bank['name'])
-    if (tdbank.prompt_creds()):
-        sys.stdout.write('yayy\n')
-    else:
-        sys.stderr.write("failll\n")
-        sys.exit(3)
