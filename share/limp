@@ -4,25 +4,30 @@ import sys, os, urllib, getpass, datetime
 class ImporterAccounts:
     """Generic base-class to handle imports to ledger's format from various popular banks."""
     def __init__(self):
-        self.accts=('Checking', 'Saving')
+        self.accts = ('Checking', 'Saving')
+        self.open_socket = None
     def prompt_creds(self):
         """Get user's credentials for a given bank login."""
-    def download_export(self, type='csv'):
-        """Download the latest bank history exported as file TYPE"""
+    def download_export(self):
+        """Download the latest account history export."""
 
 class ImporterTdbank(ImporterAccounts):
     """Handle import of various TDBank banking accounts."""
     def __init__(self, usr=getpass.getuser(), pas=None):
+        ImporterAccounts.__init__(self) #@TODO: how do i do this properly??
         self.creds = {'usr': usr}
-        stamp = datetime.datetime.utcnow()
-        stamp = datetime.datetime.isoformat(stamp)
-        stamp = stamp.replace('T', '_').replace(':', '').replace('.', '-')
-        self.save_as = os.getcwd() + '_' + stamp
+        _stamp = datetime.datetime.utcnow()
+        _stamp = datetime.datetime.isoformat(_stamp)
+        _stamp = _stamp.replace('T', '_').replace(':', '').replace('.', '-')
+        self.export = {
+                'save_as': os.getcwd() + '_' + _stamp,
+                'format': None,
+                }
         self.bank = {
             'name': 'TD Bank',
             'url': 'https://onlinebanking.tdbank.com/',
             #make this whole structure come in via conf files.
-        }
+            }
         self.creds['pas'] = None #learn python's getopts and make this possible
 
     def prompt_creds(self):
@@ -45,22 +50,101 @@ class ImporterTdbank(ImporterAccounts):
 
     #just fiddling around:
     def _http_post_request(self):
-        s = urllib2.urlopen(self.bank['url'])
+        s = urllib.urlopen(self.bank['url'])
         s.close()
         return s.read()
 
-    def download_export(self, output=None, type='csv'):
+    def prep_download(self, output=None, download='csv', acct=None):
         """Download the latest TDBank history exported as file TYPE"""
         print "Preparing to download history export."
+
+        #get username/password
         if not self.prompt_creds():
             sys.stderr.write("Error: could not interpret username/password.\n")
-            sys.exit(1)
-        if output:
-            self.save_as = output
-        else:
-            save_as = raw_input("Path of download export file?\n\t['%s']: " % (self.save_as))
-            if save_as: self.save_as = save_as
+            return False
 
+        #get account to download for
+        if acct:
+            self.export['acct'] = acct
+        else:
+            print "Account type to download history for."
+            for i, _type in enumerate(self.accts): print "\t[%s]: %s" % (i+1, self.accts[i])
+            while True:
+                try:
+                    selection = raw_input("\tacct: ")
+                    self.export['acct'] = self.accts[int(selection) - 1]
+                    break
+                except IndexError:
+                    sys.stderr.write("\tError: %s is not in the menu.\n"
+                            % (selection))
+                except ValueError:
+                    sys.stderr.write("\tError: please choose a number in the menu (1-%s).\n"
+                            % (len(self.accts)))
+
+        #file format to download
+        if download:
+            self.export['format'] = download
+        else:
+            while True:
+                download = raw_input("Preferred file-type extension of export from %s? ['%s']: "
+                        % (self.bank['name'], self.export['format']))
+                if download:
+                    self.export['format'] = download
+                    break
+
+        #"Save As.." path
+        if output:
+            self.export['save_as'] = output
+        else:
+            save_as = raw_input("Path of download export file?\n\t['%s']: " %
+                    (self.export['save_as']))
+            if save_as: self.export['save_as'] = save_as
+
+    def get_current_data(self):
+        #@TODO: connect and scrape away
+        return {
+                'from': "", #@TODO: ?needed?
+                'to': "", #@TODO: ?needed?
+                'AccountNumber': None, #@TODO: scrape from page
+                'BankID': None, #@TODO: scrape from page
+                'fullAcctType': "Deposit", #@TODO: what???
+                'acctType': self.export['acct'],
+                'totalBal': "$" + None, #@TODO: scrape from page
+                'acctLedgerBal': "$" + None, #@TODO: scrape from page
+                'viewPS': "none",
+                'acctDispType': "D",
+                'acctHost2': self.export['acct'].uppercase,
+                'acctHostAcct1':  None, #@TODO: scrape from page
+                'acctHostType': "IM",
+                'selSearch': "all",
+                }
+
+    def download_export(self):
+        if not self.prep_download(download=None):
+            sys.stderr.write("Error: could not prepare for download.\n")
+            sys.exit(1)
+
+        self.current = self.get_current_data()
+
+        data = {
+                'format': self.export['format'],
+                'from': "",
+                'to': "",
+                'AccountNumber': self.current['accountnumber'],
+                'BankID': self.current['bankid'],
+                'fullAcctType': "Deposit",
+                'acctType': "Checking",
+                'totalBal': "$" + self.current['totalbal'],
+                'acctLedgerBal': "$" + self.current['acctledgerblance'],
+                'viewPS': "none",
+                'acctDispType': "D",
+                'acctHost2': "CHECKING",
+                'acctHostAcct1': self.current['accthostacct1'],
+                'acctHostType': "IM",
+                'selSearch': "all",
+                }
+        data = urllib.urlencode(data)
+        return
 
 if __name__ == '__main__':
     tdbank = ImporterTdbank()
