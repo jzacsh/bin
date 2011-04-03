@@ -4,7 +4,7 @@ import sys, os, urllib, getpass, datetime
 class ImporterAccounts:
     """Generic base-class to handle imports to ledger's format from various popular banks."""
     def __init__(self):
-        self.accts=('Checking' 'Saving')
+        self.accts=('Checking', 'Saving')
     def prompt_creds(self):
         """Get user's credentials for a given bank login."""
     def download_export(self, type='csv'):
