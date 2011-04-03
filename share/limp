@@ -24,6 +24,9 @@ class ImporterTdbank(ImporterAccounts):
         print 'Please enter your credentails (press ENTER for [default] values)'
         self.creds['usr'] = raw_input('username ["%s"]: ' % (self.creds['usr']))
         self.creds['pas'] = getpass.getpass('password: ')
+        if not self.creds['usr']: return False
+        if not self.creds['pas']: return False
+        return True
 
     #just fiddling around:
     def _http_post_request(self):
