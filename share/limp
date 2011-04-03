@@ -25,11 +25,11 @@ class ImporterTdbank(ImporterAccounts):
         self.creds['usr'] = raw_input('username ["%s"]: ' % (self.creds['usr']))
         self.creds['pas'] = getpass.getpass('password: ')
 
-    def http_post_request(self):
+    #just fiddling around:
+    def _http_post_request(self):
         s = urllib2.urlopen(self.bank['url'])
-        html = s.read()
         s.close()
-        print html
+        return s.read()
 
 if __name__ == '__main__':
     tdbank = ImporterTdbank()
