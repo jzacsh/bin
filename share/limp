@@ -14,10 +14,10 @@ class ImporterTdbank(ImporterAccounts):
     """Handle import of various TDBank banking accounts."""
     def __init__(self, usr=getpass.getuser(), pas=None):
         self.creds = {'usr': usr}
-        strtime = datetime.datetime.utcnow()
-        strtime = datetime.datetime.isoformat(strtime)
-        strtime = strtime.replace('T', '_').replace(':', '').replace('.', '-')
-        self.save_as = os.getcwd() + '_' + strtime
+        stamp = datetime.datetime.utcnow()
+        stamp = datetime.datetime.isoformat(stamp)
+        stamp = stamp.replace('T', '_').replace(':', '').replace('.', '-')
+        self.save_as = os.getcwd() + '_' + stamp
         self.bank = {
             'name': 'TD Bank',
             'url': 'https://onlinebanking.tdbank.com/',
@@ -27,11 +27,11 @@ class ImporterTdbank(ImporterAccounts):
 
     def prompt_creds(self):
         print 'Enter your credentails (ENTER for [default] values).'
-        usr = raw_input('username ["%s"]: ' % (self.creds['usr']))
+        usr = raw_input('\tusername ["%s"]: ' % (self.creds['usr']))
         if usr: self.creds['usr'] = usr
 
         while True:
-            self.creds['pas'] = getpass.getpass('password: ')
+            self.creds['pas'] = getpass.getpass('\tpassword: ')
             if self.creds['pas']:
                 break
             else:
@@ -51,13 +51,14 @@ class ImporterTdbank(ImporterAccounts):
 
     def download_export(self, output=None, type='csv'):
         """Download the latest TDBank history exported as file TYPE"""
+        print "Preparing to download history export."
         if not self.prompt_creds():
             sys.stderr.write("failll\n")
             sys.exit(1)
         if output:
             self.save_as = output
         else:
-            save_as = raw_input("path of download? ['%s']: " % (self.save_as))
+            save_as = raw_input("Path of download export file?\n\t['%s']: " % (self.save_as))
             if save_as: self.save_as = save_as
 
 
