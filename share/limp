@@ -9,19 +9,19 @@ class ImporterAccounts:
 
 class ImporterTdbank(ImporterAccounts):
     """Handle import of various TDBank banking accounts."""
-    def __init__(self, user=getpass.getuser(), passw=None):
-        self.creds = {'user': user}
+    def __init__(self, usr=getpass.getuser(), pas=None):
+        self.creds = {'usr': usr}
         self.bank = {
             'name': 'TD Bank',
             'url': 'https://onlinebanking.tdbank.com/',
             #make this whole structure come in via conf files.
         }
-        self.pass = None #learn python's getopts and make this possible
+        self.creds['pas'] = None #learn python's getopts and make this possible
 
     def prompt_creds(self):
         print 'Please enter your credentails (press ENTER for [default] values)'
-        self.creds['user'] = raw_input('username ["%s"]: ' % (self.creds['user']))
-        self.creds['pass'] = getpass.getpass('password: ')
+        self.creds['usr'] = raw_input('username ["%s"]: ' % (self.creds['usr']))
+        self.creds['pas'] = getpass.getpass('password: ')
 
     def http_post_request(self):
         s = urllib2.urlopen(self.bank['url'])
