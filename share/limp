@@ -1,11 +1,13 @@
 #!/usr/bin/env python
-import urllib2
-import getpass
+import sys, urllib, getpass
 
 #global conf:
 class ImporterAccounts:
+    """Generic base-class to handle imports to ledger's format from various popular banks."""
     def __init__(self):
         self.accts=('Checking' 'Saving')
+    def prompt_creds(self):
+        """Get user's credentials for a given bank login."""
 
 class ImporterTdbank(ImporterAccounts):
     """Handle import of various TDBank banking accounts."""
