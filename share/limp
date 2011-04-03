@@ -15,14 +15,7 @@ class ImporterTdbank(ImporterAccounts):
     """Handle import of various TDBank banking accounts."""
     def __init__(self, usr=getpass.getuser(), pas=None):
         ImporterAccounts.__init__(self) #@TODO: how do i do this properly??
-        self.creds = {'usr': usr}
-        _stamp = datetime.datetime.utcnow()
-        _stamp = datetime.datetime.isoformat(_stamp)
-        _stamp = _stamp.replace('T', '_').replace(':', '').replace('.', '-')
-        self.export = {
-                'save_as': os.getcwd() + '_' + _stamp,
-                'format': None,
-                }
+        self.creds = {'usr': usr, 'pas': pas}
         self.bank = {
             #make this whole structure come in via conf files.
             'name': 'TD Bank',
@@ -32,7 +25,14 @@ class ImporterTdbank(ImporterAccounts):
                 'export': 'https://onlinebanking.tdbank.com/qif.asp',
                 },
             }
-        self.creds['pas'] = None #learn python's getopts and make this possible
+        _stamp = datetime.datetime.utcnow()
+        _stamp = datetime.datetime.isoformat(_stamp)
+        _stamp = _stamp.replace('T', '_').replace(':', '').replace('.', '-')
+        _prefix = self.bank['name'].lower().strip().replace(' ', '-')
+        self.export = {
+                'save_as': os.getcwd() + '/' + _prefix + '_' + _stamp,
+                'format': None,
+                }
 
     def prompt_creds(self):
         print 'Enter your credentails (ENTER for [default] values).'
@@ -84,6 +84,7 @@ class ImporterTdbank(ImporterAccounts):
                 except ValueError:
                     sys.stderr.write("\tError: please choose a number in the menu (1-%s).\n"
                             % (len(self.accts)))
+        print "::Will download history for: '%s' account." % (self.export['acct'])
 
         #file format to download
         if download:
@@ -95,6 +96,7 @@ class ImporterTdbank(ImporterAccounts):
                 if download:
                     self.export['format'] = download
                     break
+        print "::Format set to: %s" % (self.export['format'])
 
         #"Save As.." path
         if output:
@@ -103,6 +105,9 @@ class ImporterTdbank(ImporterAccounts):
             save_as = raw_input("Path of download export file?\n\t['%s']: " %
                     (self.export['save_as']))
             if save_as: self.export['save_as'] = save_as
+        print "::Download will be: %s" % (self.export['save_as'])
+
+        return True
 
     def get_current_data(self):
         #@TODO: connect and scrape away
@@ -125,7 +130,7 @@ class ImporterTdbank(ImporterAccounts):
                 }
 
     def download_export(self):
-        if not self.prep_download(download=None):
+        if not self.prep_download():
             sys.stderr.write("Error: could not prepare for download.\n")
             sys.exit(1)
 
@@ -143,7 +148,7 @@ class ImporterTdbank(ImporterAccounts):
                 'acctLedgerBal': "$" + self.current['acctLedgerBal'],
                 'viewPS': "none",
                 'acctDispType': "D",
-                'acctHost2': self.export['acct'].uppercase,
+                'acctHost2': self.export['acct'].upper(),
                 'acctHostAcct1': self.current['acctHostAcct1'],
                 'acctHostType': "IM",
                 'selSearch': "all",
