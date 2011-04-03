@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+import urllib2
+import getpass
+
+#global conf:
+class ImporterAccounts:
+    def __init__(self):
+        self.accts=('Checking' 'Saving')
+
+class ImporterTdbank(ImporterAccounts):
+    """Handle import of various TDBank banking accounts."""
+    def __init__(self, user=getpass.getuser(), passw=None):
+        self.creds = {'user': user}
+        self.bank = {
+            'name': 'TD Bank',
+            'url': 'https://onlinebanking.tdbank.com/',
+            #make this whole structure come in via conf files.
+        }
+        self.pass = None #learn python's getopts and make this possible
+
+    def prompt_creds(self):
+        print 'Please enter your credentails (press ENTER for [default] values)'
+        self.creds['user'] = raw_input('username ["%s"]: ' % (self.creds['user']))
+        self.creds['pass'] = getpass.getpass('password: ')
+
+    def http_post_request(self):
+        s = urllib2.urlopen(self.bank['url'])
+        html = s.read()
+        s.close()
+        print html
+
+if __name__ == '__main__':
+    tdbank = ImporterTdbank()
+    print 'Getting exports for "%s"...' % (tdbank.bank['name'])
