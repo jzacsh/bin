@@ -53,7 +53,7 @@ class ImporterTdbank(ImporterAccounts):
         """Download the latest TDBank history exported as file TYPE"""
         print "Preparing to download history export."
         if not self.prompt_creds():
-            sys.stderr.write("failll\n")
+            sys.stderr.write("Error: could not interpret username/password.\n")
             sys.exit(1)
         if output:
             self.save_as = output
