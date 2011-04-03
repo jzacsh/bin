@@ -37,3 +37,8 @@ class ImporterTdbank(ImporterAccounts):
 if __name__ == '__main__':
     tdbank = ImporterTdbank()
     print 'Getting exports for "%s"...' % (tdbank.bank['name'])
+    if (tdbank.prompt_creds()):
+        sys.stdout.write('yayy\n')
+    else:
+        sys.stderr.write("failll\n")
+        sys.exit(3)
