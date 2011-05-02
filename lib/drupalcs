@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# original pre-commit hook by http://github.com/ericduran
+
+# Filter by all files that contain PHP.
+if [[ ! $(type phpcs) ]];then
+  echo "warning: it seems phpcs is not installed" >&2
+  exit 1
+fi
+
+for PHPFILE in $(git status --porcelain | grep 'M ' | awk -F'^M  ' '{print $2}' | grep -E '(php|inc|module|tpl.php|class)$')
+do
+
+  # fails.
+  ERRORS=$(phpcs --standard=drupalcs $PHPFILE)
+  if (( $? ));then
+    echo "Commit aborted. Please fix your coding style errors first." >&2
+    echo "$ERRORS" >&2
+    exit 1
+  fi
+done
