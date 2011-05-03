@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# easy "project" searching
+#
+# easy "project" searching; wrapping `grep` with my PROJECT_BASE vars.
 
-source libbzsh
+source libbzsh #@TODO: remove this crap from all scripts!
 
 OPT_DB=0
 OPT_VB=0
@@ -38,7 +39,7 @@ fi
 # if [[ ! $(declare -p CB &>/dev/null) ]] || [[ ! $(declare -p PROJECT_BASE &>/dev/null) ]];then
 
 # for now, PROJECT_BASE is a safe bet:
-if [[ ! $(declare -p PROJECT_BASE &>/dev/null) ]];then
+if [[ ! $(declare -p PROJECT_BASE) ]];then
     dbg 'found one of your env. vars'
     if [[ $1 == "--massive" ]];then
         dbg 'setting "massive" search param'
