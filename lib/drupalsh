@@ -2,7 +2,43 @@
 
 #
 # functions and helpers made specifically for drupal development
+# @TODO: update this one last time with the latest from ~/.host/host.cnyitjza
+# @TODO: cannot call these as stand-alone (PITA). Turn these into scripts.
 #
+
+#@TODO: abstract this out
+base() {
+    #@TODO: look at the TODO in PROJECT_BASE declaration -- PROJECT_BASE needs
+    # to be dynamic, because of utilities like this function.
+    local repo=$PROJECT_BASE
+    if [[ $1 = 'edge' ]];then
+        repo=$PROJECT_EDGE
+        shift
+    fi
+    cd $repo/${@} || cd $repo;
+}
+
+
+#quick launch for root mysql innotop
+inno() {
+    if [[ ! -r ~/.netrc ]];then
+        printf "error: ~/.netrc could not be found.\n"
+        return 1
+    elif [[ ! $(type innotop) ]];then
+        printf 'error: I am a wrapper around `innotop`, which was not found.\n'
+        return 1
+    fi
+
+    local creds=$(sed  -n '/mysql/ { n;N;N;p }' ~/.netrc)
+
+    echo "debug: $creds"
+
+    innotop \
+        --user=$(printf "${creds/*machine /}" | head -n 1) \
+        --password=$(printf "${creds/*password /}" | head -n 1) \
+        --host=$(printf "${creds/*password /}" | head -n 1)
+}
+
 
 #quick launch for http://dgo.to/, incase the URI isn't easy enough
 dgo() {
@@ -18,11 +54,13 @@ dgo() {
   $BROWSER "http://dgo.to/${key}${search}"
 }
 
+#@TODO: make this a flag for `themer`:
+alias themer?='drush pm-list | grep -i "devel_themer"'
 #toggle `devel_themer` module on and off
-alias themer?='drush pm-list | grep -i "devel_themer"' #check
 themer() {
-  local nm='devel_themer'
-  [[ $(drush pm-list | grep ${nm} | grep 'Enabled') ]] && drush -y dis ${nm} || drush -y en ${nm}
+  local n='devel_themer' #name
+  [[ $(drush pm-list | grep ${n} | grep 'Enabled') ]] && \
+      drush -y dis ${n} || drush -y en ${n}
 }
 
 #clear and re-run `tail -f` of dd()'s output
@@ -33,7 +71,7 @@ cleardd() {
   local def_uid="33" #uid for www-data
 
   # set values
-  [[ -z ${1} ]] && echo "no params defaulting to: ${def_file}"
+  (( $# )) || echo "no params defaulting to: ${def_file}"
   local file=${1:-$def_file} #default param
   local file_uid=$(stat -c %u ${file} 2>/dev/null)
   [[ $file_uid -eq 0 ]] && unset file_uid #avoid root owned file
@@ -47,7 +85,7 @@ cleardd() {
 
 #drupal cvs
 dcvs() {
-  #TODO make larger for diffs, gets, etc.
+  #TODO delte all of this... cvs is gone.
   if [[ -z $1 ]];then
     echo -e "usage: dvcs module_name\n\tloads a drupal contrib module, module_name, from CVS HEAD." >&2
     return 1
@@ -107,5 +145,56 @@ fu() {
     rm -rfv ${download}
     rm -rfv ${feature}
   fi
+}
+
+#prep your local for cozy use.
+cozy_local() {
+    if [[ $1 = '-h'  || $1 = '--help' ]];then
+        echo -e "usage \`$FUNCNAME [password, [db_name, ...] ]\`
+        sets the password for your drupal admin users" >&2
+        return 1
+    fi
+
+    #inserts
+    local password=${1:-password}
+    if (( $# > 1 ));then
+        shift
+        local databases=("${@}")
+    else
+        #defaults
+        local databases=('hamster' 'kitten')
+        #@TODO: make this use-able for others. (utilize dynamic PROJECT_BASE
+        # solutionsm, and grab the settings.php database names).
+    fi
+
+    declare -a queries
+
+    #
+    #listing of queries you normally run:
+    # @TODO: take these from somewhere else?
+    #
+
+    #set password to something useful.
+    queries+=("
+        UPDATE users
+        SET pass=md5('${password}')
+        WHERE
+            name='admin'
+        OR
+            mail='%$(whoami)%'
+    ;")
+    #un-sanitize/simplify your own login
+    queries+=("
+        UPDATE users
+        SET mail='$(whoami)@mail.com'
+        WHERE mail LIKE '%$(whoami)%'
+    ;")
+
+    #actual work
+    for db in $databases; do
+        for query in "${queries[@]}"; do
+            mysql -u root --password=root --database="${db}" -e "$query"
+        done
+    done
 }
 
