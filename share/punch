@@ -1,5 +1,4 @@
-#!/bin/bash
- #@TODO: use this! #!/usr/bin/env bash
+#!/usr/bin/env bash
 
  #@TODO:
  # add a "update"/"note" function the update the note for a current punch-in.
@@ -8,6 +7,7 @@
 
 # early conf ##################################################################
 
+#feel free to change this _default values:
 _CARD=~/.config/punchcard
 _DELIM=' '
 
@@ -41,16 +41,16 @@ fi
 # getops configuration: #######################################################
 declare -rA OPTS=(
     [c:]='client  Specify the client/project being referenced, "__".'
-    [C]='List all clients/projects on time-card. Exits immediately.'
-    [D:]='timestamp  Delete all in/out time-card entries at epoch, "__".'
+    [C]='List all clients/projects on punch-card. Exits immediately.'
+    [D:]='timestamp  Delete all in/out punch-card entries at epoch, "__".'
     [h]='Help message.'
-    [L]='List all entries, for every project, on time-card. Exits immediately.'
-    [l]='List all time-card entries made under a project. See -c.'
+    [L]='List all entries, for every project, on punch-card. Exits immediately.'
+    [l]='List all punch-card entries made under a project. See -c.'
     [p]='Punch in/out for a "client"/"project" being referenced. See -c.'
     [q]='Quiet mode, print minimal output and even fail quietly.'
-    [d]='Delete all time-card entries made under a project. See -c.'
+    [d]='Delete all punch-card entries made under a project. See -c.'
     [s]='Output timestamps as epoch, intended as shell input. See eval(1p).'
-    [t]='Sum of total time-card entries under project. See -c.'
+    [t]='Sum of total punch-card entries under project. See -c.'
     [u]='Usage statement.'
 )
 
@@ -126,7 +126,7 @@ usage() {
     )
 
     echo "$_n [$flags] [ $argflags ] [ note... ]
-    Simple time card utility, lets you punch in, out and get paid.
+    Simple punch card utility, lets you punch in, out and get paid.
 
     ${_n^} generally takes a client/subject of what you're working *for* and
     optionaly a quick note of what you're working *on*, then stores a timestamp
@@ -662,5 +662,3 @@ if (( OPT_RUN[t] ));then
     spent
 fi
 
-#@TODO: change all user-facing wording to use "punch-card" as verbage instead
-# of "time-card"
