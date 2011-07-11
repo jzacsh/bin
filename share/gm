@@ -37,3 +37,5 @@ check_gmrun() {
 check_gmrun
 pkill gmrun
 gmrun & disown && die $EC_NORM
+
+# vim: et:sw=4:ts=4

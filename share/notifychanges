@@ -80,3 +80,5 @@ while true;do
         rm $tmpf
     fi
 done
+
+# vim: et:sw=4:ts=4

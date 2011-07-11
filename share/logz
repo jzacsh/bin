@@ -19,3 +19,5 @@
 # done
 
 tail -f $(find $HOME/docs/log{,s} /var/log/ -name '*.log')
+
+# vim: et:sw=2:ts=2
