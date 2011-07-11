@@ -19,8 +19,15 @@ usage() {
 }
 
 backup() {
-    curl -s "$DOC_URI" > "$BAK_DIR/${DOC_PRE}$(date --rfc-3339=date)_$(date +%s)${DOC_SUF}"
-    (( $? )) && echo "backup failed, \`curl\` exited with $?" >&2 || return 0
+    local rfc_date seconds
+    rfc_date=$(date --rfc-3339=date)
+    seconds=$(date +%s)
+    curl -s --fail "$DOC_URI" > "$BAK_DIR/${DOC_PRE}${rfc_date}_${seconds}${DOC_SUF}"
+    local c_ret=$?
+    (( c_ret )) && {
+        printf "Error: backup failed, \`curl' exited with: %s\n" "$c_ret" >&2
+        return $c_ret
+    } || return 0
 }
 
 #only backup if necessary
