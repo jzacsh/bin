@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ## CHANGE THESE STRING VALUES, ONLY: #############################################
-DOC_URI=${1:-'http://openetherpad.org/ep/pad/export/uvLNbZUotg/latest?format=txt'}
-BAK_DIR=${2:-"$HOME/dbox/edu/226/project/backup/"}
+DOC_URI=$1
+BAK_DIR=$2
 
 DOC_PRE='todo_'
 DOC_SUF='.pad.bak'
