@@ -25,3 +25,5 @@ backup() {
 #only backup if necessary
 latest_bak=$(find "$BAK_DIR" -name "${DOC_PRE}*${DOC_SUF}" | sort | tail -n 1)
 diff <(curl -s "$DOC_URI") "$latest_bak" >&/dev/null || backup
+
+# vim et:sw=4:ts=4
