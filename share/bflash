@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+usage () {
+  printf '
+usage: %s [ CARDS-FILE ]
+
+description:
+    A simple "flash cards" style program, write your list of terms/definitions
+    and have them taught back to you. see ./example for an example set of cards
+
+    env BFLASH_CARDS to set a default CARDS-FILE
+
+    CARDS-FILE format:
+      # term
+      stuff to be learned about TERM
+      # Richard M Stallman
+      just dont look him in the eyes
+      # linux
+      what?
+      # bash
+      will save the children
+
+' "\`$(basename $0)'" >&2
+  exit 1
+}
+
+
+BFLASH_CARDS=${BFLASH_CARDS:-~/docs/ems/edu/study/cards/meds} #default cards file
+
+if [[ $1 != -h && $1 != --help ]];then
+  fcards=${1:-$BFLASH_CARDS} # ascii file containing flash cards
+  IFS=$'\n' read -d'\0' -a cards < $fcards
+
+  echo "(PRESS ENTER TO BEGIN)"
+
+  for line in "${cards[@]}"; do
+    if [[ ${line:0:1} = '#' ]]; then
+      read
+      printf '%30s\n' | tr ' ' '-'
+      echo "${line:1}"
+      read
+      continue
+    fi
+    echo "$line"
+  done
+else
+  usage
+fi
+
+# vim: et:ts=2:sw=2
