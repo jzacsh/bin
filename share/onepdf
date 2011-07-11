@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+dbg=0
+
+##########################################
+
+usage() {
+printf "
+%s
+  A GUI utility to combine multiple PDF files into a single PDF.
+
+  License: GPLv2
+  Author: Jonathan Zacsh <jzacsh@gmail.com>
+
+  Summary:
+    A simple bash wrapper taking advantage of the existing pdftk and
+    pdfjoin utilities, with a Zenity-based GUI front-end.
+" "\`$(basename $0)'" >&2
+}
+
+if (( $# ));then
+  usage
+  exit 1
+fi
+
+die() {
+  zenity --error --text="ERROR: ${1}"
+  exit 1
+}
+
+info(){
+  zenity --warning --text="${1}"
+}
+
+debug() {
+  (( ${dbg} == 0 )) && return 0 || zenity --warning --text="DEBUG: ${1}"
+}
+
+getPdftk() {
+  info 'ERROR: pdftk is not in your PATH, please point to its location!'
+  (( $? != 0 )) && die 'Could not find pdtfk'
+}
+
+#generate new file
+generate() {
+  outf=$1
+  shift
+  ${tk} ${@} cat output ${outf}
+  (( $? != 0 )) && die 'Could not output proper PDF' || debug "you've chosen to create ${outf}"
+}
+
+#check for pdftk
+tk=$(which pdftk)
+(( $? != 0 )) && echo getPdftk
+
+#select pdfs to combine:
+info 'Please select all PDF files to combine.'
+pdfs=$(zenity --file-selection --multiple --title='Select PDF files to Combine' --separator=' ')
+
+case $? in
+  0)
+    #choose name/locaation for new file
+    info "Please Choose a File name for your new PDF, using the following dialogue."
+    newfile=$(zenity --file-selection --save --title='Choose Save Location')
+    (( $? == 0 )) && generate ${newfile} $pdfs || die 'Save location not chosen.'
+    debug "$pdfs"
+    ;;
+  1)
+    die 'No file selected.'
+    ;;
+  -1)
+    die 'No file selected.'
+    ;;
+esac
+
+# vim et sw=2 ts=2
