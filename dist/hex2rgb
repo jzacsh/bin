@@ -19,3 +19,5 @@ while read line; do
   hex2dec "${colors[@]}"
 
 done < $1
+
+# vim: et:sw=2:ts=2

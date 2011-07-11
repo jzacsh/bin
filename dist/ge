@@ -20,4 +20,4 @@ IFS=':' read file linenum _ < <(sed 's/\[[[:digit:]]*[mK]//g' <<< "$choice")
 
 vim "$file" +$linenum
 
-
+# vim: et:sw=2:ts=2
