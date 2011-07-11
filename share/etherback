@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 
-## CHANGE THESE STRING VALUES, ONLY: #############################################
 DOC_URI=$1
 BAK_DIR=$2
 
 DOC_PRE='todo_'
 DOC_SUF='.pad.bak'
-
-
-##################################################################################
+## CHANGE ABOVE STRING VALUES, ONLY: #############################################
 
 usage() {
     echo "usage: $(basename $0) etherpad_text_uri backup_dir" >&2
@@ -26,4 +23,4 @@ backup() {
 latest_bak=$(find "$BAK_DIR" -name "${DOC_PRE}*${DOC_SUF}" | sort | tail -n 1)
 diff <(curl -s "$DOC_URI") "$latest_bak" >&/dev/null || backup
 
-# vim et:sw=4:ts=4
+# vim: et:sw=4:ts=4
