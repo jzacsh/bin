@@ -19,3 +19,5 @@ do
     exit 1
   fi
 done
+
+# vim: et:sw=2:ts=2

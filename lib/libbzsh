@@ -51,3 +51,5 @@ dbg() {
   if_debug || return
   echo -e "${col_ylw}::${col_end} ${col_blu}DEBUG:${col_end} ${@}"
 }
+
+# vim: et:sw=2:ts=2

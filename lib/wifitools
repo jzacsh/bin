@@ -118,3 +118,5 @@ wifi() {
     wfiface
     wfls
 }
+
+# vim: et:sw=4:ts=4
