@@ -1,14 +1,30 @@
 #!/usr/bin/env bash
 
 declare -a AVAIL
+_n=$(basename $0)
 
-#@TODO: make this wrapper OSX/Linux useful.
-find_versions() {
-  local dir
-  while read dir;do
-    AVAIL+=(${dir/*-/ })
-  done < <(find /usr/local/ -maxdepth 1 -type d -name 'netbeans-*')
+#@TODO: make this check both OSX/Linux locations.
+while read dir;do
+  AVAIL+=(${dir/*-/ })
+done < <(find /usr/local/ -maxdepth 1 -type d -name 'netbeans-*')
+unset dir
+
+usage() {
+  local avail
+  IFS='|'
+  avail="${AVAIL[*]/./}"
+  _n="\`$_n'"
+
+  printf "Wrapper around netbeans...
+  usage: %s [version] [ /path/to/filename ]
+
+  eg.:   %s [%s] [ ~/my/little/pony.txt ]
+" "$_n" "$_n" "$avail" >&2
+  exit 1
 }
+
+#check for help
+[[ $1 = -h || $1 = --help ]] && usage
 
 # pick a netbeans version to launch
 shgl=$(shopt -p extglob)
@@ -29,8 +45,8 @@ if [[ -r $netbeans ]];then
   parse="-J-Dorg.netbeans.modules.parsing.impl.indexing.RepositoryUpdater.level=$level"
   $netbeans "$parse" "${@}" & disown 2>/dev/null
 else
-  find_versions
-  avail="${AVAIL[@]}"
+  IFS=,
+  avail="${AVAIL[*]/./}"
 
   printf "ERROR: Netbeans v.:%s not available.
     Only found versions %s\n" "${ver}" "$avail" >&2
