@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+declare -a AVAIL
+
+#@TODO: make this wrapper OSX/Linux useful.
+find_versions() {
+  local dir d
+  while read dir;do
+    d=${dir/*-/ }
+    AVAIL+=(${d/./})
+  done < <(find /usr/local/ -maxdepth 1 -type d -name 'netbeans-*')
+}
+
+# pick a netbeans version to launch
+shgl=$(shopt -p extglob)
+shopt -s extglob
+if (( ${#1} == 2 )) && [[ ${1} = +([[:digit:]]) ]];then
+  ver=$1
+  shift
+else
+  ver=${BEANS_VERSION:-'70'}
+fi
+"$shgl" #set back whatever you had
+
+ver=${ver:0:1}.${ver:1}
+netbeans="/usr/local/netbeans-${ver}/bin/netbeans"
+
+if [[ -r $netbeans ]];then
+  level="FINE"
+  parse="-J-Dorg.netbeans.modules.parsing.impl.indexing.RepositoryUpdater.level=$level"
+  $netbeans "$parse" "${@}" & disown 2>/dev/null
+else
+  find_versions
+
+  printf "
+  ERROR: Netbeans v.:%s not available.
+    Only found versions %s
+  " "${ver}" "${AVAIL[@]}" >&2
+  exit 1
+fi
+
+# vim: et:ts=2:sw=2
