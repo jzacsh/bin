@@ -4,10 +4,9 @@ declare -a AVAIL
 
 #@TODO: make this wrapper OSX/Linux useful.
 find_versions() {
-  local dir d
+  local dir
   while read dir;do
-    d=${dir/*-/ }
-    AVAIL+=(${d/./})
+    AVAIL+=(${dir/*-/ })
   done < <(find /usr/local/ -maxdepth 1 -type d -name 'netbeans-*')
 }
 
@@ -20,7 +19,7 @@ if (( ${#1} == 2 )) && [[ ${1} = +([[:digit:]]) ]];then
 else
   ver=${BEANS_VERSION:-'70'}
 fi
-"$shgl" #set back whatever you had
+$shgl #set back whatever you had
 
 ver=${ver:0:1}.${ver:1}
 netbeans="/usr/local/netbeans-${ver}/bin/netbeans"
@@ -31,11 +30,10 @@ if [[ -r $netbeans ]];then
   $netbeans "$parse" "${@}" & disown 2>/dev/null
 else
   find_versions
+  avail="${AVAIL[@]}"
 
-  printf "
-  ERROR: Netbeans v.:%s not available.
-    Only found versions %s
-  " "${ver}" "${AVAIL[@]}" >&2
+  printf "ERROR: Netbeans v.:%s not available.
+    Only found versions %s\n" "${ver}" "$avail" >&2
   exit 1
 fi
 
