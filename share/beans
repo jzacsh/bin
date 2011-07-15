@@ -43,7 +43,7 @@ netbeans="/usr/local/netbeans-${ver}/bin/netbeans"
 if [[ -r $netbeans ]];then
   level="FINE"
   parse="-J-Dorg.netbeans.modules.parsing.impl.indexing.RepositoryUpdater.level=$level"
-  $netbeans "$parse" "${@}" & disown 2>/dev/null
+  $netbeans "$parse" "${@}" >& /dev/null & disown
 else
   IFS=,
   avail="${AVAIL[*]/./}"
