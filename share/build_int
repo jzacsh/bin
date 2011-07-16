@@ -154,7 +154,7 @@ prep_env() {
   verb "current directory is: $PWD"
 
   verb "making sure the following ssh key is readable...\n\t$git_sshkey"
-  if (( $git_sshkey = '0' ));then
+  if [[ $git_sshkey = '0' ]];then
       verb 'found git_sshkey set to "0". will not use key'
   else
       if [[ -r $git_sshkey ]];then
