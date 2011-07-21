@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# takes either a file argument, a directory argument, changing of filetypes
+# (depending on the filename you pass) or no argument, in which case it makes up
+# a filename and if dropbox is avaialble it puts the new file into dropbox PUBurl
+# folder and prints out a URL
+
+if ! type -p import >& /dev/null; then
+  echo "Error: \`import' not found on your system." >&2
+  return 1
+fi
+
+#figure out if we can use dropbox
+dboxp=''
+dbox_path () {
+  if type -p dropbox >& /dev/null;then
+    if [[ -d ~/Dropbox/Public/ ]];then
+      dboxp="~/Dropbox/Public/"
+    else
+      #@TODO: this is version-specific:
+      dboxp=$(
+        sqlite3 ~/.dropbox/config.db \
+          'select value from config where key="dropbox_path";'
+      )
+      [[ ! -d $dboxp ]] && dboxp='' || dboxp="${dboxp}/Public/"
+    fi
+  fi
+}
+
+ftype=${SHOT_ENC:-png}
+fname="screenshot_$(date +%s).${ftype}"
+if (( $# ));then
+  if [[ -d $1 ]];then
+    # drop the default file-name in their chosen dir
+    fname="${1}/${fname}"
+  else
+    # we might need to tack on an extension
+    len="${#1}"
+    dot=$((len - 4))
+    if [[ "${1:$dot:1}" = . ]];then
+      ext=$((len - 3))
+      ftype=${1:$ext}
+      fname="${1}"
+    else
+      #no extension was given
+      fname="${1}.${ftype}"
+    fi
+  fi
+else
+  dbox_path #run only if necessary
+  if [[ -n $dboxp ]];then
+    fname="${dboxp}/${fname}"
+  fi
+fi
+
+#take the shot!
+import -verbose -encoding "$ftype" "$fname"
+
+#get the dropbox puburl if its DIR was used.
+if [[ $? -eq 0 && -n $dboxp ]];then
+  dropbox puburl "$fname"
+fi
+
+# vim: et:ts=2:sw=2
