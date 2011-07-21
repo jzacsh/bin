@@ -11,19 +11,22 @@ if ! type -p import >& /dev/null; then
 fi
 
 #figure out if we can use dropbox
-dboxp=''
 dbox_path () {
+  local path
   if type -p dropbox >& /dev/null;then
     if [[ -d ~/Dropbox/Public/ ]];then
-      dboxp="~/Dropbox/Public/"
+      printf "~/Dropbox/Public/"
     else
       #@TODO: this is version-specific:
-      dboxp=$(
+      path=$(
         sqlite3 ~/.dropbox/config.db \
           'select value from config where key="dropbox_path";'
       )
-      [[ ! -d $dboxp ]] && dboxp='' || dboxp="${dboxp}/Public/"
+      path="${path}/Public"
+      [[ -d $path ]] && printf "${path}" || printf ''
     fi
+  else
+    printf ''
   fi
 }
 
@@ -47,7 +50,7 @@ if (( $# ));then
     fi
   fi
 else
-  dbox_path #run only if necessary
+  dboxp=$(dbox_path) #run only if necessary
   if [[ -n $dboxp ]];then
     fname="${dboxp}/${fname}"
   fi
