@@ -16,17 +16,15 @@ dbox_path () {
   if type -p dropbox >& /dev/null;then
     if [[ -d ~/Dropbox/Public/ ]];then
       printf "~/Dropbox/Public/"
-    else
+    elif type -p sqlite3 >& /dev/null;then
       #@TODO: this is version-specific:
       path=$(
         sqlite3 ~/.dropbox/config.db \
           'select value from config where key="dropbox_path";'
       )
       path="${path}/Public"
-      [[ -d $path ]] && printf "${path}" || printf ''
+      [[ -d $path ]] && printf "$path"
     fi
-  else
-    printf ''
   fi
 }
 
