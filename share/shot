@@ -35,7 +35,11 @@ fname="screenshot_$(date +%s).${ftype}"
 if (( $# ));then
   if [[ -d $1 ]];then
     # drop the default file-name in their chosen dir
-    fname="${1}/${fname}"
+    if [[ -w $1 ]];then
+      fname="${1}/${fname}"
+    else
+      printf 'Error: do not have write permission to "%s".\n' "$1" >&2
+    fi
   else
     # we might need to tack on an extension
     len="${#1}"
