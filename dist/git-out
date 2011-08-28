@@ -1,28 +1,16 @@
 #!/bin/bash
 #
-# Emulates hg's `outgoing' command
-#
-# taken from falconindy's repo
+# behavior like mercurial's "out" command
 #
 
-ORIGIN=${1:-origin}
+read -r _ curbranch < <(git branch | grep '^\*')
 
-# get remote HEAD (assumes origin as remote)
-read remote_head _ < <(git ls-remote $ORIGIN HEAD 2>/dev/null)
-[[ -z $remote_head ]] && exit 1
+remote=$(git config branch.$curbranch.remote 2>/dev/null)
+remote=${remote##*/}
 
-# find remote_head in local commits
-n=$(sed -n "/$remote_head/=" <(git rev-list --all))
+merge=$(git config branch.$curbranch.merge 2>/dev/null)
+merge=${merge##*/}
+merge=${merge#+}
 
-if [[ ! $n ]]; then
-  echo "the remote appears to be ahead of the local"
-elif (( n == 1 )); then
-  echo "nothing outgoing"
-else
-  (( n-- ))
-  echo "Outgoing commits:"
-  git --no-pager log --pretty=oneline HEAD~$n..
-
-fi
-
-# vim: et:sw=2:ts=2
+printf 'Comparing with %s/%s\n' "${remote:-origin}" "${merge:-master}"
+git cherry -v ${remote:-origin}/${merge:-master}
