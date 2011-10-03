@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-exit 99
 
 WATCH="${1:-$HOME/pub/drop}"
 INOTIFY='http://github.com/rvoicilas/inotify-tools'
@@ -28,7 +27,7 @@ usage() {
 }
 
 dependency() {
-    echo -e "$1 not found.\nPlease install all dependencies to this script." >&2
+    echo -e "'$1' not found.\nPlease install all dependencies to this script." >&2
     usage
     exit 3
 }
@@ -40,17 +39,16 @@ fi
 
 #for the same friends
 for util in ${depends[@]}; do
-    type -p $util &>/dev/null
-    [[ $(type -p $util) ]] || dependency "$util"
+    type -p "$util" >&/dev/null || dependency "$util"
 done
 
 
 # if inotifywait is passed a non-existent directory,
 # it goes into a monsterous infinate loop instead of failing.
 if [[ -r $WATCH ]];then
-    recurse='-r'
+    recurse='--recursive'
 else
-    echo "error: cannot find '$WATCH'" >&2
+    echo "Error: cannot find '$WATCH' in filesystem" >&2
     exit 3
 fi
 
