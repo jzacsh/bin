@@ -58,11 +58,12 @@ while read -r message; do
 done < <(inotifywait \
     --recursive \
     --monitor \
+    --timefmt='%H:%M:%S' \
+    --format='%T (%e) | "%f"' \
     --event delete \
     --event move \
     --event create \
     --event modify \
-    --timefmt='%H:%M:%S' \
-    --format='%T (%e) | "%f"' "$WATCH")
+    "$WATCH")
 
 # vim: et:sw=4:ts=4
