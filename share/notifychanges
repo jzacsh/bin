@@ -55,7 +55,7 @@ fi
 # the actual magic:
 while read -r message; do
     notify-send "$message"
-done <(inotifywait
+done < <(inotifywait \
     --recursive \
     --monitor \
     --event delete \
