@@ -52,31 +52,17 @@ else
     exit 3
 fi
 
-#@TODO: repalce this loop with proper `inotifywait -m`
-#@TODO: read inotifywait(1) EVENTS section to figure out what you do and don't
-#       want to libnotify for
-
-#@TODO: create a file descriptor to stream output to. continual read from that
-#descriptor in your loop below
-inotifywait --monitor $recurse --format '%e' $WATCH &
-N_PID=$!
-while true;do
-    if [[ $(inotifywait --monitor $recurse --format '%e' $WATCH) ]];then
-#       declare -a suspects
-        declare suspects
-        tmpf=$(mktemp)
-
-        while read -r possible ;do
-            stamp=$(stat --format=%X "$possible")
-            tpast=$(( 10#$stamp - 10#$(date +%s) )) 
-#           (( tpast < 30 )) && suspects+=("$possible")
-            (( tpast < 30 )) && echo "$possible" >> $tmpf
-        done < <(find $WATCH -cmin 1)
-
-#       notify-send -t 15 "$HEADER" "${suspects[@]}"
-        notify-send -t 5 "$HEADER" "$(< $tmpf)"
-        rm $tmpf
-    fi
-done
+# the actual magic:
+while read -r message; do
+    notify-send "$message"
+done <(inotifywait
+    --recursive \
+    --monitor \
+    --event delete \
+    --event move \
+    --event create \
+    --event modify \
+    --timefmt='%H:%M:%S' \
+    --format='%T (%e) | "%f"' "$WATCH")
 
 # vim: et:sw=4:ts=4
