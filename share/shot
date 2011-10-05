@@ -60,9 +60,10 @@ fi
 
 #take the shot!
 import -verbose -encoding "$ftype" "$fname"
+size=10#$(stat -c %s "$fname")
 
 #get the dropbox puburl if its DIR was used.
-if [[ $? -eq 0 && -n $dboxp ]];then
+if (( size )) && [[ -n $dboxp ]];then
   dropbox puburl "$fname"
 fi
 
