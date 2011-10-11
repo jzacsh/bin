@@ -7,10 +7,10 @@ LOCAL="$1"
 _n=$(basename $0)
 now='date --rfc-3339=seconds'
 
-printf '\n[%s] | STARTED "%s".\n' "$($now)" "${_n,,}"
+printf '\n[%s] | STARTED "%s".\n' "$($now)" "${_n}"
 
 die() {
-  printf '[%s] | FINISHED "%s".\n\n' "$($now)" "${_n,,}"
+  printf '[%s] | FINISHED "%s".\n\n' "$($now)" "${_n}"
   exit "$1"
 }
 
@@ -21,7 +21,7 @@ usage() {
 
   summary:
     git-pull(1) the latest code for repository at local directory,
-    <local_dir>.\n' "${_n,,}" >&2
+    <local_dir>.\n' "${_n}" >&2
 }
 
 #log success
@@ -42,7 +42,7 @@ if (( $# != 1 )) || [[ $1 = -h || $1 = --help ]];then
   usage
   die 1
 elif (( "${BASH_VERSINFO[0]}" != 4 ));then
-  printf '%s requires bash version 4 or greater.\n' "${_n,,}" >&2
+  printf '%s requires bash version 4 or greater.\n' "${_n}" >&2
   die 1
 elif ! type -p git >& /dev/null;then
   printf 'git(1) not installed (or not in path).\n' >&2
