@@ -41,9 +41,6 @@ log_f() {
 if (( $# != 1 )) || [[ $1 = -h || $1 = --help ]];then
   usage
   die 1
-elif (( "${BASH_VERSINFO[0]}" != 4 ));then
-  printf '%s requires bash version 4 or greater.\n' "${_n}" >&2
-  die 1
 elif ! type -p git >& /dev/null;then
   printf 'git(1) not installed (or not in path).\n' >&2
   die 1
