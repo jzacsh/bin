@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# pull latest code from $1 into $2
+# pull latest code into $1
 
 LOCAL="$1"
 
