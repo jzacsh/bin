@@ -48,7 +48,7 @@ elif ! type -p git >& /dev/null;then
   printf 'git(1) not installed (or not in path).\n' >&2
   die 1
 elif [[ ! -w "$LOCAL/.git/" ]];then
-  printf 'Directory "%s" is not a readable git repository.\n' "$LOCAL" >&2
+  printf 'Directory "%s" is not a writable git repository.\n' "$LOCAL" >&2
   die 1
 fi
 
