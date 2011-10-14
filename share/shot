@@ -1,59 +1,128 @@
 #!/usr/bin/env bash
 
-# takes either a file argument, a directory argument, changing of filetypes
-# (depending on the filename you pass) or no argument, in which case it makes up
-# a filename and if dropbox is avaialble it puts the new file into dropbox PUBurl
-# folder and prints out a URL
+_n="$(basename $0)"
 
-if ! type -p import >& /dev/null; then
-  echo "Error: \`import' not found on your system." >&2
-  return 1
+P="${1}"
+ENC="${SHOT_ENC}"
+PUB="${SHOT_PUB}" #dropbox-specific dir.
+unique="$(date +%s 2>/dev/null || uuidgen)"
+
+usage() {
+  printf "
+  USAGE:
+    %s [PATH]
+
+    For [PATH] you can pass an image encoding type, a full file path (with
+    encoding extension), or a file name prefix (a default extension will be
+    used).
+
+  SUMMARY:
+    Take a screenshot, using the import(1) utility, of a selected area.
+
+    Dropbox Public-Link Magic
+      If no [PATH] argument is passed and Dropbox is installed, %s attempts to
+      makes its default write-location your Dropbox Public/ folder, so that it
+      can print a helful puburl link for you to shrae with others.
+
+  ENVIRONMENT
+    SHOT_ENC
+      The file type extension of the image encoding you'd like import(1) to
+      write your screenshot in.
+      ( currently: %s )
+
+    SHOT_DBX
+      %s will look for a Dropbox directory in the following ways, in this
+      order:
+      1) ~/Dropbox/
+      2) SHOT_DBX environment variable, use this if you're using a non-standard
+      setup or find that this utility doesn't find Dropbox otherwise.
+      ( currently: %s )
+      3) In ~/.dropbox/config.db, where dropbox internally stores its
+      configuration.
+
+    SHOT_PUB
+      If [PATH] is not provided and you have a Dropbox installation with the
+      standard Public/ dir, use this to specify a sub directory to use within
+      Public/
+      ( currently: %s )
+  \n" \
+  "${_n/,,/}" \
+  "${_n/,,/}" \
+  "${SHOT_ENC:-not set}" \
+  "${_n/,,/}" \
+  "${SHOT_DBX:-not set}" \
+  "${SHOT_PUB:-not set}" >&2
+}
+
+#sanity check
+if [[ $1 = -h || $1 = --help ]];then
+  usage
+  exit
+elif ! type -p import >& /dev/null;then
+  echo 'Error: import(1) not found on your system.' >&2
+  usage
+  exit 1
 fi
 
 #figure out if we can use dropbox
 dbox_path () {
   local path
   if type -p dropbox >& /dev/null;then
-    if [[ -d ~/Dropbox/Public/ ]];then
-      printf "~/Dropbox/Public/"
+    if [[ -d ~/Dropbox/Public ]];then
+      #finish early, most likely case
+      path="~/Dropbox/Public"
+    elif [[ -d "${SHOT_DBX}/Public" ]];then
+      #this is a hairy install, let the user tell us
+      path="${SHOT_DBX}/Public"
     elif type -p sqlite3 >& /dev/null;then
-      #@TODO: this is version-specific:
+      #@TODO: this is Dropbox version-specific:
       path=$(
         sqlite3 ~/.dropbox/config.db \
           'select value from config where key="dropbox_path";'
       )
       path="${path}/Public"
-      [[ -d $path ]] && printf "$path"
+    fi
+  fi
+
+  #allow screenshots to accumulate out of site
+  if [[ -d "$path" ]];then
+    if [[ -d "${path}/${SHOT_PUB}" ]];then
+      printf "%s" "${path}/${SHOT_PUB}"
+    else
+      printf "%s" "$path"
     fi
   fi
 }
 
-ftype=${SHOT_ENC:-png}
-fname="screenshot_$(date +%s).${ftype}"
+ftype=${ENC:-png}
+fname="screenshot_${unique}.${ftype}" #default path
 if (( $# ));then
-  if [[ -d $1 ]];then
-    # drop the default file-name in their chosen dir
-    if [[ -w $1 ]];then
-      fname="${1}/${fname}"
+  # user passed a directory
+  if [[ -d $P ]];then
+    if [[ -w $P ]];then
+      fname="${P}/${fname}"
     else
-      printf 'Error: do not have write permission to "%s".\n' "$1" >&2
+      printf 'Error: do not have write permission to "%s".\n' "$P" >&2
     fi
   else
-    # we might need to tack on an extension
-    len="${#1}"
-    dot=$((len - 4))
-    if [[ "${1:$dot:1}" = . ]];then
+    # we were given an extension or a file path
+
+    len="${#P}"
+    dot_idx=$((len - 4))
+    if [[ "${P:$dot_idx:1}" = . ]];then
+      #we were given a full file path
       ext=$((len - 3))
-      ftype=${1:$ext}
-      fname="${1}"
+      ftype="${P:$ext}"
+      fname="${P}"
     else
-      #no extension was given
-      fname="${1}.${ftype}"
+      #we were given a prefix filename
+      fname="${P}.${ftype}"
     fi
   fi
-else
-  dboxp=$(dbox_path) #run only if necessary
+else #Dropbox trick, hold off on default path
+  dboxp=$(dbox_path)
   if [[ -n $dboxp ]];then
+    #default path, but in dropbox Public/
     fname="${dboxp}/${fname}"
   fi
 fi
