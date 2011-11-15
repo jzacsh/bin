@@ -45,6 +45,11 @@ usage() {
       standard Public/ dir, use this to specify a sub directory to use within
       Public/
       ( currently: %s )
+
+    SHOT_URL
+      The public link shot should prefix your screenshot with, when printing
+      the results to you, so you can copy/paste this URL to a friend (this is
+      useful if SHOT_DBX[/SHOT_PU] is a path that's exposed under SHOT_URL.
   \n" \
   "${_n/,,/}" \
   "${_n/,,/}" \
@@ -67,20 +72,25 @@ fi
 #figure out if we can use dropbox
 dbox_path () {
   local path
-  if type -p dropbox >& /dev/null;then
-    if [[ -d ~/Dropbox/Public ]];then
-      #finish early, most likely case
-      path="~/Dropbox/Public"
-    elif [[ -d "${SHOT_DBX}/Public" ]];then
-      #this is a hairy install, let the user tell us
-      path="${SHOT_DBX}/Public"
-    elif type -p sqlite3 >& /dev/null;then
-      #@TODO: this is Dropbox version-specific:
-      path=$(
-        sqlite3 ~/.dropbox/config.db \
-          'select value from config where key="dropbox_path";'
-      )
-      path="${path}/Public"
+
+  if [[ -d "${SHOT_DBX}" ]];then
+    #this is a non-standard, or non-dropbox or otherwise hairy install, let
+    # the user tell us
+    path="${SHOT_DBX}"
+
+    #try to use a sub dir
+    if [[ -n "${SHOT_PUB}" ]];then
+      #user-specified sub-dir is waiting
+      path="${SHOT_DBX}"
+    else
+      #try to find our own sudir
+      if [[ $(type -p dropbox 2> /dev/null) ]];then
+        if [[ -d "${SHOT_DBX}/Public" ]];then
+          #use Public/ (Dropbox utility's standard)
+          path="${SHOT_DBX}/Public"
+        fi
+      fi
+
     fi
   fi
 
@@ -96,6 +106,7 @@ dbox_path () {
 
 ftype=${ENC:-png}
 fname="screenshot_${unique}.${ftype}" #default path
+file="$fname"
 if (( $# ));then
   # user passed a directory
   if [[ -d $P ]];then
@@ -132,8 +143,12 @@ import -verbose -encoding "$ftype" "$fname"
 size=10#$(stat -c %s "$fname")
 
 #get the dropbox puburl if its DIR was used.
-if (( size )) && [[ -n $dboxp ]];then
-  dropbox puburl "$fname"
+if (( size ));then
+  if [[ $(type -p dropbox 2>/dev/null) ]];then
+    dropbox puburl "$fname"
+  elif [[ -n "$SHOT_URL" ]];then
+    printf '%s/%s' "${SHOT_URL%/}" "${file}"
+  fi
 fi
 
 # vim: et:ts=2:sw=2
