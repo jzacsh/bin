@@ -147,7 +147,7 @@ if (( size ));then
   if [[ $(type -p dropbox 2>/dev/null) ]];then
     dropbox puburl "$fname"
   elif [[ -n "$SHOT_URL" ]];then
-    printf '%s/%s' "${SHOT_URL%/}" "${file}"
+    printf '%s/%s\n' "${SHOT_URL%/}" "${file}"
   fi
 fi
 
