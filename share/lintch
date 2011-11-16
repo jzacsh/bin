@@ -88,8 +88,7 @@ lint() {
     ftype="${ftype,,}"
     case $ftype in
       php)
-        echo "running: '$php_lint'" # //@TODO: remove me!!    
-        $($php_lint "$f")
+        $php_lint "$f"
         ;;
       *)
         printf 'Could not determine linter for filetype: %s\n\t[file: %s]\n' \
