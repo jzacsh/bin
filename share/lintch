@@ -7,12 +7,12 @@
 #
 #default options from env.
 #
-#c_lint="${LINT_PHP:-no default}"
-#cpp_lint="${LINT_PHP:-no default}"
-#js_lint="${LINT_ECMA:-jshint}"
-#java_lint="${LINT_JAVA:-no default}"
+c_lint="${LINT_PHP:-no default}"
+cpp_lint="${LINT_PHP:-no default}"
+js_lint="${LINT_ECMA:-no default}"
+java_lint="${LINT_JAVA:-no default}"
 php_lint="${LINT_PHP:-php -l}"
-#py_lint="${LINT_PYTHON:-no default}"
+py_lint="${LINT_PYTHON:-pylint}"
 
 
 #
