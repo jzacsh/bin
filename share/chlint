@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# run the appropriate lint on all files in our working directory which are
+# waiting to be staged, regardless of VCS of choice or filetype that's been
+# changed.
+
+echo 'this script not yet implemented' >&2 # //@TODO: remove me!!    
+exit 99 #//@TODO: remove me!!    
+
+#
+#default options from env.
+#
+js_lint="${LINT_JS:-jshint}"
+php_lint="${LINT_PHP:-'php -a'}"
+
+#
+#vcs-related functions
+#
+which_vcs() {
+  if [[ $(hg root 2>/dev/null) ]];then
+    printf 'hg'
+  elif [[ $(git status 2>/dev/null) ]];then
+    printf 'git'
+  fi
+}
+
+hg_root() {
+  echo 'gah running hg root' >&2 # //@TODO: remove me!!    
+  printf "%s" "$(hg root)"
+}
+
+git_root() {
+  printf "%s" "$(git rev-parse --show-toplevel)"
+}
+
+hg_changed() {
+  hg status -n
+}
+
+git_changed() {
+  git status --porcelain | sed -e 's/^\ .[[:space:]]*//'
+# while read changes; do
+#   echo "$changes" | sed -e 's/^\ .[[:space:]]*//'
+# done < <(git status --porcelain)
+}
+
+#
+#linting-related functions
+# (the only real logic in this script)
+#
+lint() {
+  local f="$1" ftype
+  echo "TODO: running lint on ${f}" >&2
+  if [[ "${f/*.}" = js ]];then
+    $(js_lint "$f")
+  else
+    ftype="$(file -b "$f")"
+    ftype="${ftype/ */}"
+    case ${ftype,,} in
+      php)
+        $(php_lint "$f")
+        ;;
+      *)
+        printf 'Could not determine linter for filetype: %s\n\t[file: %s]\n' \
+          "${ftype,,}" "$f" >&2
+        return 1
+        ;;
+    esac
+  fi
+}
+
+#
+#dynamic bits (making use of above functions:
+#
+vcs="$(which_vcs)"
+changed="${vcs}_changed"
+echo "vcs, seems to be: $vcs" >&2 # //@TODO: remove me!!    
+echo "vcs_root command will be: ${vcs}_root" >&2 # //@TODO: remove me!!    
+vcs_root="${vcs}_root"
+echo "hg_root, returns: $(hg_root)" >&2 # //@TODO: remove me!!    
+echo "vcs_root, evaluated: $("${vcs}_root")" >&2 # //@TODO: remove me!!    
+echo "vcs_root, definitive: $vcs_root" >&2 # //@TODO: remove me!!    
+exit 99 #//@TODO: remove me!!    
+
+#
+# actually run our linter over our files:
+#
+
+while read file; do
+  command lint "${vcs_root}/${file}"
+  echo '... finished linting file...' >&2 # //@TODO: remove me!!    
+done < <($("$changed"))
+
