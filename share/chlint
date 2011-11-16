@@ -4,9 +4,6 @@
 # waiting to be staged, regardless of VCS of choice or filetype that's been
 # changed.
 
-echo 'this script not yet implemented' >&2 # //@TODO: remove me!!    
-exit 99 #//@TODO: remove me!!    
-
 #
 #default options from env.
 #
@@ -58,7 +55,7 @@ lint() {
     ftype="${ftype/ */}"
     case ${ftype,,} in
       php)
-        $(php_lint "$f")
+        $($php_lint "$f")
         ;;
       *)
         printf 'Could not determine linter for filetype: %s\n\t[file: %s]\n' \
@@ -74,20 +71,13 @@ lint() {
 #
 vcs="$(which_vcs)"
 changed="${vcs}_changed"
-echo "vcs, seems to be: $vcs" >&2 # //@TODO: remove me!!    
-echo "vcs_root command will be: ${vcs}_root" >&2 # //@TODO: remove me!!    
-vcs_root="${vcs}_root"
-echo "hg_root, returns: $(hg_root)" >&2 # //@TODO: remove me!!    
-echo "vcs_root, evaluated: $("${vcs}_root")" >&2 # //@TODO: remove me!!    
-echo "vcs_root, definitive: $vcs_root" >&2 # //@TODO: remove me!!    
-exit 99 #//@TODO: remove me!!    
+vcs_root="$(${vcs}_root)"
 
 #
 # actually run our linter over our files:
 #
 
 while read file; do
-  command lint "${vcs_root}/${file}"
-  echo '... finished linting file...' >&2 # //@TODO: remove me!!    
-done < <($("$changed"))
+  lint "${vcs_root}/${file}"
+done < <($changed)
 
