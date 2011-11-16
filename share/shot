@@ -50,6 +50,10 @@ usage() {
       The public link shot should prefix your screenshot with, when printing
       the results to you, so you can copy/paste this URL to a friend (this is
       useful if SHOT_DBX[/SHOT_PU] is a path that's exposed under SHOT_URL.
+
+    SHOT_UPLOAD
+      The uploader utility that should be passed the screenshot's filepath as
+      an argument (eg.: ompldr, imgur scripts or something homemade).
   \n" \
   "${_n/,,/}" \
   "${_n/,,/}" \
