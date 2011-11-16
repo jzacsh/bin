@@ -83,8 +83,8 @@ lint() {
   if [[ "${f/*.}" = js ]];then
     $(js_lint "$f")
   else
-    ftype="$(file -b "$f")"
-    ftype="${ftype/ */}"
+    f_type="$(file -b "$f")"
+    ftype="${f_type/ */}"
     ftype="${ftype,,}"
     case $ftype in
       php)
@@ -92,7 +92,7 @@ lint() {
         ;;
       *)
         printf 'Could not determine linter for filetype: %s\n\t[file: %s]\n' \
-          "$ftype" "$f" >&2
+          "$f_type" "$f" >&2
         return 1
         ;;
     esac
