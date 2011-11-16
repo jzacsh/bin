@@ -4,14 +4,45 @@
 # waiting to be staged, regardless of VCS of choice or filetype that's been
 # changed.
 
-echo 'this script not yet implemented' >&2 # //@TODO: remove me!!    
-exit 99 #//@TODO: remove me!!    
-
 #
 #default options from env.
 #
-js_lint="${LINT_JS:-jshint}"
-php_lint="${LINT_PHP:-'php -a'}"
+c_lint="${LINT_PHP:-no default}"
+cpp_lint="${LINT_PHP:-no default}"
+js_lint="${LINT_ECMA:-jshint}"
+java_lint="${LINT_JAVA:-no default}"
+php_lint="${LINT_PHP:-php -a}"
+py_lint="${LINT_PYTHON:-no default}"
+
+
+#
+# sanity check
+#
+_n="$(basename "$0")"
+if (( $# ));then
+  #we take no options
+
+  printf "
+  Summary
+    \`%s\`, Lint any outstanding changes in your working tree, assuming you're
+    in a VCS repository of  some kind..
+
+  Lint parsers can be specified via the following env. variables:
+    LINT_C\t(default: %s)
+    LINT_CPP\t(default: %s)
+    LINT_JAVA\t(default: %s)
+    LINT_ECMA\t(default: %s)
+    LINT_PHP\t(default: %s)
+    LINT_PYTHON\t(default: %s)
+\n" "${_n,,}" \
+  "$c_lint" \
+  "$cpp_lint" \
+  "$js_lint" \
+  "$java_lint" \
+  "$php_lint" \
+  "$py_lint" >&2
+  exit 1
+fi
 
 #
 #vcs-related functions
