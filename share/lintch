@@ -7,12 +7,12 @@
 #
 #default options from env.
 #
-c_lint="${LINT_PHP:-no default}"
-cpp_lint="${LINT_PHP:-no default}"
-js_lint="${LINT_ECMA:-jshint}"
-java_lint="${LINT_JAVA:-no default}"
-php_lint="${LINT_PHP:-php -a}"
-py_lint="${LINT_PYTHON:-no default}"
+#c_lint="${LINT_PHP:-no default}"
+#cpp_lint="${LINT_PHP:-no default}"
+#js_lint="${LINT_ECMA:-jshint}"
+#java_lint="${LINT_JAVA:-no default}"
+php_lint="${LINT_PHP:-php -l}"
+#py_lint="${LINT_PYTHON:-no default}"
 
 
 #
@@ -56,7 +56,6 @@ which_vcs() {
 }
 
 hg_root() {
-  echo 'gah running hg root' >&2 # //@TODO: remove me!!    
   printf "%s" "$(hg root)"
 }
 
@@ -81,19 +80,20 @@ git_changed() {
 #
 lint() {
   local f="$1" ftype
-  echo "TODO: running lint on ${f}" >&2
   if [[ "${f/*.}" = js ]];then
     $(js_lint "$f")
   else
     ftype="$(file -b "$f")"
     ftype="${ftype/ */}"
-    case ${ftype,,} in
+    ftype="${ftype,,}"
+    case $ftype in
       php)
+        echo "running: '$php_lint'" # //@TODO: remove me!!    
         $($php_lint "$f")
         ;;
       *)
         printf 'Could not determine linter for filetype: %s\n\t[file: %s]\n' \
-          "${ftype,,}" "$f" >&2
+          "$ftype" "$f" >&2
         return 1
         ;;
     esac
