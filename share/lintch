@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+# run the appropriate lint on all files in our working directory which are
+# waiting to be staged, regardless of VCS of choice or filetype that's been
+# changed.
+
+#
+#default options from env.
+#
+c_lint="${LINT_PHP:-no default}"
+cpp_lint="${LINT_PHP:-no default}"
+js_lint="${LINT_ECMA:-no default}"
+java_lint="${LINT_JAVA:-no default}"
+php_lint="${LINT_PHP:-php -l}"
+py_lint="${LINT_PYTHON:-pylint}"
+
+
+#
+# sanity check
+#
+_n="$(basename "$0")"
+if (( $# ));then
+  #we take no options
+
+  printf "
+  Summary
+    \`%s\`, Lint any outstanding changes in your working tree, assuming you're
+    in a VCS repository of  some kind..
+
+  Lint parsers can be specified via the following env. variables:
+    LINT_C\t(default: %s)
+    LINT_CPP\t(default: %s)
+    LINT_JAVA\t(default: %s)
+    LINT_ECMA\t(default: %s)
+    LINT_PHP\t(default: %s)
+    LINT_PYTHON\t(default: %s)
+\n" "${_n,,}" \
+  "$c_lint" \
+  "$cpp_lint" \
+  "$js_lint" \
+  "$java_lint" \
+  "$php_lint" \
+  "$py_lint" >&2
+  exit 1
+fi
+
+#
+#vcs-related functions
+#
+which_vcs() {
+  if [[ $(hg root 2>/dev/null) ]];then
+    printf 'hg'
+  elif [[ $(git status 2>/dev/null) ]];then
+    printf 'git'
+  fi
+}
+
+hg_root() {
+  printf "%s" "$(hg root)"
+}
+
+git_root() {
+  printf "%s" "$(git rev-parse --show-toplevel)"
+}
+
+hg_changed() {
+  hg status -n
+}
+
+git_changed() {
+  git status --porcelain | sed -e 's/^\ .[[:space:]]*//'
+# while read changes; do
+#   echo "$changes" | sed -e 's/^\ .[[:space:]]*//'
+# done < <(git status --porcelain)
+}
+
+#
+#linting-related functions
+# (the only real logic in this script)
+#
+lint() {
+  local f="$1" ftype
+  if [[ "${f/*.}" = js ]];then
+    $(js_lint "$f")
+  else
+    f_type="$(file -b "$f")"
+    ftype="${f_type/ */}"
+    ftype="${ftype,,}"
+    case $ftype in
+      php)
+        $php_lint "$f"
+        ;;
+      *)
+        printf 'Could not determine linter for filetype: %s\n\t[file: %s]\n' \
+          "$f_type" "$f" >&2
+        return 1
+        ;;
+    esac
+  fi
+}
+
+#
+#dynamic bits (making use of above functions:
+#
+vcs="$(which_vcs)"
+changed="${vcs}_changed"
+vcs_root="$(${vcs}_root)"
+
+#
+# actually run our linter over our files:
+#
+
+while read file; do
+  lint "${vcs_root}/${file}"
+done < <($changed)
+

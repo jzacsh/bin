@@ -46,17 +46,18 @@ usage() {
       Public/
       ( currently: %s )
 
-    SHOT_URL
-      The public link shot should prefix your screenshot with, when printing
-      the results to you, so you can copy/paste this URL to a friend (this is
-      useful if SHOT_DBX[/SHOT_PU] is a path that's exposed under SHOT_URL.
+    SHOT_UPLOAD
+      The uploader utility that should be passed the screenshot's filepath as
+      an argument (eg.: ompldr, imgur scripts or something homemade).
+      ( currently: %s )
   \n" \
   "${_n/,,/}" \
   "${_n/,,/}" \
   "${SHOT_ENC:-not set}" \
   "${_n/,,/}" \
   "${SHOT_DBX:-not set}" \
-  "${SHOT_PUB:-not set}" >&2
+  "${SHOT_PUB:-not set}" \
+  "${SHOT_UPLOAD:-not set}" >&2
 }
 
 #sanity check
@@ -146,8 +147,8 @@ size=10#$(stat -c %s "$fname")
 if (( size ));then
   if [[ $(type -p dropbox 2>/dev/null) ]];then
     dropbox puburl "$fname"
-  elif [[ -n "$SHOT_URL" ]];then
-    printf '%s/%s\n' "${SHOT_URL%/}" "${file}"
+  elif [[ $(type "$SHOT_UPLOAD" 2>/dev/null) ]];then
+    $SHOT_UPLOAD "${fname}"
   fi
 fi
 
