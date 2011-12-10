@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+#take care of `poole` build/serve loop
+
+type poole >&/dev/null || {
+  echo '`poole` not found.' >&2
+  exit 2
+}
+
+#take down any existing service
+if [[ $(ps -A | grep poole) ]];then
+  pkill poole 2>/dev/null #don't care to know
+fi
+
+#actual magic: rebuild and start server
+poole -b && poole -s >& poole.log &
