@@ -1,16 +1,40 @@
 #!/usr/bin/env bash
 
-#take care of `poole` build/serve loop
-
 type poole >&/dev/null || {
-  echo '`poole` not found.' >&2
+  echo ':: Error: `poole` not found.' >&2
   exit 2
 }
 
-#take down any existing service
-if [[ $(ps -A | grep poole) ]];then
-  pkill poole 2>/dev/null #don't care to know
+#take care of `poole` build/serve loop
+refresh() {
+  #take down any existing service
+  if [[ $(ps -A | grep poole) ]];then
+    pkill poole 2>/dev/null #don't care to know
+  fi
+
+  #actual magic: rebuild and start server
+  poole -b && poole -s >& poole.log &
+}
+
+#run at least once, since the we've been called
+echo ':: Re-building and serving via `poole`...'
+refresh
+
+#
+# -w: watch for changes, and rebuild/serve automatically.
+#
+#  continue to run when we notice changes, so this script doesn't have to be
+#  manually called
+#
+if [[ $1 = -w ]];then
+  if type inotifywait >& /dev/null;then
+    echo ':: Watching for changes... '
+    while inotifywait --exclude='.*.swp' -r -e modify input/; do
+      echo ':: ... re -building/-serving.'
+      refresh
+    done
+  else
+    echo ':: Error: `-w`, "watch" option utilizes `intofiywait` utility, which was not found' >& 2
+  fi
 fi
 
-#actual magic: rebuild and start server
-poole -b && poole -s >& poole.log &
