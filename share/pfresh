@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# Jonathan Zacsh <jzacsh@gmail.com>
+#
+# Wrapper around poole to avoid usual rebuild/serve loop.
+#
+# Pass '-w' to have rebuild/serve loop re-run every time a file is changed.
+# (requires inotify-tools to be installed)
+
 type poole >&/dev/null || {
   echo ':: Error: `poole` not found.' >&2
   exit 2
