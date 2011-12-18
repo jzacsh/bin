@@ -41,7 +41,7 @@ if [[ $1 = -w ]];then
       echo 'killing poole server...'
       pkill poole > /dev/null
     }
-    trap pkillpoole $E_DIRTY SIGINT
+    trap pkillpoole SIGINT
 
     #actual juice of watching...
     echo ':: Watching for changes... '
