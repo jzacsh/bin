@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+xsel -o | espeak -v en --stdin
