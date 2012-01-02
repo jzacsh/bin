@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
+#@TODO: write a tiny gnome-panel speed-dial quick-dropdown to allow changing `-s` to espeak
+speed="${ESPEAK_SPEED:-160}"
+
 #stop other TTS audio running
 pkill espeak && sleep 0.5
 
 #run our current highlighted text through TTS
-xsel -o | espeak -v en --stdin
+xsel -o | espeak -s "$speed" -v en --stdin
 
