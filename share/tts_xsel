@@ -1,11 +1,30 @@
 #!/usr/bin/env bash
 
+#
+# Manage TTS operations using espeak
+#
+# author: Jonathan Zacsh <jzacsh@gmail.com>
+#
+
+TTS_CURRENT=${TTS_CURRENT:-~/.tts_current}
 #@TODO: write a tiny gnome-panel speed-dial quick-dropdown to allow changing `-s` to espeak
 speed="${ESPEAK_SPEED:-160}" #use espeak(1) default
 
-#stop other TTS audio running
-pkill espeak && sleep 0.5
+current=0
+speak () {
+  #stop other TTS audio running
+  kill $(< "$TTS_CURRENT") 2> /dev/null && sleep 0.5
 
-#run our current highlighted text through TTS
-xsel -o | espeak -s "$speed" -v en --stdin
+  #run our current highlighted text through TTS
+  xsel -o | espeak -s "$speed" -v en --stdin &
+
+  #track current TTS
+  current="$!"
+}
+
+#start TTS
+speak
+
+#store current TTS process
+echo -n "$current" > "$TTS_CURRENT"
 
