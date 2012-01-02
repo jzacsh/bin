@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 
+#stop other TTS audio running
+pkill espeak && sleep 0.5
+
+#run our current highlighted text through TTS
 xsel -o | espeak -v en --stdin
+
