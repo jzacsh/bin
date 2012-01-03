@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-#for more on assumptions made by this script, see ~/bin/share/tts_xsel
-TTS_CURRENT=${TTS_CURRENT:-~/.tts_current}
-
-kill -s CONT $(< "$TTS_CURRENT")
-
