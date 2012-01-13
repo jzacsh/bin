@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+#
+# live example of imagedex.py and prep_images scripts used with inotify tools.
+#
+
+watch="${1:-/srv/http/subs/content/www/drawings}"
+
+[[ -r "$watch" && -d "$watch" ]] || {
+  echo 'Error: Must pass a valid directory to be watched by inotify utilities.' >&2
+  exit 1
+}
+
+if type inotifywait >& /dev/null && type imagedex >& /dev/null;then
+
+  #actual juice of watching...
+  echo ":: [$(date --rfc-3339=seconds)] Watching for changes under '$watch' ..."
+  while inotifywait --exclude='*.json' -r -e modify "$watch"; do
+    echo ":: [$(date --rfc-3339=seconds)] ... re-building index of files."
+    imagedex -j drawings -p '/drawings/' -r \
+      -f /srv/http/subs/content/www/drawings/imagedex.json \
+      /srv/http/subs/content/www/drawings
+
+    echo ":: [$(date --rfc-3339=seconds)] ... re-building conversions and thumbnails of drawings"
+    /srv/http/subs/content/inc/prep_images > /srv/http/subs/content/inc/prep_images.log
+  done
+else
+  echo "Error: '$(basename $0)', is a simple wrapper around \`inotifywait\` and cannot run without it in \$PATH" >&2
+  exit 2
+fi
