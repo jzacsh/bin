@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+
+# conf: feel ffree to change this:
+path="${1:-/srv/http/subs/content/www/drawings/}"
+mods="${2:-/srv/http/subs/content/www/scaled/drawings/}"
+small='120x120'
+medium='800x800'
+#################################################################
+
+#some prep work
+small_w=$(( 10#$(echo -n "${small/x*}") ))
+small_h=$(( 10#$(echo -n "${small/*x}") ))
+medium_w=$(( 10#$(echo -n "${medium/x*}") ))
+medium_h=$(( 10#$(echo -n "${medium/*x}") ))
+
+# nonsense: #####################################################
+if [[ $1 = -h || $1 = --help ]];then
+  printf '
+    usage: `%s` [PATH] [MODS]
+
+    Resize and convert all images as necessary from PATH dir, to the MODS dir.
+
+    Files will be read from PATH and not modified. The conversions, resized
+    bitmap-only images, will be placed in similar directory trees under MODS.
+
+    PATH: absolute path. Default value: "%s"
+    MODS: absolute path. Default value: "%s"
+
+    See also: convert(1), ImageMagick(1)
+    Author: Jonathan Zacsh <jzacsh@gmail.com>
+  ' "$(basename $0)" "$path" "$mods" >& 2
+  exit 1
+fi
+
+#check for dependencies
+if (( BASH_VERSINFO[0] < 4 ));then
+  printf '
+  %s relies heavily on bash4 features.
+  Your bash version looks to be %s.
+  ' $(basename $0) "${BASH_VERSINFO[0]}" >&2
+  exit 2
+fi
+if ! type convert >& /dev/null || ! type identify >& /dev/null ;then
+  printf '
+  %s is a simple wrapper around a couple ImageMagick utilities.
+  You must have ImageMagick installed.
+  ' "$(basename $0)" >&2
+  exit 2
+fi
+
+verbose() {
+  local col_red="\[\e[1;31m\]"
+  local col_grn="\[\e[1;32m\]"
+  local col_blu="\[\e[1;34m\]"
+  local col_end="\[\e[m\]"
+
+  echo -ne "${col_red}::${col_end} ${@}\n"
+}
+#################################################################
+
+#
+#determine if this is an imagine want to run imagemagick stuff on
+is_image_file() {
+  local file ftype
+
+  file="$1"
+  [[ -r $1 ]] || return 2
+
+  ftype="$(file -b --mime-type "$file")"
+  case "$ftype" in
+    image/jpeg)
+      echo -n 'jpg'
+      ;;
+    image/svg+xml)
+      echo -n 'svg'
+      ;;
+    image/png)
+      echo -n 'png'
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+ensure_subtree() {
+  local subtr="$1"
+  local landing="$2"
+
+  if [[ ! -d "$landing/$subtr" || ! -w "$landing/$subtr" ]];then
+    mkdir -p "$landing/$subtr" || {
+      echo "Error: failed to create missing directory '$subtr' in '$landing'." >&2
+      return 1
+    }
+  fi
+  return 0
+}
+
+check_converted() {
+  local f geo
+  f="$1"
+  mod="$2"
+
+  if [[ -r $1 ]];then
+    #get the "geometry"
+    geo="$(identify -verbose "$f" | grep '^[[:space:]]*Geometry:[[:space:]]*')"
+    geo="${geo/*Geometry: }"
+
+    #get the width
+    w="${geo/x*}"
+    w=$(( 10#$(echo -n "$w") ))
+
+    #get the height
+    h="${geo/*x}"
+    h="${h/+*}"
+    h=$(( 10#$(echo -n "$h") ))
+
+    #requested mod sizes
+    rw="${mod}_w"
+    rw=$(( 10#$(echo -n "${!rw}") ))
+    #
+    rh="${mod}_h"
+    rh=$(( 10#$(echo -n "${!rh}") ))
+    echo "rw: $rw" # //@TODO: remove me!!    
+    echo "rh: $rh" # //@TODO: remove me!!    
+    exit 99
+
+    #actual logic of this function.
+    if (( w == rw || h == rh  ));then
+      #one of our dimensions is inside our requested bounds
+      if (( w <= rw || h <= rh ));then
+        #the *other* one is at *most* equal to the boundary, but not greater.
+        return 0
+      fi
+    fi
+  fi
+  return 1
+}
+
+run_conversions() {
+  local mod subtr file
+  orig="$1"
+  modfile="$2"
+  subtr="$3"
+  modtype="$4"
+
+  ensure_subtree "$subtr" "$mods/$modtype"
+  if [[ $? ]];then
+    tree="$mods/$modtype/$subtr"
+    verbose "\tresizing to '$modtype', ${!modtype}"
+    if [[ $(check_converted "$orig" "$modtype") ]];then
+      #found the file already set to our requested size, with a matching name.
+      verbose "\tskipping, file already converted to specifications."
+    else
+      convert "$orig" -resize "${!modtype}" "$tree/$modfile"
+      [[ $? ]] && verbose "\tsuccessfully converted to $modtype '$modfile'." || {
+        echo -e "\tfailed to convert to $modtype '$mod_name'."
+        return 1 #@TODO: make sure this actually returns all the way out of run_conversions
+      }
+    fi
+  fi
+}
+
+verbose "Starting work in '$mods'...\n"
+find "$path" -type f | while read file; do
+  ftype=$(is_image_file "$file") || continue
+
+  #continue, as we want to work on this file
+  ftree="$(dirname "$file")"
+  fname="$(basename "$file")"
+
+  #determine new file name
+  if [[ $ftype = svg ]];then
+    mod_name="${fname%.svg}.png"
+  else
+    mod_name="${fname}"
+  fi
+
+  #properly mirror our conversion's new location
+  subtree="${ftree#$path*}"
+
+  verbose "... working on '$subtree/$fname':"
+  run_conversions "$file" "$mod_name" "$subtree" "small"
+  run_conversions "$file" "$mod_name" "$subtree" "medium"
+
+  verbose #some visual padding
+done
+
