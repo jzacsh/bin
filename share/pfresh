@@ -50,7 +50,7 @@ if [[ $1 = -w ]];then
       refresh
     done
   else
-    echo ':: Error: `-w`, "watch" option utilizes `intofiywait` utility, which was not found' >& 2
+    echo ':: Error: `-w`, "watch" option utilizes `inotifywait` utility, which was not found' >& 2
   fi
 fi
 
