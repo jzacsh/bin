@@ -6,16 +6,18 @@
 
 watch="${1:-/srv/http/subs/content/www/drawings}"
 
+#sanity check
 [[ -r "$watch" && -d "$watch" ]] || {
   echo 'Error: Must pass a valid directory to be watched by inotify utilities.' >&2
   exit 1
 }
 
+#more sanity checking
 if type inotifywait >& /dev/null && type imagedex >& /dev/null;then
 
   #actual juice of watching...
   echo ":: [$(date --rfc-3339=seconds)] Watching for changes under '$watch' ..."
-  while inotifywait --exclude='*.json' -r -e modify "$watch"; do
+  while inotifywait --excludei='*.json' --excludei='.*.swp' -r -e modify "$watch"; do
     echo ":: [$(date --rfc-3339=seconds)] ... re-building index of files."
     imagedex -j drawings -p '/drawings/' -r \
       -f /srv/http/subs/content/www/drawings/imagedex.json \
@@ -25,6 +27,9 @@ if type inotifywait >& /dev/null && type imagedex >& /dev/null;then
     /srv/http/subs/content/inc/prep_images > /srv/http/subs/content/inc/prep_images.log
   done
 else
-  echo "Error: '$(basename $0)', is a simple wrapper around \`inotifywait\` and cannot run without it in \$PATH" >&2
+  echo "
+    Error: '$(basename $0)', is a simple wrapper around inotifywait,
+    prep_images, and imagedex and cannot run without it them \$PATH.
+  " >&2
   exit 2
 fi
