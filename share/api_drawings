@@ -5,6 +5,7 @@
 #
 
 watch="${1:-/srv/http/subs/content/www/drawings}"
+PID_LOG="${2:-/srv/http/subs/content/inc/api_drawings.pid}"
 
 #sanity check
 [[ -r "$watch" && -d "$watch" ]] || {
@@ -12,7 +13,20 @@ watch="${1:-/srv/http/subs/content/www/drawings}"
   exit 1
 }
 
+[[ -w "$PID_LOG" && -f "$PID_LOG" ]] || {
+  printf 'Error: Cannot write to "%s", make sure its a regular, writeable file.'
+  \ "$PID_LOG" >&2
+  exit 2
+}
+
+echo -n "$$" > "$PID_LOG"
+die() {
+  printf 'Emptying PID file, "%s".' "$PID_LOG"
+  echo -n '' > "$PID_LOG"
+}
+
 #more sanity checking
+trap die $E_DIRTY SIGINT
 if type inotifywait >& /dev/null && type imagedex >& /dev/null;then
 
   #actual juice of watching...
