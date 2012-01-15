@@ -3,7 +3,7 @@
 # conf: feel ffree to change this:
 path="${1:-/srv/http/subs/content/www/drawings/}"
 mods="${2:-/srv/http/subs/content/www/scaled/drawings/}"
-small='120x120'
+small='160x160'
 medium='800x800'
 #################################################################
 
