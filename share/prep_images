@@ -98,7 +98,7 @@ ensure_subtree() {
 }
 
 check_converted() {
-  local f geo
+  local f geo w h rw rh
   f="$1"
   mod="$2"
 
@@ -109,22 +109,19 @@ check_converted() {
 
     #get the width
     w="${geo/x*}"
-    w=$(( 10#$(echo -n "$w") ))
+    w=$(( 10#$w ))
 
     #get the height
     h="${geo/*x}"
     h="${h/+*}"
-    h=$(( 10#$(echo -n "$h") ))
+    h=$(( 10#$h ))
 
     #requested mod sizes
     rw="${mod}_w"
-    rw=$(( 10#$(echo -n "${!rw}") ))
+    rw=$(( 10#${!rw} ))
     #
     rh="${mod}_h"
-    rh=$(( 10#$(echo -n "${!rh}") ))
-    echo "rw: $rw" # //@TODO: remove me!!    
-    echo "rh: $rh" # //@TODO: remove me!!    
-    exit 99
+    rh=$(( 10#${!rh} ))
 
     #actual logic of this function.
     if (( w == rw || h == rh  ));then
@@ -135,6 +132,8 @@ check_converted() {
       fi
     fi
   fi
+
+  #proposed needs to be resized
   return 1
 }
 
