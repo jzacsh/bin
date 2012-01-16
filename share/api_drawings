@@ -7,13 +7,24 @@
 watch="${1:-/srv/http/subs/content/www/drawings}"
 PID_LOG="${2:-/srv/http/subs/content/inc/api_drawings.pid}"
 
+#check if thisscript is up and running
+if [[ $1 = -c ]];then
+  [[ -n "$(< "$PID_LOG")" && -d /proc/$(< "$PID_LOG") ]]
+  exit $?
+elif [[ -n "$(< "$PID_LOG")" ]];then
+  echo 'Error: PID file found not empty, script is running sowewhere else with PID, "%d".' \
+  "$(< "$PID_LOG")" >&2
+  exit 3
+fi
+
 #sanity check
 [[ -r "$watch" && -d "$watch" ]] || {
   echo 'Error: Must pass a valid directory to be watched by inotify utilities.' >&2
   exit 1
 }
 
-[[ -w "$PID_LOG" && -f "$PID_LOG" ]] || {
+touch "$PID_LOG"
+[[ $? == 0 && -w "$PID_LOG" && -f "$PID_LOG" ]] || {
   printf 'Error: Cannot write to "%s", make sure its a regular, writeable file.'
   \ "$PID_LOG" >&2
   exit 2
@@ -21,7 +32,7 @@ PID_LOG="${2:-/srv/http/subs/content/inc/api_drawings.pid}"
 
 echo -n "$$" > "$PID_LOG"
 die() {
-  printf 'Emptying PID file, "%s".' "$PID_LOG"
+  printf 'Emptying PID file, "%s".\n' "$PID_LOG"
   echo -n '' > "$PID_LOG"
 }
 
