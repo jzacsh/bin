@@ -138,7 +138,7 @@ check_converted() {
 }
 
 run_conversions() {
-  local mod subtr file
+  local mod subtr file need_resize
   orig="$1"
   modfile="$2"
   subtr="$3"
@@ -148,15 +148,17 @@ run_conversions() {
   if [[ $? ]];then
     tree="$mods/$modtype/$subtr"
     verbose "\tresizing to '$modtype', ${!modtype}"
-    if [[ $(check_converted "$orig" "$modtype") ]];then
+    check_converted "$tree/$modfile" "$modtype"
+    if (( $? ));then
+      convert "$orig" -resize "${!modtype}" "$tree/$modfile"
+      (( $? )) && {
+        echo -e "\tfailed to convert to $modtype '$mod_name'."
+        #@TODO: make sure this actually returns *out* of run_conversions:
+        return 1
+      } || verbose "\tsuccessfully converted to $modtype '$modfile'."
+    else
       #found the file already set to our requested size, with a matching name.
       verbose "\tskipping, file already converted to specifications."
-    else
-      convert "$orig" -resize "${!modtype}" "$tree/$modfile"
-      [[ $? ]] && verbose "\tsuccessfully converted to $modtype '$modfile'." || {
-        echo -e "\tfailed to convert to $modtype '$mod_name'."
-        return 1 #@TODO: make sure this actually returns all the way out of run_conversions
-      }
     fi
   fi
 }
