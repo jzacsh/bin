@@ -8,10 +8,10 @@ medium='800x800'
 #################################################################
 
 #some prep work
-small_w=$(( 10#$(echo -n "${small/x*}") ))
-small_h=$(( 10#$(echo -n "${small/*x}") ))
-medium_w=$(( 10#$(echo -n "${medium/x*}") ))
-medium_h=$(( 10#$(echo -n "${medium/*x}") ))
+small_w=$(( 10#${small/x*} ))
+small_h=$(( 10#${small/*x} ))
+medium_w=$(( 10#${medium/x*} ))
+medium_h=$(( 10#${medium/*x} ))
 
 # nonsense: #####################################################
 if [[ $1 = -h || $1 = --help ]];then
@@ -102,7 +102,7 @@ check_converted() {
   f="$1"
   mod="$2"
 
-  if [[ -r $1 ]];then
+  if [[ -r $f ]];then
     #get the "geometry"
     geo="$(identify -verbose "$f" | grep '^[[:space:]]*Geometry:[[:space:]]*')"
     geo="${geo/*Geometry: }"
