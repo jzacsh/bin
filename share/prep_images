@@ -4,7 +4,7 @@
 path="${1:-/srv/http/subs/content/www/drawings/}"
 mods="${2:-/srv/http/subs/content/www/scaled/drawings/}"
 small='160x160'
-medium='800x800'
+medium='550x550'
 #################################################################
 
 #some prep work
