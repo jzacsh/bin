@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# XFCE-wrapper around `gmrun`, useful script found in the AUR as a light-weight
+# replacement for Gnome-do.
+
 #exit codes
 EC_NORM=0
 EC_FAIL=1
