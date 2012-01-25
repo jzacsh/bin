@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# conf: feel ffree to change this:
+# conf: feel free to change this:
 path="${1:-/srv/http/subs/content/www/drawings/}"
 mods="${2:-/srv/http/subs/content/www/scaled/drawings/}"
 small='160x160'
