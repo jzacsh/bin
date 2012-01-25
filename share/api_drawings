@@ -54,7 +54,7 @@ if type inotifywait >& /dev/null && type imagedex >& /dev/null;then
 else
   echo "
     Error: '$(basename $0)', is a simple wrapper around inotifywait,
-    prep_images, and imagedex and cannot run without it them \$PATH.
+    prep_images, and imagedex and cannot run without them \$PATH.
   " >&2
   exit 2
 fi
