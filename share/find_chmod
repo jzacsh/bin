@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# Keep my music directory and its files the way i like them (with the right
+# bits set).
+
+# @TODO is this what bitmasks are for?
+
+dir="$1"
+chmod_f="${2:-644}"
+chmod_d="${3:-755}"
+
+(( $# )) || {
+  printf 'Run chmod(1) recursively on all contents of DIRECTORY.
+    Usage: DIRECTORY [CHMOD_FILES] [CHMOD_DIRS]
+      CHMOD_FILES defaults to: %d
+      CHMOD_DIRS defaults to: %d\n' "$chmod_f" "$chmod_d" >&2
+  exit 1
+}
+
+[[ -d "$dir" && -w "$dir" ]] || {
+  printf 'Not a directory writable by you: "%s"\n' "$dir" >&2
+  exit 2
+}
+
+# This is pretty invasive stuff, double-check with myself:
+printf \
+  "'%s'\n\tRecursively \`chmod\` files to '%d' and dirs to '%d'? [Y/n]" \
+  "$dir" "$chmod_f" "$chmod_d"
+read -p '' confirmation
+
+if [[ "${confirmation,,}" = 'n' ]];then
+  echo 'Cancelled.' >&2
+  exit 3
+else
+  find "$dir" -type f -exec chmod -c "$chmod_f" {} +;
+  find "$dir" -type d -exec chmod -c "$chmod_d" {} +;
+fi
