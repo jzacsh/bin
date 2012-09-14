@@ -9,8 +9,10 @@ dir="$1"
 chmod_f="${2:-644}"
 chmod_d="${3:-755}"
 
-(( $# )) || {
-  printf 'Run chmod(1) recursively on all contents of DIRECTORY.
+[[ $# = 0 || $1 = --help ]] && {
+  printf 'Summary:
+    runs chmod(1) recursively on all contents of DIRECTORY.
+
     Usage: DIRECTORY [CHMOD_FILES] [CHMOD_DIRS]
       CHMOD_FILES defaults to: %d
       CHMOD_DIRS defaults to: %d\n' "$chmod_f" "$chmod_d" >&2
