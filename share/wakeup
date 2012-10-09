@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+# Modify the below configuration and call this script on cron to wake up to a
+# radio stream in the morning.
+
+STREAM_URL='http://npr.ic.llnwd.net/stream/npr_live24'
+CONF=~/.config/wakeup/
+PID_FILE="${CONF}/.pid"
+LOG_FILE="${CONF}/.log"
+
+# functions ##########################################
+
+log() {
+  local stamp
+  stamp="$(date +%A\ %H:%M:%S)"
+  printf '[%s | pid: %d]: %s\n' \
+    "$stamp" "$$" "${@}" >> "$LOG_FILE"
+}
+
+die() {
+  local signal
+  signal="${1:-0}"
+
+  log "dying with $signal
+"
+  exit "$signal"
+}
+
+init_config() {
+  if [[ ! -d "$CONF" || ! -w "$CONF" ]];then
+    log "Configuration error: '$CONF' is not a writeable directory..."
+    log "trying to create '$CONF' now:"
+    mkdir -p "$CONF"
+    if (( $? ));then
+      log "Failed to ensure '$CONF' is writeable directory. Please fix!"
+      die 3
+    fi
+  fi
+}
+
+usage() {
+  local _n
+  _n="$(basename "$0")"
+
+  printf 'Usage: %s (morning|turnoff)
+    - morning
+        Starts playing the following audio stream:
+        "%s".
+    - turnoff
+        Kills the above started audio stream, if still running.
+' "$_n" "$STREAM_URL" >&2
+}
+
+getPid() {
+  cat "$PID_FILE"
+}
+
+morning() {
+  log "Trying to start morning stream, '$STREAM_URL'."
+  echo "$$" > "$PID_FILE"
+  mplayer -really-quiet volume=100 "$STREAM_URL"
+}
+
+turnoff() {
+  local pid
+  pid="$(getPid)"
+  if (( pid ));then
+    log "Killing stream at PID, '$pid'..."
+    kill -TERM -$pid
+    if (( $? ));then
+      log "Failed to kill PID, '$pid' with TERM..."
+      log 'trying desperate `killall mplayer`.'
+      killall mplayer
+      if (( $? ));then
+        die 2
+      else
+        cleanup
+      fi
+    else
+      cleanup
+    fi
+  fi
+}
+
+cleanup() {
+  log "Successfully killed, cleaning up,"
+  echo -n > "$PID_FILE"
+  die
+}
+
+# runtime logic ######################################
+
+# Sanity check
+init_config
+
+if [[ $1 = morning ]];then
+  morning
+elif [[ $1 = turnoff ]];then
+  turnoff
+else
+  usage
+  log 'Script called incorrectly, running usage and dying.'
+  die 1
+fi
+
+die
