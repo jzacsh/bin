@@ -66,7 +66,7 @@ turnoff() {
   pid="$(getPid)"
   if (( pid ));then
     log "Killing stream at PID, '$pid'..."
-    kill -TERM -$pid
+    kill -TERM -$pid 2>/dev/null
     if (( $? ));then
       log "Failed to kill PID, '$pid' with TERM..."
       log 'trying desperate `killall mplayer`.'
