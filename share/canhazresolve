@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+[[ $# -ne 1 ]] && {
+  _n="$(basename $0)"
+  printf "usage: '%s' DOMAIN
+  Determine if DOMAIN resolves to this machine's API address.\n" "$_n" >&2
+  exit 1
+}
+
+# the domain in question
+domain="$1"
+
+# Current IP (copy/paste of `mi` alias)
+currently="$(curl -s http://checkip.dyndns.org | sed -e 's/^.*Address:\ //' -e 's/<\/body.*//')"
+
+# IP that `domain` resolves to
+resolvesto="$(host "$domain" | sed -n '$'p | sed -e 's|^.*has\ address\ \([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$|\1|')"
+
+# If `domain` currently resolves to our IP address
+test "$currently" == "$resolvesto"
+canhaz=$?
+
+if (( canhaz ));then
+  printf \
+    '"%s" does not resolve to your current IP, "%s".
+     (resolves to: "%s")\n' \
+    "$domain" "$currently" "$resolvesto"
+fi
+
+exit $canhaz
+
+# vim: et:ts=2:sw=2
