@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# Column printer for the top of files (used *one* time in a small reporter).
+
+#Sanity checks
+if [[ "$BASH_VERSINFO" -lt 4 ]];then
+  printf 'Bash V4 features heavily used, Bash 4 required.\n' >&2
+  exit 1
+fi
+(( $# < 3 )) || {
+  _n="$(basename "$0")"; _n="${n,,}"
+  echo 'usage: %s NUM_COLS [-d]
+  NUM_COLS number of columns to label
+  -d\tEnable debugging
+
+  Example: `%s 80` will render:
+  1 3 5 7 9 13| 17|
+  Where the pipe character, |, marks the exact location of the column number.
+  ' "$_n" "$_n" >&2
+  exit 2
+}
+
+NUM_COLS=$(( 10#${1:-80} ))
+
+# enable debugging
+if [[ $2 = -d ]];then
+  PRINT_COLS_DEBUG=1
+fi
+
+printer_spacing() {
+  col=$(( 10#${1} ))
+  if (( $col > 9 )); then
+    if [[ $2 = 'prepare' ]];then
+      printf '%d|' $col
+    else
+      printf '4'
+    fi
+  else
+    if [[ $2 = 'prepare' ]];then
+      printf '%d' $col
+    else
+      printf '2'
+    fi
+  fi
+}
+
+if (( PRINT_COLS_DEBUG ));then
+  seq $NUM_COLS | while read col; do
+    printf '%s' "$col" >&2
+  done
+  printf '\n'
+
+fi
+
+seq $NUM_COLS | while read col; do
+  column=$(( 10#${col} ))
+
+  if (( column == 1 ));then
+    printf "%s" "$column"
+  else
+    width=$(( 10#$(printer_spacing "$column") ))
+    cleared=$(( $(( column -1 )) % width ))
+
+    # DEBUG:   printf '%d cleared: %d\n' "$column" $cleared >&2 # DONOTSUBMIT
+    if (( cleared == 0 )); then
+      modded="$(printer_spacing "$column" 'prepare')"
+      printf "%${width}s" "$modded"
+    fi
+  fi
+done
+printf '\n'
