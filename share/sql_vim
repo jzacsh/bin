@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+# Run an SQL query from inside SQL file; allows for SQL comments anywhere.
+
+# Originally based on stripping comments, then empty lines, then passing to
+# mysql, from ~/.vimrc:
+#   map <LocalLeader>S :!sed 's/^\(.*\)--.*$/\1/' % \| sed -e '/^[[:space:]]*$/'d \| mysql <CR>
+
+if [[ "$BASH_VERSINFO" -lt 4 ]];then
+  printf 'Bash V4 features heavily used, Bash 4 required.\n' >&2
+  exit 1
+fi
+(( $# != 1 )) && exit 1
+type printcols > /dev/null 2>&1 || {
+  printf 'Error: `printcols` script not found.\n' >&2
+  exit 2
+}
+
+SQLVIM_BINARY="${SQLVIM_BINARY:-mysql}"
+QUERY_FILE="$1"
+LESS_INDENT=8 # `less -N` indents for massive number of lines
+STRIPPED_FILE="$(mktemp)"
+strip_comments() { sed 's/^\(.*\)--.*$/\1/' "$1"; }
+strip_empties() { sed -e '/^[[:space:]]*$/'d; }
+column_markers() { printcols "$1"; }
+
+strip_comments "$QUERY_FILE" | strip_empties > "$STRIPPED_FILE"
+
+# save this for error reporting, below
+longest_line=$(( 10#$(wc -L < "$STRIPPED_FILE") ));
+
+# Some padding between QUERY_FILE file and SQL error
+printf '\n\n' >> "$STRIPPED_FILE"
+
+
+"$SQLVIM_BINARY" < "$STRIPPED_FILE" 2>> "$STRIPPED_FILE"
+if (( $? ));then
+  cols="$(column_markers "$longest_line")"
+
+
+  # View the utilized-SQL source, with line numbers
+  # including the SQL error at the bottom
+  if [[ $PAGER = less ]];then
+    less -f <(
+      printf "%${LESS_INDENT}s%s\n" ' ' "$cols"
+      cat -n "$STRIPPED_FILE"
+      printf "%${LESS_INDENT}s%s\n" ' ' "$cols"
+    )
+  else
+    # TODO this LESS_INDENT logic doesn't work without `less` :P
+    ${PAGER} <(
+      printf "%${LESS_INDENT}s%s\n" ' ' "$cols"
+      cat -n "$STRIPPED_FILE"
+      printf "%${LESS_INDENT}s%s\n" ' ' "$cols"
+    )
+  fi
+fi
+
+rm -v "$STRIPPED_FILE"
