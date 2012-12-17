@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+_n="$(basename "$0")"; _n="${_n,,}"
+usage() {
+  printf 'Usage: %s ICO_FILE OUTPUT_FILE
+  Create a copy of a Microsoft ".ico" file, ICO_FILE, converted to PNG and save
+  to OUTPUT_FILE.
+' "$_n" >&2
+}
+
+(( $# != 2 )) && {
+  usage
+  exit 1
+}
+
+if ! type convert > /dev/null 2>&1;then
+  printf "Error: Require, but cannot find ImageMagick's convert(1) .\n" >&2
+  exit 2
+fi
+
+convert "$1" -thumbnail 16x16 -alpha on -background none -flatten "$2"
