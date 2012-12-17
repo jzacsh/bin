@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+# Convert a website's favicon (if it has one) to a PNG file, defaulting to the
+# original favicon's name.
+_n="$(basename "$0")"; _n="${_n,,}"
+F_FOUND='' # found favicon path
+F_TYPE='' # found favicon's file type
+URL="$1"
+PNG_OUTPUT="$2"
+
+usage() {
+  printf "Usage: %s URL [OUTPUT_NAME]
+Summary:
+  Convert a URL's favicon (if it has one) to a PNG file. Name of the output
+  PNG file defaults favicon_[timestamp].png, if OUTPUT_NAME is not
+  provided.
+
+  Note: URL should be the root you believe will contain a favicon.
+
+  FAVIPNG_CONVERSION environment variable indicating the binary that the
+  original favicon should be passed to (as a first argument), if the format is
+  ico.
+" "$_n" >&2
+}
+
+(( $# < 1 || $# > 2 )) && {
+  usage
+  exit 1
+}
+
+scrape_rel_tag() {
+  # @TODO(zacsh) re-write this script in python an import an xml/xpath parser to
+  # find the link[rel="shortcut icon"]
+# printf 'Error: Scraping for rel tag not yet implemented.\n' >&2
+  return 1
+}
+
+guess_path() {
+  local guess guesses
+  guesses=( "${URL}" "${URL}/favicon.ico" "${URL}/favicon.png" )
+  for guess in "$guesses";do
+    if curl -ILf "$guess" >/dev/null 2>&1;then
+      F_TYPE="${guess##*.}"
+      F_FOUND="$guess"
+      break
+    fi
+  done
+  test -z $F_FOUND
+}
+
+default_name() {
+  printf 'favicon_%s.png' "$(date +%s)"
+}
+
+FAVIPNG_CONVERSION="${FAVIPNG_CONVERSION:-icopng}"
+
+if ! type "$FAVIPNG_CONVERSION" >/dev/null 2>&1;then
+  printf 'FAVIPNG_CONVERSION env. variable was set to, "%s", but must be set to
+  a valid executable\n' "$FAVIPNG_CONVERSION" >&2
+  exit 2
+fi
+
+scrape_rel_tag || guess_path
+
+if [[ -z $F_FOUND ]];then
+  # @TODO(zacsh) when scrape_rel_tag is complete, then add this back to the
+  # error output:
+# printf 'Could not determine location of icon.
+# Tried scraping for <link rel="shortcut icon" ... />
+#   "$1" "${guesses[@]}"  >&2
+  printf 'Tried guessing locations under the provided URL:\n\t%s\n' \
+    "$1" >&2
+  exit 3
+fi
+
+# Download a copy of the original favicon
+downloaded="$(mktemp).${F_TYPE}"
+touch "$downloaded"
+curl -sL "$F_FOUND" > "$downloaded"
+
+png_icon="${PNG_OUTPUT:-$(default_name "$favicon")}"
+
+
+if [[ $F_TYPE = ico ]];then
+  "$FAVIPNG_CONVERSION" "$downloaded" "$png_icon"
+  rm "$downloaded"
+else
+  mv "$downloaded" "$png_icon"
+fi
+
+echo "$png_icon"
