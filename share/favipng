@@ -5,6 +5,7 @@
 _n="$(basename "$0")"; _n="${_n,,}"
 F_FOUND='' # found favicon path
 F_TYPE='' # found favicon's file type
+F_ONDISK='' # locally downloaded copy
 URL="$1"
 PNG_OUTPUT="$2"
 
@@ -35,13 +36,42 @@ scrape_rel_tag() {
   return 1
 }
 
+path_is_image() {
+  local guess ondisk ftype mimetype
+  guess="$1"
+
+  if ! curl -ILf "$guess" >/dev/null 2>&1;then
+    return 1
+  fi
+
+  ondisk="$(mktemp)"
+  curl -sL "$guess" > "$ondisk"
+  (( $? )) && return 2
+
+   # eg.: mime-type "image/png" => "image"
+  mimetype="$(file --brief --mime-type "$ondisk")"
+  ftype="${mimetype/\/*/}"
+
+  if [[ $ftype != image ]];then
+    return 3
+  fi
+
+  echo -n "$ondisk"
+}
+
 guess_path() {
-  local guess guesses
+  local guess guesses ondisk
   guesses=( "${URL}" "${URL}/favicon.ico" "${URL}/favicon.png" )
-  for guess in "$guesses";do
-    if curl -ILf "$guess" >/dev/null 2>&1;then
-      F_TYPE="${guess##*.}"
+  for guess in "${guesses[@]}";do
+    ondisk="$(path_is_image "$guess")"
+    if (( $? == 0 ));then
       F_FOUND="$guess"
+      F_TYPE="${guess##*.}"
+
+      # Rename our copy to make ImageMagick happy
+      F_ONDISK="${ondisk}.${F_TYPE}"
+      mv "$ondisk" "$F_ONDISK"
+
       break
     fi
   done
@@ -50,6 +80,15 @@ guess_path() {
 
 default_name() {
   printf 'favicon_%s.png' "$(date +%s)"
+}
+
+save_ico_to() {
+  if [[ $F_TYPE = ico ]];then
+    "$FAVIPNG_CONVERSION" "$F_ONDISK" "$1"
+    rm "$F_ONDISK"
+  else
+    mv "$F_ONDISK" "$1"
+  fi
 }
 
 FAVIPNG_CONVERSION="${FAVIPNG_CONVERSION:-icopng}"
@@ -67,25 +106,13 @@ if [[ -z $F_FOUND ]];then
   # error output:
 # printf 'Could not determine location of icon.
 # Tried scraping for <link rel="shortcut icon" ... />
-#   "$1" "${guesses[@]}"  >&2
   printf 'Tried guessing locations under the provided URL:\n\t%s\n' \
-    "$1" >&2
+    "$1" "${guesses[@]}"  >&2
   exit 3
 fi
 
-# Download a copy of the original favicon
-downloaded="$(mktemp).${F_TYPE}"
-touch "$downloaded"
-curl -sL "$F_FOUND" > "$downloaded"
-
 png_icon="${PNG_OUTPUT:-$(default_name "$favicon")}"
 
-
-if [[ $F_TYPE = ico ]];then
-  "$FAVIPNG_CONVERSION" "$downloaded" "$png_icon"
-  rm "$downloaded"
-else
-  mv "$downloaded" "$png_icon"
-fi
+save_ico_to "$png_icon"
 
 echo "$png_icon"
