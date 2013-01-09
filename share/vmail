@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+email="$(mktemp)"
+
+$EDITOR "$email"
+
+mail "${@}" < "$email"
+
+rm -v "$email"
