@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+dirs=(doc plugin syntax autoload colors ftdetect ftplugin)
+
+for dir in "${dirs[@]}";do
+  [[ -d "$dir" ]] || continue # for ${dir}s that don't exist
+  echo -e "\n\nGoing over $dir/ contents..."
+
+  for file in bundle/*/$dir/*;do
+    [[ -r "$file" ]] || continue # for ${dir}s/file-combos that don't exist
+
+    echo -e "\n\tfound '${dir}'-file: '$file'...";
+    if [[ -d "$file" ]];then
+      echo -e "\t\tWARNING: Look into dir '$file' !";
+      continue;
+    fi
+
+    localCopy="./${dir}/$(basename "$file")"
+    if [[ -r "$localCopy" ]] && ! diff "$localCopy" "$file" >/dev/null 2>&1; then
+      echo -e "\t\tNOTE: different local copy exists, overwriting";
+    fi
+
+    if [[ $1 != -n ]];then #avoid clean-runs
+      cp -v "$file" "${dir}/"
+    fi
+  done
+done
