@@ -36,26 +36,17 @@ class PseudoClock {
   }
 
   void advanceHMS() {
-    if (this.second == 59) {
+    if (++this.second == 60) {
       this.second = 0;
-
-      if (this.minute == 59) {
+      if (++this.minute == 60) {
         this.minute = 0;
-
-        if (this.hour == 23) {
+        if (++this.hour == 24) {
           this.hour = 0;
         }
-        else {
-          ++this.hour;
-        }
-      } else {
-        ++this.minute;
       }
-    } else {
-      ++this.second;
     }
   }
-  
+
   void _start() {
     new Timer.repeating(1000, (Timer timer) {
       this.advanceHMS();
@@ -92,7 +83,7 @@ class PseudoClock {
 
 main() {
   new PseudoClock.StartOn(new Date.now());
-  // new PseudoClock(1, 10, 57);
+  // new PseudoClock(1, 59, 57);
 }
 
 // vim: et:ts=2:sw=2
