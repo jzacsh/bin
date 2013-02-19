@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 _n="$(basename "$0")"
-[[ -r "$1" && -d "$1" ]] || {
-  printf 'Error: "%s" is not a readable directory\n' "$1" >&2
+musicdir="$(readlink -f "$1")"
+[[ -r "$musicdir" && -d "$musicdir" ]] || {
+  printf 'Error: "%s" is not a readable directory\n' "$musicdir" >&2
   printf 'USAGE: %s MUSIC_DIR\n' "$_n" >&2
   exit 1
 }
-mplayer -playlist <(find "$1" -type f | sort)
+mplayer -playlist <(find "$musicdir" -type f | sort)
