@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# Load our custom ~/.config/user-dirs.dirs for XDG_[FOO]_DIR env vars.
+#
+# Ensure our custom directories are acknowledged, as they may have not been
+# mounted yet, from external drives, when first checked by regular processes.
+
+xdgdirs_file=~/back/dots/user-dirs.dirs
+
+# See if we even haven't already run
+canon_current="$(readlink -f ~/.config/user-dirs.dirs)"
+canon_custom="$(readlink -f "$xdgdirs_file")"
+if [[ "$canon_current" = "$canon_custom" ]] ;then
+  exit
+fi
+
+xdgdirs_exist() {
+  local dir proposed
+
+  grep "XDG_[[:alpha:]][_[[:alpha:]]*]*DIR" "$xdgdirs_file" | \
+    while read proposed; do
+      dir="${proposed/*=/}";
+      if [[ ! -d "$proposed" ]];then
+        return 1;
+      fi
+    done
+  return 0
+}
+
+xdgdirs_exist && {
+  cd ~/.config/
+  ln -sfv "$xdgdirs_file"
+} || {
+  printf 'Error: not all DIRS in xdg-dirs.dirs exist:\n\t"%s"\n' \
+    "$xdgdirs_file" >&2
+}
+
+unset xdgdirs_file
