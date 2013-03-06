@@ -20,7 +20,7 @@ export_once() {
   to_prepend=$2
   existing_val=$(get_env "^${env_var}=")
 
-  # Only prepend our env. vars, if we haven't *already*
+  # Only prepend our env. vars if we haven't *already*
   if ! { get_env "$to_prepend" >/dev/null 2>&1; }; then
     # Prepend to existing env vars, if env. vars exist, otherwise, simply
     # export.
