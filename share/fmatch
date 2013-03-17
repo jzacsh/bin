@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import filecmp
+from optparse import OptionParser
+
+def get_dirs():
+    (dira, dirb) = (sys.argv[1], sys.argv[2])
+    return ((dira, os.listdir(dira)), (dirb, os.listdir(dirb)))
+
+def fmatch():
+    ((dira, diralist), (dirb,dirblist)) = get_dirs()
+    fpath_template = "{0}/{1}"
+
+    print("dirs:\n\tdir1: {0}\n\tdir2: {1}".format(dira, dirb))
+    same_message = ''
+    for filea in diralist:
+        filea = fpath_template.format(dira, filea)
+        if not os.path.isdir(filea):
+            for fileb in dirblist:
+                fileb = fpath_template.format(dirb, fileb)
+                if not os.path.isdir(fileb):
+                    if filecmp.cmp(filea, fileb):
+                        same_message = ('Identical files'
+                        ' found:\n\t{0}\n\t{1}\n')
+                        print(same_message.format(filea, fileb))
+
+    if same_message == '':
+        print('No matching files found')
+    else:
+        print(('Matches, listed above, found between'
+              ' directories:\n\t{0}\n\t{1}').format(dira, dirb))
+
+if __name__ == '__main__':
+    fmatch()
+
+# vim: et:ts=4:sw=4:sts=4
