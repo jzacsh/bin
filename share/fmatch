@@ -13,7 +13,6 @@ def fmatch():
     ((dira, diralist), (dirb,dirblist)) = get_dirs()
     fpath_template = "{0}/{1}"
 
-    print("dirs:\n\tdir1: {0}\n\tdir2: {1}".format(dira, dirb))
     same_message = ''
     for filea in diralist:
         filea = fpath_template.format(dira, filea)
