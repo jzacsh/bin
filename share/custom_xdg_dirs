@@ -15,14 +15,11 @@ if [[ "$canon_current" = "$canon_custom" ]] ;then
 fi
 
 xdgdirs_exist() {
-  local dir proposed
+  local proposed
 
   grep "XDG_[[:alpha:]][_[[:alpha:]]*]*DIR" "$xdgdirs_file" | \
     while read proposed; do
-      dir="${proposed/*=/}";
-      if [[ ! -d "$proposed" ]];then
-        return 1;
-      fi
+      [[ -d "${proposed/*=/}" ]] || return 1
     done
   return 0
 }
