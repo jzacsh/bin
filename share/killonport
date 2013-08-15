@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+process=$(fuser -n tcp "$1" 2>/dev/null)
+for pid in "$process"; do
+  printf '...killing PID %s\n' $pid
+  kill $pid
+  pidexit=$?
+  if (( pidexit ));then
+    printf 'kill failed (exit %s). -9? [Y/n]\t' "$pidexit"
+    read dashnine
+    if [[ -z "$dashnine" || "${dashnine,,}" = y ]];then
+      kill -9 $pid
+    else
+      exit "$pidexit"
+    fi
+  else
+    printf 'Succeess! (exit: %s)\n' "$pidexit"
+  fi
+done
+
+if [[ -z "$process" ]];then
+  printf 'No process running on port :%s\n' "$1" >&2
+fi
