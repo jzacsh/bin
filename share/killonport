@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+[[ -z $1 ]] && exit 1
+
+printf 'Killing listeners on :%s\n' "$1"
 process=$(fuser -n tcp "$1" 2>/dev/null)
 for pid in "$process"; do
   printf '...killing PID %s\n' $pid
