@@ -2,8 +2,14 @@
 
 [[ -z $1 ]] && exit 1
 
-printf 'Killing listeners on :%s\n' "$1"
+printf 'Looking for processes on :%s\n' "$1"
 process=$(fuser -n tcp "$1" 2>/dev/null)
+
+if [[ -z "$process" ]];then
+  printf 'No process running on port :%s\n' "$1" >&2
+  exit
+fi
+
 for pid in "$process"; do
   printf '...killing PID %s\n' $pid
   kill $pid
@@ -20,7 +26,3 @@ for pid in "$process"; do
     printf 'Succeess! (exit: %s)\n' "$pidexit"
   fi
 done
-
-if [[ -z "$process" ]];then
-  printf 'No process running on port :%s\n' "$1" >&2
-fi
