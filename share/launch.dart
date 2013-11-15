@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 // Just playing with some dart basics.. never used it before.
 
@@ -10,7 +11,7 @@ class PseudoClock {
     this._start();
   }
 
-  PseudoClock.StartOn(Date startTime) {
+  PseudoClock.StartOn(DateTime startTime) {
     this.hour = startTime.hour;
     this.minute = startTime.minute;
     this.second = startTime.second;
@@ -19,20 +20,17 @@ class PseudoClock {
   }
 
 
-  static String _zeroPadNumber(num number) {
+  static String _zeroPad(num number) {
     // TODO(jzacsh) remove if sprint is ever native:
     return number.toString().length == 1 ?
-      '0'.concat(number.toString()) : number.toString();
+      '0'+ number.toString() : number.toString();
   }
 
-  void _printHMS() {
-    // TODO(jzacsh) import sprintf pub package for \r
-    print('\r'
-        .concat(_zeroPadNumber(this.hour))
-        .concat(':')
-        .concat(_zeroPadNumber(this.minute))
-        .concat(':')
-        .concat(_zeroPadNumber(this.second)));
+  void _updateHMS() {
+    stdout.write('\r'
+        + _zeroPad(this.hour) + ':'
+        + _zeroPad(this.minute) + ':'
+        + _zeroPad(this.second));
   }
 
   void advanceHMS() {
@@ -48,9 +46,9 @@ class PseudoClock {
   }
 
   void _start() {
-    new Timer.repeating(1000, (Timer timer) {
+    new Timer.periodic(new Duration(seconds:1), (Timer timer) {
       this.advanceHMS();
-      this._printHMS();
+      this._updateHMS();
     });
   }
 
@@ -82,7 +80,7 @@ class PseudoClock {
 //}
 
 main() {
-  new PseudoClock.StartOn(new Date.now());
+  new PseudoClock.StartOn(new DateTime.now());
   // new PseudoClock(1, 59, 57);
 }
 
