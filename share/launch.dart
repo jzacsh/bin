@@ -53,7 +53,7 @@ class PseudoClock {
   }
 
   void stop() {
-    throw const NotImplementedException();
+    throw new UnimplementedError('stopping clock is not implemented.');
   }
 }
 
