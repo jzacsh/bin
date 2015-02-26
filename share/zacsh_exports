@@ -45,6 +45,7 @@ export RLWRAP=' AaN '
 export PAGER=less
 export RUBYOPT='w' #helpful ruby warnings
 export GREP_OPTIONS='--color=auto'
+export GOPATH="$HOME/usr/lib/go/"
 
 # The solution is to check if _appending_ ENV. variables are appending
 # unnecessarily.
