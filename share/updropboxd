@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+DAEMON_EXEC=~/.dropbox-dist/dropboxd
+
+if [[ "$(dropbox status 2>&1)" != "Dropbox isn't running!" ]];then
+  exit;
+fi
+
+stamp="$(date --iso-8601)-$(date +%H-%M-%S)"
+logFile=~/usr/log/dropboxd_${stamp}.log
+command "$DAEMON_EXEC" > "$logFile" 2>&1 & disown
