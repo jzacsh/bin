@@ -9,3 +9,5 @@ fi
 stamp="$(date --iso-8601)-$(date +%H-%M-%S)"
 logFile=~/usr/log/dropboxd_${stamp}.log
 command "$DAEMON_EXEC" > "$logFile" 2>&1 & disown
+
+dropbox lansync n # disable LAN spam
