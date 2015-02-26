@@ -50,7 +50,7 @@ export GOPATH="$HOME/usr/lib/go/"
 # The solution is to check if _appending_ ENV. variables are appending
 # unnecessarily.
 export_once 'PATH' \
-  "$HOME/bin:$HOME/bin/local:$HOME/bin/share:$HOME/bin/dist:$HOME/bin/lib:$HOME/usr/local/bin/androidsdk/platform-tools:$HOME/usr/local/bin/androidsdk/tools:/usr/local/go/bin"
+  "$HOME/bin:$HOME/bin/local:$HOME/bin/share:$HOME/bin/dist:$HOME/bin/lib:$HOME/usr/lib/go/bin/:$HOME/usr/local/bin/androidsdk/platform-tools:$HOME/usr/local/bin/androidsdk/tools:/usr/local/go/bin"
 export_once 'CLASSPATH' "$HOME/var/edu/princenton/algs4/"
 export_once 'PYTHONPATH' "$HOME/usr/lib/python/"
 export_once 'NODE_PATH' "/usr/local/lib/node_modules/:/usr/lib/node/"
