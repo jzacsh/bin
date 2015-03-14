@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+cat >&2 <<EOF
+  NO IDEA what this script was supposed to do, and its use of libbzsh is now
+  deleted, so this code needs to be inspected and discarded anyway :)
+EOF
+exit 99
 source libbzsh
 
 # toggle these: ###############################################################
