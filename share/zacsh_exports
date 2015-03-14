@@ -1,32 +1,32 @@
 #!/usr/bin/env bash
+#
+# Run all env. `export` statements
+#
+# NOTE: This is intended to be run from inside ~/.bashrc (yes, nested shells).
 
-ex_env=/usr/bin/env
-ex_grep=/bin/grep
+isAlreadyExported() { env | grep "^${1}=" >/dev/null 2>&1; }
+
+# re-prints "$@" colon delimeted, eg: "$1:$2:$3"
+concatWithColons() { printf '%s:' $@ | sed -e 's,:$,,'; }
 
 # Hacks to somewhat allow "export ENV=...." to be run a million times without
 # making a mess.
-
-# This is intended to be run from inside ~/.bashrc (yes, nested shells).
-
-get_env() {
-  # NB: if figure out why executables aren't in _global_ path by now, then fix
-  # and delete this function.
-  $ex_env | $ex_grep $1
-}
-
-export_once() {
+#
+# $1=env var to export (eg: PYTHONPATH)
+# $@=strings to colon-delimited prepend (eg: /my/pylib /sys/pylib)
+exportPrependedOnce() {
   local env_var to_prepend existing_val
-  env_var=$1
-  to_prepend=$2
-  existing_val=$(get_env "^${env_var}=")
+  env_var="$1"; shift
+
+  to_prepend="$(concatWithColons "$@")"
+  existing_val="$(eval echo -n "\$$env_var")"
 
   # Only prepend our env. vars if we haven't *already*
-  if ! { get_env "$to_prepend" >/dev/null 2>&1; }; then
-    # Prepend to existing env vars, if env. vars exist, otherwise, simply
-    # export.
-    # see: man bash | less +/\:\+
-    export "$env_var"="${to_prepend}${existing_val:+":$existing_val"}"
-  fi
+  isAlreadyExported "$to_prepend" && return # nothing to do
+
+  local toExport="$to_prepend"
+  [ -n "$existing_val" ] && toExport="$toExport:$existing_val"
+  export "${env_var}=$toExport"
 }
 
 
@@ -47,14 +47,23 @@ export RUBYOPT='w' #helpful ruby warnings
 export GREP_OPTIONS='--color=auto'
 export GOPATH="$HOME/usr/lib/go/"
 
-# The solution is to check if _appending_ ENV. variables are appending
-# unnecessarily.
-export_once 'PATH' \
-  "$HOME/bin:$HOME/bin/local:$HOME/bin/share:$HOME/bin/dist:$HOME/bin/lib:$HOME/usr/lib/go/bin/:$HOME/usr/local/bin/androidsdk/platform-tools:$HOME/usr/local/bin/androidsdk/tools:/usr/local/go/bin"
-export_once 'CLASSPATH' "$HOME/var/edu/princenton/algs4/"
-export_once 'PYTHONPATH' "$HOME/usr/lib/python/"
-export_once 'NODE_PATH' "/usr/local/lib/node_modules/:/usr/lib/node/"
+exportPrependedOnce 'PATH' \
+  "$HOME/bin" \
+  "$HOME/bin/local" \
+  "$HOME/bin/share" \
+  "$HOME/bin/dist" \
+  "$HOME/bin/lib" \
+  "$HOME/usr/lib/go/bin/" \
+  "$HOME/usr/local/bin/androidsdk/platform-tools" \
+  "$HOME/usr/local/bin/androidsdk/tools" \
+  "/usr/local/go/bin"
+exportPrependedOnce 'CLASSPATH' "$HOME/var/edu/princenton/algs4/"
+exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python/"
+exportPrependedOnce 'NODE_PATH' \
+  "/usr/local/lib/node_modules/" \
+  "/usr/lib/node/"
 
 
-unset export_once
-unset get_env
+unset isAlreadyExported
+unset concatWithColons
+unset exportPrependedOnce
