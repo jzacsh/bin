@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Symlinks private key $1 so `addKeys` will find it
+
+[ -z "$1" ] && {
+  printf 'Error: Expect $1 to be a private key filename\n' >&2
+  exit 1
+}
+
+addKeysLocation=~/.ssh/add/
+mkdir -p "$addKeysLocation"
+cd "$addKeysLocation"
+
+
+keyName="$(basename "${1/.pub}")"
+
+chmod --verbose 400     "../$keyName"
+ln --symbolic --verbose "../$keyName"     "$keyName.add"
+
+chmod --verbose 400     "../$keyName.pub"
+ln --symbolic --verbose "../$keyName.pub" "$keyName.add.pub"
