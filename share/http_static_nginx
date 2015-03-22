@@ -67,7 +67,7 @@ cleanupTmpServer() {
   printf '\n\nCaught interrupt for "%s" server on port %s...\n' \
     "$appName" "$appPort"
 
-  printf '\tKilling nginx server\n'
+  printf '\tKilling nginx server, with EUID=0:\n'
   sudo nginx -c "$nginxConfig" -s stop
 
   printf '\tDeleting temp configuration in %s\n\n\n' "$nginxTmpDir"
@@ -75,7 +75,7 @@ cleanupTmpServer() {
   exit 0
 }
 
-# TODO(zacsh) Figure out how to run nginx as local user (ie: no sudo)
+printf '...Starting nginx with EUIDi=0\n'
 if ! sudo nginx -c "$nginxConfig";then
   printf 'Failed to start nginx\n' >&2
   exit 4
