@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+binpath="$(type -p "$1")"
+file "$binpath" # response
+if [ "$(file --brief --mime-type "$binpath")" = 'inode/symlink' ];then
+  file -L "$binpath" # obvious next question
+fi

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -e
+
+binpath="$(type -p "$1")"
+${PAGER:-cat} "$binpath"
