@@ -54,8 +54,8 @@ exportPrependedOnce 'PATH' \
   "$HOME/bin/dist" \
   "$HOME/bin/lib" \
   "$HOME/usr/lib/go/bin/" \
-  "$HOME/usr/local/bin/androidsdk/platform-tools" \
-  "$HOME/usr/local/bin/androidsdk/tools" \
+  "$HOME/usr/local/bin/android/sdk/platform-tools" \
+  "$HOME/usr/local/bin/android/sdk/tools" \
   "/usr/local/go/bin"
 exportPrependedOnce 'CLASSPATH' "$HOME/var/edu/princenton/algs4/"
 exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python/"
