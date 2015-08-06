@@ -37,9 +37,11 @@ var listFiles = module.exports = function(dirToList) {
 
 
 if (require.main === module) {
-  console.log(
-      JSON.stringify(
-          module.exports(
-              path.resolve(
-                  process.argv[2]))));
+  var dirToList = path.resolve(process.argv[2]);
+
+  var treeWrapper = {};
+  var dirName = path.basename(dirToList);
+  treeWrapper[dirName] = module.exports(dirToList);
+
+  console.log(JSON.stringify(treeWrapper));
 }
