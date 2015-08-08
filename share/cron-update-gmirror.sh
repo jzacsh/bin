@@ -2,6 +2,8 @@
 set -e
 set -x
 
+export PATH=$PATH:$HOME/bin/share/:$HOME/usr/lib/go/bin/
+
 # config
 gdriveRoot="$(readlink -f "$1")"
 gdriveArt="$2"
