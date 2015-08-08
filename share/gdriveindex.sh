@@ -2,6 +2,8 @@
 #
 # Utilizes skicka upload (but can use any 3rd-party cloud uploader) to keep an
 # up to date index of a given directory  
+#   Example args: $1=~/usr/share/drive/ $2=some/public/dir/
+#
 dieUsage() { printf 'usage: ~/gdrive/path subpath/to/index\n' >&2; exit 1; }
 
 (( $# == 2 )) || dieUsage
