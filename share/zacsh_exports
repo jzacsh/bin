@@ -4,10 +4,9 @@
 #
 # NOTE: This is intended to be run from inside ~/.bashrc (yes, nested shells).
 
-isAlreadyExported() { env | grep "^${1}=" >/dev/null 2>&1; }
-
-# re-prints "$@" colon delimeted, eg: "$1:$2:$3"
-concatWithColons() { printf '%s:' $@ | sed -e 's,:$,,'; }
+isAlreadyExported() {
+  printf "${!1}" | tr : '\n' | grep "^${2}$" > /dev/null 2>&1
+}
 
 # Hacks to somewhat allow "export ENV=...." to be run a million times without
 # making a mess.
@@ -15,17 +14,29 @@ concatWithColons() { printf '%s:' $@ | sed -e 's,:$,,'; }
 # $1=env var to export (eg: PYTHONPATH)
 # $@=strings to colon-delimited prepend (eg: /my/pylib /sys/pylib)
 exportPrependedOnce() {
-  local env_var to_prepend existing_val
-  env_var="$1"; shift
+  local env_var="$1";shift
 
-  to_prepend="$(concatWithColons "$@")"
-  existing_val="$(eval echo -n "\$$env_var")"
+  local to_prepend="$(
+    local -a found=( $(printf "${!env_var}" | tr : '\n') )
+    local isFirst=1
 
-  # Only prepend our env. vars if we haven't *already*
-  isAlreadyExported "$to_prepend" && return # nothing to do
+    local part
+    for part in $@; do
+      printf '%s\n' "${found[@]}" | grep "$part" >/dev/null 2>&1 &&
+          continue
+
+      (( isFirst )) || printf ':'
+      isFirst=0
+
+      printf '%s' "$part"
+    done
+  )"
+
+  [ -z "$to_prepend" ] && return  # nothing new
 
   local toExport="$to_prepend"
-  [ -n "$existing_val" ] && toExport="$toExport:$existing_val"
+  [ -n "${!env_var}" ] && toExport="$toExport:"${!env_var}""
+
   export "${env_var}=$toExport"
 }
 
@@ -54,15 +65,15 @@ exportPrependedOnce 'PATH' \
   "$HOME/bin/share" \
   "$HOME/bin/dist" \
   "$HOME/bin/lib" \
-  "$HOME/usr/lib/go/bin/" \
+  "$HOME/usr/lib/go/bin" \
   "$HOME/usr/local/bin/android/sdk/platform-tools" \
   "$HOME/usr/local/bin/android/sdk/tools" \
   "/usr/local/go/bin"
-exportPrependedOnce 'CLASSPATH' "$HOME/var/edu/princenton/algs4/"
-exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python/"
+exportPrependedOnce 'CLASSPATH' "$HOME/var/edu/princenton/algs4"
+exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python"
 exportPrependedOnce 'NODE_PATH' \
-  "/usr/local/lib/node_modules/" \
-  "/usr/lib/node/"
+  "/usr/local/lib/node_modules" \
+  "/usr/lib/node"
 
 
 unset isAlreadyExported
