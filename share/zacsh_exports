@@ -68,7 +68,9 @@ exportPrependedOnce 'PATH' \
   "$HOME/usr/lib/go/bin" \
   "$HOME/usr/local/bin/android/sdk/platform-tools" \
   "$HOME/usr/local/bin/android/sdk/tools" \
+  "$HOME/usr/local/bin/android/studio/bin" \
   "/usr/local/go/bin"
+
 exportPrependedOnce 'CLASSPATH' "$HOME/var/edu/princenton/algs4"
 exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python"
 exportPrependedOnce 'NODE_PATH' \
