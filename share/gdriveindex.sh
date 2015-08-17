@@ -15,17 +15,25 @@ drivePath="$2"
   dieUsage
 }
 
+die() {
+  local err="$1"; shift
+  echo -e $@; cleanup; exit $err
+}
+cleanup() { if [ -n "$tmpJson" ];then rm -v "$tmpJson";fi }
+
 set -e
+trap cleanup ERR
+
 fullPath="$(readlink -f "$localRoot"/"$drivePath")"
 tmpJson="$(mktemp --tmpdir "$(basename "$0")-XXXXXX.json")"
 dirtojson.js "$fullPath" > "$tmpJson"
 
 if diff "$fullPath"/index.json "$tmpJson" >/dev/null 2>&1; then
-  printf 'index.json already up to date\n'
-  exit
+  die 0 'index.json already up to date\n'
 fi
 
 
 cp -v "$tmpJson" "$fullPath"/index.json
 pushd "$fullPath"
-skicka upload ./index.json "$drivePath" && rm -v "$tmpJson"
+skicka upload ./index.json "$drivePath"
+cleanup
