@@ -58,7 +58,7 @@ export PAGER=less
 export RUBYOPT='w' #helpful ruby warnings
 export GREP_OPTIONS='--color=auto'
 export GOPATH="$HOME/usr/lib/go/"
-export JAVA_HOME='/usr/lib/jvm/java-7-openjdk-amd64/'
+export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64/'
 
 exportPrependedOnce 'PATH' \
   "$HOME/bin" \
