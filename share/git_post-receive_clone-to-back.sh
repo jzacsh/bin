@@ -12,7 +12,7 @@ declare -r clonesRoot="$(readlink -f ~/back/src)"
 
 declare -r currentRoot="$(readlink -f "$PWD")"
 declare -r repoRelative="${currentRoot/$srcsRoot}"
-[ -e ~/src/"$repoRelative" ]  # sanity check
+[ -e "$srcsRoot"/"$repoRelative" ]  # sanity check
 
 
 # defensive block... should happen just once, if ever
