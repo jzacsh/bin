@@ -15,15 +15,28 @@ declare -r repoRelative="${currentRoot/$srcsRoot}"
 [ -e "$srcsRoot"/"$repoRelative" ]  # sanity check
 
 
-# defensive block... should happen just once, if ever
+gitRmRepoContents() {
+  git ls-files --others -i --exclude-standard | while read file; do
+    rm -v "$file"  # git is so fng complicated stackoverflow.com/a/15931542
+  done
+  git clean -d --force -x  # rm untracked files and such
+  if [ -n "$(git ls-files)" ]; then
+    git rm -rf *
+  fi
+}
+
 expectedCloneTo="${clonesRoot}${repoRelative}"
-if [ ! -e "$expectedCloneTo" ];then
-  mkdir -p "$expectedCloneTo"
-  git clone --quiet "$currentRoot" "$expectedCloneTo"
+# Empty previous contents of backup
+if [ -e "$expectedCloneTo" ];then
+  { [ "$expectedCloneTo" != '/' ] && [ -n "$expectedCloneTo" ]; } &&
+    find "$expectedCloneTo" -mindepth 1 -exec rm --recursive --force {} +;
 fi
+
+# Clone a fresh backup of repo
+mkdir -p "$expectedCloneTo"
+git clone --quiet "$currentRoot" "$expectedCloneTo"
 expectedCloneTo="$(readlink -f "$expectedCloneTo")"
 
-printf 'Force-updating repo "%s" at "%s" ... ' "$repoRelative" "$expectedCloneTo"
 git \
   --work-tree="$expectedCloneTo" \
   --git-dir="$currentRoot" \
