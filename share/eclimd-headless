@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# Starts a headless eclimd server
+# Pasted directly from eclim.org docs:
+#   http://eclim.org/install.html#installing-on-a-headless-server
+
+Xvfb :1 -screen 0 1024x768x24 &
+DISPLAY=:1 "$ECLIPSE_HOME"/eclimd -b
