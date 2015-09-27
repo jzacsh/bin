@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# Temporarily disables screensaver/shutoff features
+#
+# take arguments intended for use after `at now`, eg: "1 hour" will result in
+# screensaver being re-enabled, via: `[this script] | at now 1 hour`
+
+if [ -n "$1" ]; then
+  # taken directly from http://raspberrypi.stackexchange.com/a/753
+  xset s off         # don't activate screensaver
+  xset -dpms         # disable DPMS (Energy Star) features.
+  xset s noblank     # don't blank the video device
+
+  # schedule the `else` block below for later
+  # taken from http://stackoverflow.com/a/4430912
+  timeout -sHUP ${1}m "$(readlink -f "${BASH_SOURCE[0]}")"
+else
+  # invers of above commands
+
+  xset s on         # allow activate screensaver
+  xset +dpms        # enable DPMS (Energy Star) features.
+  xset s blank      # don't blank the video device
+fi
