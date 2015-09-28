@@ -74,6 +74,7 @@ exportPrependedOnce 'PATH' \
   "$HOME/usr/local/bin/android/sdk/platform-tools" \
   "$HOME/usr/local/bin/android/sdk/tools" \
   "$HOME/usr/local/bin/android/studio/bin" \
+  "$HOME/usr/local/bin/valgrind/bin" \
   "/usr/local/go/bin"
 
 exportPrependedOnce 'CLASSPATH' "$HOME/var/edu/princenton/algs4"
