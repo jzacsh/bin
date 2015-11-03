@@ -58,6 +58,23 @@ export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64/'
 export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
 export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
 
+# prefer source highlighting over archive inspection
+if type zacsh-highlight > /dev/null 2>&1;then
+  export LESSOPEN="| $(type -p zacsh-highlight) %s"
+elif type pygmentize >/dev/null 2>&1;then
+  if echo $TERM | grep 256 >/dev/null 2>&1;then
+    # For more, see /usr/share/doc/python-pygments/formatters.html
+    termOpt=' -f terminal256 '
+  else
+    termOpt=''
+  fi
+  export LESSOPEN="| pygmentize -g $termOpt %s"
+  unset termOpt
+elif type source-highlight >/dev/null 2>&1;then
+  export LESSOPEN='|source-highlight --data-dir=${TMPDIR:-/tmp/} %s'
+elif type lesspipe >/dev/null 2>&1;then
+  export LESSOPEN='|lesspipe %s'
+fi
 
 exportPrependedOnce 'PATH' \
   "$HOME/bin" \
