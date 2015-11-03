@@ -4,10 +4,6 @@
 #
 # NOTE: This is intended to be run from inside ~/.bashrc (yes, nested shells).
 
-isAlreadyExported() {
-  printf "${!1}" | tr : '\n' | grep "^${2}$" > /dev/null 2>&1
-}
-
 # Hacks to somewhat allow "export ENV=...." to be run a million times without
 # making a mess.
 #
@@ -85,6 +81,4 @@ exportPrependedOnce 'NODE_PATH' \
   "/usr/lib/node"
 
 
-unset isAlreadyExported
-unset concatWithColons
 unset exportPrependedOnce
