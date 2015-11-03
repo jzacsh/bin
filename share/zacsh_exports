@@ -58,6 +58,18 @@ export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64/'
 export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
 export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
 
+if [ -d $HOME/tmp ];then
+  export TMPDIR=$HOME/tmp
+
+  tmuxSshSock=${TMPDIR}/ssh-auth-sock.tmux
+  if [ -n "$SSH_AUTH_SOCK" ] && [ "$SSH_AUTH_SOCK" != "$tmuxSshSock" ];then
+    rm -f "$tmuxSshSock"
+    ln -sf "$SSH_AUTH_SOCK" "$tmuxSshSock"
+    export SSH_AUTH_SOCK="$tmuxSshSock"
+  fi
+  unset tmuxSshSock
+fi
+
 # prefer source highlighting over archive inspection
 if type zacsh-highlight > /dev/null 2>&1;then
   export LESSOPEN="| $(type -p zacsh-highlight) %s"
