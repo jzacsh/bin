@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -e
+declare -r cmd="$1"
+declare -r watchTarget="${2:-./src}"
+
+_fn="${0,,}"; usage() {
+  printf 'usage: `%s` "some build command" SOME_DIR/\n' "$(basename "$_fn")" >&2
+  exit 1
+}
+{ [ -n "$watchTarget" ] && [ -n "$cmd" ] ; } || usage
+{ [ -d "$watchTarget" ] && [ -r "$watchTarget" ]; } || usage
+
+declare -A clr=(
+  [end]='\033[0m'
+  [blk]='\e[0;30m'
+  [red]='\e[1;31m'
+  [grn]='\e[1;32m'
+  [ylw]='\e[1;33m'
+  [blu]='\e[1;34m'
+  [wht]='\e[0;37m'
+)
+col() { _clr=$1; shift; echo -en "${clr[$_clr]}$@${clr[end]}"; }
+
+captureChanges() {
+  set +e
+  bash -c "$cmd";
+}
+
+msg='\n'${clr[ylw]}'RUNNING'${clr[end]}'\t`%s` for changes to %s\n\n'
+printf "$msg" "$(col red "$cmd")" "$(col grn "$watchTarget")"
+
+captureChanges  # ... kick things off for show 
+
+declare -r handleMsg='\n\n
+'${clr[red]}'HANDLING'${clr[end]}' change %d seconds ago to "%s"...\n$`%s`\n\n'
+
+inotifywait \
+  --monitor \
+  --event=attrib \
+  --recursive \
+  --exclude='^\.\w*.*\.s[a-w][a-z]$' \
+  --timefmt='%s' \
+  --format='%T %f' "$watchTarget" |
+while read chngTime file _; do
+  now=10#$(( $(date +%s) ))
+  thn=10#$chngTime # then
+  lateToTheParty=$(( now - thn ))
+  (( lateToTheParty > 1 )) && {
+    printf \
+      "\n\tskipping old change (%d seconds late to the party)\n\n" \
+      $lateToTheParty
+    continue
+  }
+
+  printf "$handleMsg" \
+    $lateToTheParty "$file" "$cmd"
+  captureChanges
+done
