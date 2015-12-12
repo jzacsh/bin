@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 declare -r cmd="$1"
-declare -r watchTarget="${2:-./src}"
+declare -r watchTarget="${2:-./}"
 
 _fn="${0,,}"; usage() {
   printf 'usage: `%s` "some build command" SOME_DIR/\n' "$(basename "$_fn")" >&2
