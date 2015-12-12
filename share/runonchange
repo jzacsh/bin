@@ -4,7 +4,9 @@ declare -r cmd="$1"
 declare -r watchTarget="${2:-./}"
 
 _fn="${0,,}"; usage() {
-  printf 'usage: `%s` "some build command" SOME_DIR/\n' "$(basename "$_fn")" >&2
+  local usageMsg='usage: `%s` "some build command" [SOME_DIR]'
+  usageMsg+='\n\n\tSOME_DIR defaults to cwd\n'
+  printf "$usageMsg" "$(basename "$_fn")" >&2
   exit 1
 }
 { [ -n "$watchTarget" ] && [ -n "$cmd" ] ; } || usage
