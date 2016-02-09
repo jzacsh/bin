@@ -67,7 +67,6 @@ export LESS=' XFRr '
 export RLWRAP=' AaN '
 export PAGER=less
 export RUBYOPT='w' #helpful ruby warnings
-export GREP_OPTIONS='--color=auto'
 export GOPATH="$HOME/usr/lib/go/"
 export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64/'
 export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
