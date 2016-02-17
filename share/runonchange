@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 set -e
 declare -r cmd="$1"
-declare -r watchTarget="${2:-./}"
+declare -r watchTarget="$2"
 
 _fn="${0,,}"; usage() {
-  local usageMsg='usage: `%s` "some build command" [SOME_DIR]'
-  usageMsg+='\n\n\tSOME_DIR defaults to cwd\n'
+  local usageMsg='usage: `%s` "some build cmd" SOME_DIR [GREP_INVERT_STR]\n\n'
+  usageMsg+='\tSOME_DIR defaults to cwd\n'
+  usageMsg+='\tGREP_INVERT_STR allows for additional expressions to\n'
+  usageMsg+='\t\tignore when watching a directory\n'
   printf "$usageMsg" "$(basename "$_fn")" >&2
   exit 1
 }
-{ [ -n "$watchTarget" ] && [ -n "$cmd" ] ; } || usage
-{ [ -d "$watchTarget" ] && [ -r "$watchTarget" ]; } || usage
+{
+  [ -n "$watchTarget" ] &&
+    [ -n "$cmd" ] &&
+    [ -d "$watchTarget" ] &&
+    [ -r "$watchTarget" ]
+} || usage
 
 declare -A clr=(
   [end]='\033[0m'
@@ -51,6 +57,13 @@ while read chngTime file _; do
     printf \
       "\n\tskipping old change (%d seconds late to the party)\n\n" \
       $lateToTheParty
+    continue
+  }
+
+  [ -z "$(echo -n "$file" | grep --invert-match --extended-regexp "$3")" ] && {
+    printf \
+      '\n\tskipping file seemingly excluded by rule: "%s":\t\t%s\n' \
+      "$3" "$file" >&2
     continue
   }
 
