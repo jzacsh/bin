@@ -7,4 +7,9 @@ musicdir="$(readlink -f "$1")"
   printf 'USAGE: %s MUSIC_DIR\n' "$_n" >&2
   exit 1
 }
-mplayer -playlist <(find "$musicdir" -type f | sort)
+
+{ type mplayer >/dev/null 2>&1 && playerExc=mplayer; } ||
+  { type mpv >/dev/null 2>&1 && playerExc=mpv; } ||
+    { printf 'could not find something to playback video with\n' >&2; exit 2; }
+
+"$playerExc" -playlist <(find "$musicdir" -type f | sort)
