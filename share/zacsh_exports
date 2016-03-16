@@ -71,6 +71,7 @@ export GOPATH="$HOME/usr/lib/go/"
 export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64/'
 export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
 export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
+export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
 
 if [ -d $HOME/tmp ];then
   export TMPDIR=$HOME/tmp
