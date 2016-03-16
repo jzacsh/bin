@@ -22,13 +22,13 @@ usage() {
         default notify-send(1) or zenity(1).
 
     Example usage:
-       `%s ~/pub/drop`
+       `%s ~/pub/drop` which is the same as: `cd ~/pub/drop && %s`
 
        `%s -s ~/pub/drop | while read notification; do /bin/feed-hamster; done`
 
     See: notify-send(1) http://github.com/rvoicilas/inotify-tools
     See: inotifywait(1) http://www.galago-project.org
-    \r' "$scriptName" "$scriptName" >&2
+    \r' "$scriptName" "$scriptName" "$scriptName" "$scriptName" >&2
     exit 2
 }
 
