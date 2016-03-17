@@ -110,6 +110,7 @@ exportPrependedOnce 'PATH' \
   "$HOME/bin/dist" \
   "$HOME/bin/lib" \
   "$HOME/usr/lib/go/bin" \
+  "$HOME/.local/bin/" \
   "$JAVA_HOME/bin" \
   "$HOME/usr/local/bin/android/sdk/platform-tools" \
   "$HOME/usr/local/bin/android/sdk/tools" \
