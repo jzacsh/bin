@@ -29,13 +29,14 @@ cmpr() {
     <(\grep --invert-match password "$current");
 }
 if ! cmpr > /dev/null 2>&1; then
-  printf \
-    '\n%s:    irssi config differs from your dotfiles in "%s"\n\n' \
-    "$(col ylw WARNING)" \
-    "\$$(printf "$latest" | sed -e "s|$HOME|HOME|")" >&2
-  cmpr || {
-    echo; read -p "Run irssi with $(col red old config) anyway? [yN] " answer
-  }
+  {
+    printf \
+      '\n%s:    irssi config differs from your dotfiles in "%s"\n\n' \
+      "$(col ylw WARNING)" \
+      "\$$(printf "$latest" | sed -e "s|$HOME|HOME|")"
+    cmpr;
+  } | "${PAGER:-less}"
+  echo; read -p "Run irssi with $(col red old config) anyway? [yN] " answer
   ans="${answer,,}"; ans="${ans:0:1}"
   if [ "$ans" != y ];then
     printf \
