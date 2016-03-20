@@ -1,13 +1,35 @@
 #!/usr/bin/env bash
 #
-# Call IRSSI, but stop me if my config is out of date, first.
+# Call irssi/weechat, but stop me if my config is out of date, first.
 #
 #   Note this is purposely a script and not a shell function, as I want `tmux`
 #   to execute *this* logic for me when it reloads from saved sessions.
-
 set -e
-declare -r latest=~/.irssi/config.default
-declare -r current=~/.irssi/config
+
+declare -r ircClient="$(
+  if [ -n "$IRC" ];then
+    echo "$IRC"
+  else
+    if type weechat >/dev/null 2>&1;then
+      echo weechat
+    elif type irssi >/dev/null 2>&1;then
+      echo irssi
+    else
+      printf 'Cannot find an IRC client to use\n' >&2
+      exit 2
+    fi
+  fi
+)"
+if [ "$ircClient" = weechat ];then
+  declare -r latest=~/.weechat/irc.conf.default
+  declare -r current=~/.weechat/irc.conf
+elif [ "$ircClient" = irssi ];then
+  declare -r latest=~/.irssi/config.default
+  declare -r current=~/.irssi/config
+else
+  printf 'ERROR: zomg, bug in this script\n' >&2
+  exit 3
+fi
 
 declare -A clr=(
   [end]='\033[0m'
@@ -31,8 +53,9 @@ cmpr() {
 if ! cmpr > /dev/null 2>&1; then
   {
     printf \
-      '\n%s:    irssi config differs from your dotfiles in "%s"\n\n' \
+      '\n%s:    %s config differs from your dotfiles in "%s"\n\n' \
       "$(col ylw WARNING)" \
+      "$ircClient" \
       "\$$(printf "$latest" | sed -e "s|$HOME|HOME|")"
     cmpr;
   } | "${PAGER:-less}"
@@ -48,4 +71,4 @@ if ! cmpr > /dev/null 2>&1; then
   fi
 fi
 
-irssi
+"$ircClient"
