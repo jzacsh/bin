@@ -24,7 +24,7 @@ declare -r pkgSrc="$(
     \sed -e 's|:[0-9]*\:[0-9]*\:$||'
 )"
 
-declare -r pkg="$(dirname "$pkgSrc")" 
+declare -r pkg="$(dirname "$pkgSrc")"
 # NOTE: `godoc "$pkg"` works perfectly at this point
 
 echo "$pkg" | sed -e "s|^${GOPATH}src\/||"
