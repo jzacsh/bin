@@ -42,6 +42,12 @@ captureChanges  # ... kick things off for show
 declare -r handleMsg='\n\n
 '${clr[red]}'HANDLING'${clr[end]}' change %d seconds ago to "%s"...\n$`%s`\n\n'
 
+excludeRule="$3"
+shouldSkipFile() {
+  [ -n "$excludeRule" ] && [ -z "$(echo -n "$1" | grep --invert-match --extended-regexp "$excludeRule")" ]
+}
+
+didFileSkip=0
 inotifywait \
   --monitor \
   --event=attrib \
@@ -55,18 +61,30 @@ while read chngTime file _; do
   lateToTheParty=$(( now - thn ))
   (( lateToTheParty > 1 )) && {
     printf \
-      "\n\tskipping old change (%d seconds late to the party)\n\n" \
+      "\tskipping old change (%d seconds late to the party)\n" \
       $lateToTheParty
     continue
   }
 
-  if [ -n "$3" ] && [ -z "$(echo -n "$file" | grep --invert-match --extended-regexp "$3")" ];then
-    printf \
-      '\n\tskipping file seemingly excluded by rule: "%s":\t\t%s\n' \
-      "$3" "$file" >&2
-    continue
+  if shouldSkipFile "$file";then
+    if (( didFileSkip ));then
+      if (( didFileSkip > 40 ));then
+        didFileSkip=0
+        printf '\n\t\t' >&2
+      else
+        printf ', ' >&2
+      fi
+    else
+      printf \
+        '\tskipping file seemingly excluded by rule: "%s":\n\t\t' \
+        "$excludeRule" >&2
+    fi
+
+    printf '"%s"' "$file" >&2
+    didFileSkip=$(( didFileSkip + ${#file} )); continue
   fi
 
+  didFileSkip=0
   printf "$handleMsg" \
     $lateToTheParty "$file" "$cmd"
   captureChanges
