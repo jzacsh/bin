@@ -2,6 +2,7 @@
 set -e
 declare -r cmd="$1"
 declare -r watchTarget="$2"
+declare -r handleDelay=1
 
 _fn="${0,,}"; usage() {
   local usageMsg='usage: `%s` "some build cmd" SOME_DIR [GREP_INVERT_STR]\n\n'
@@ -47,6 +48,33 @@ shouldSkipFile() {
   [ -n "$excludeRule" ] && [ -z "$(echo -n "$1" | grep --invert-match --extended-regexp "$excludeRule")" ]
 }
 
+# handles event at $1 timestamp, for file $2
+handleEvent() {
+  local since; since="$(secondsSince $1)"
+  printf "$handleMsg" $since "$2" "$cmd"
+  captureChanges
+}
+# has it been $1 seconds since $2 timestamp
+hasBeen() { [ "$(printf '%d >= %s\n' $(secondsSince $2) $1 | bc)" -eq 1 ]; }
+secondsSince() {
+  local then=$1; local now; now=$(date +%s)
+  printf '%d - %d\n' $now $then | bc
+}
+
+declare -a poolOfChgTimes=()
+poolChanges() {
+  poolOfChgTimes+=($1)
+  printf '.' # "pooling..."-indicator
+  sleep $handleDelay
+
+  [ ${#poolOfChgTimes} -gt 1 ] || return  # already handled
+
+  if hasBeen $handleDelay ${poolOfChgTimes[0]};then
+    handleEvent ${poolOfChgTimes[0]} $2
+    poolOfChgTimes=()
+  fi
+}
+
 didFileSkip=0
 inotifywait \
   --monitor \
@@ -55,11 +83,8 @@ inotifywait \
   --exclude='^\.\w*.*\.s[a-w][a-z]$' \
   --timefmt='%s' \
   --format='%T %f' "$watchTarget" |
-while read chngTime file _; do
-  now=10#$(( $(date +%s) ))
-  thn=10#$chngTime # then
-  lateToTheParty=$(( now - thn ))
-  (( lateToTheParty > 1 )) && {
+while read chngTime file foo; do
+  hasBeen $handleDelay $chngTime && {
     printf \
       "\tskipping old change (%d seconds late to the party)\n" \
       $lateToTheParty
@@ -85,7 +110,5 @@ while read chngTime file _; do
   fi
 
   didFileSkip=0
-  printf "$handleMsg" \
-    $lateToTheParty "$file" "$cmd"
-  captureChanges
+  poolChanges $chngTime "$file"
 done
