@@ -75,6 +75,7 @@ poolChanges() {
   fi
 }
 
+didOldSkip=0
 didFileSkip=0
 inotifywait \
   --monitor \
@@ -84,12 +85,27 @@ inotifywait \
   --timefmt='%s' \
   --format='%T %f' "$watchTarget" |
 while read chngTime file foo; do
-  hasBeen $handleDelay $chngTime && {
-    printf \
-      "\tskipping old change (%d seconds late to the party)\n" \
-      $(secondsSince $chngTime)
-    continue
-  }
+  if hasBeen $handleDelay $chngTime;then
+    # silently skip changes for ignored *and* late files
+    if shouldSkipFile "$file";then printf '.' >&2; continue; fi
+
+    if (( didOldSkip ));then
+      if (( didOldSkip > 40 ));then
+        didOldSkip=0
+        printf '\n\t\t' >&2
+      else
+        printf ', ' >&2
+      fi
+    else
+      printf \
+        "\tskipping old change; at least %d second(s) late to party:\n\t\t" \
+        $handleDelay
+    fi
+
+    msg="$(printf '%d sec ago: "%s"' $(secondsSince $chngTime))" "$file"
+    printf "$msg" >&2
+    didOldSkip=$(( didOldSkip + ${#msg} )); continue
+  fi
 
   if shouldSkipFile "$file";then
     if (( didFileSkip ));then
@@ -109,6 +125,7 @@ while read chngTime file foo; do
     didFileSkip=$(( didFileSkip + ${#file} )); continue
   fi
 
+  didOldSkip=0
   didFileSkip=0
   poolChanges $chngTime "$file"
 done
