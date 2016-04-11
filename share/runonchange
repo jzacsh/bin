@@ -102,7 +102,7 @@ while read chngTime file foo; do
         $handleDelay
     fi
 
-    msg="$(printf '%d sec ago: "%s"' $(secondsSince $chngTime))" "$file"
+    msg="$(printf '%d sec ago: "%s"' $(secondsSince $chngTime) "$file")"
     printf "$msg" >&2
     didOldSkip=$(( didOldSkip + ${#msg} )); continue
   fi
