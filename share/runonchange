@@ -38,7 +38,7 @@ captureChanges() {
 msg='\n'${clr[ylw]}'RUNNING'${clr[end]}'\t`%s` for changes to %s\n\n'
 printf "$msg" "$(col red "$cmd")" "$(col grn "$watchTarget")"
 
-captureChanges  # ... kick things off for show 
+captureChanges  # ... kick things off for show
 
 declare -r handleMsg='\n\n
 '${clr[red]}'HANDLING'${clr[end]}' change %d seconds ago to "%s"...\n$`%s`\n\n'
