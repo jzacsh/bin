@@ -87,7 +87,7 @@ while read chngTime file foo; do
   hasBeen $handleDelay $chngTime && {
     printf \
       "\tskipping old change (%d seconds late to the party)\n" \
-      $lateToTheParty
+      $(secondsSince $chngTime)
     continue
   }
 
