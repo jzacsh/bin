@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#
+# Thin wrapper for easy-to-use curl form at clbin.com
+declare -r clbinUrl=https://clbin.com/
+
+httpGetTxt() { curl -sL "$1" | "${PAGER:-less}"; }
+
+[ $# -gt 0 ] && {
+  {
+    printf \
+      'Error: `%s` wrapper takes no args (content taken from stdin).\n\n' \
+      "$(basename "$0")"
+    httpGetTxt "$clbinUrl" | w3m -dump -T text/html
+  } >&2 | "${PAGER:-less}"
+  exit 1
+}
+
+curl -F 'clbin=<-' "$clbinUrl"
