@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# Finds the next open port on a busy machine
+
+isPortBeingWatched() { netstat --listening --numeric | grep ":${1}.*LISTEN"; }
+isProcessOnPort() { fuser -n tcp "$1" >/dev/null 2>&1; }
+
+isPortClear() { ! isProcessOnPort "$1"; }
+
+# NOTE: /proc/sys port-listing taken from http://unix.stackexchange.com/a/55918
+while read lowerPort upperPort;do
+  for (( port = lowerPort; port <= upperPort; port++ )); do
+    if isPortClear "$port";then
+      printf '%s\n' "$port"
+      exit 0
+    fi
+  done
+done < /proc/sys/net/ipv4/ip_local_port_range
+exit 1
