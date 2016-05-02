@@ -42,9 +42,6 @@ isDisplayInUse() {
 }
 
 haveExtraDisplays() ( [ "$(listDisplays | wc -l)" != 1 ]; )
-haveUnusedDisplays() {
-  [ "$(listProjectedDisplays | wc -l)" != "$(listDisplays | wc -l)" ];
-}
 
 getPreferredResolution() {
   local displayName="$1"; [ -n "$displayName" ]
@@ -65,6 +62,10 @@ listProjectedDisplays() {
   for display in $(listDisplays | getDisplayName); do
     [ "$(isDisplayInUse "$display")" = INUSE ] && printf '%s\n' "$display"
   done
+}
+
+haveUnusedDisplays() {
+  [ "$(listProjectedDisplays | wc -l)" != "$(listDisplays | wc -l)" ];
 }
 
 project() {
@@ -91,6 +92,7 @@ case $arg in
     - advisory - Prints an advisory `xrandr` command if extra display exist
         Mostly just says something like:
            `xrandr --auto --output HDMI1 --right-of eDP1`
+    - offexternal - desparate hack to *try* to turn off external displays
     - PROJECT_TO - Display name to project to [uber hack! just use `advisory`]
     \r' "$this" "$this" >&2
     exit 1
@@ -103,6 +105,21 @@ case $arg in
     msg='%d extra display(s) detected.'
     msg=$msg' Project via `xrandr --auto --output [%s] --right-of=[%s]`\n'
     printf "$msg" $numExtra "$displayOpts" "$displayOpts"
+    exit
+    ;;
+  offexternal)
+    haveExtraDisplays || exit 0 # nothing to disconnect
+
+    # my best-guess heuristic for "is a native(?) display active"; no idea how
+    # to do that reliably, but i know on *my* librem13, that's eDP1.
+    declare -r onBoard=eDP1
+    listProjectedDisplays | grep "$onBoard" >/dev/null || exit 0
+
+    # turn off all others
+    for other in $(listProjectedDisplays | grep -v "$onBoard"); do
+      xrandr --output "$other" --off
+    done
+
     exit
     ;;
 esac
