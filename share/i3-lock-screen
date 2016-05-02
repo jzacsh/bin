@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# disconnect from secondary screens; address symptom.
+#     BUG: some awful bug causes my machine to hang when i go to sleep with an
+#     external display plugged in
+display-external offexternal
+
 i3lock \
   --tiling \
   --pointer=default \
