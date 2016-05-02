@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+i3lock \
+  --tiling \
+  --pointer=default \
+  --show-failed-attempts \
+  --image="$HOME"/media/img/wallpaper/lockscreen-sleeping.png

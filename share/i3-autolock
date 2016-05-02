@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+declare -r dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+lockscrnexec="$dir/i3-lock-screen"
+[ -x "$lockscrnexec" ] || lockscrnexec=i3lock
+
+/usr/bin/xautolock \
+  -time 1 \
+  -locker "$lockscrnexec" \
+  -notify 30 \
+  -notifier 'notify-send -u critical -t 10000 -- "LOCKING screen in 30 seconds"'
