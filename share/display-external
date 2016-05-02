@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+#
+# Ridiculously hacky wrapper for `xrandr`:
+#     xrandr --output HDMI1 --auto --right-of eDP1
+#
+# Mostly because:
+#   1. sometimes `--auto` inexplicably doesn't work
+#   2. I won't remember this in a month, and would rather have some "advisory"
+#      print out a CLI for me (eg: when opening new shell; or better: on plugin)
+
+getDisplayName() { cut -f 1 -d ' '; }
+matchConnectedTitle() { grep --color=auto -E '^\w*\s*connected'; }
+listDisplays() ( xrandr --query | matchConnectedTitle; )
+# wrt `listDisplays`
+#   TODO: replace with `xrandr --listactivemonitors` scraping instead?
+
+isMonitor() (
+  local seeking="$1"; shift; [ -n "$seeking" ]
+
+  local title;
+  title="$(echo "$*" | matchConnectedTitle)"
+
+  [ -n "$title" ] && [ "$(echo "$title" | getDisplayName)" = "$seeking" ]
+)
+
+isPreferredRes() ( grep -E '[0-9]+\.[0-9]+\*?\+' >/dev/null; )
+isCurrentRes() (   grep -E '[0-9]+\.[0-9]+\*\+?' >/dev/null; )
+
+isDisplayInUse() {
+  local displayName="$1"; [ -n "$displayName" ]
+
+  local reading=0
+  xrandr --query | while read line;do
+    if [ $reading -ne 0 ] && echo "$line" | isCurrentRes > /dev/null;then
+      printf 'INUSE'
+      return 0 # bash is hard... return statuses lost (due to `read` hell of bash?)
+    elif isMonitor "$displayName" "$line";then
+      reading=1
+    fi
+  done
+  return 1
+}
+
+haveExtraDisplays() ( [ "$(listDisplays | wc -l)" != 1 ]; )
+haveUnusedDisplays() {
+  [ "$(listProjectedDisplays | wc -l)" != "$(listDisplays | wc -l)" ];
+}
+
+getPreferredResolution() {
+  local displayName="$1"; [ -n "$displayName" ]
+
+  local reading=0
+  xrandr --query | while read line;do
+    if [ $reading -ne 0 ] && echo "$line" | isPreferredRes > /dev/null;then
+      echo -n "$line" | sed -e 's|^\s*\([0-9]*x[0-9]*\).*$|\1|' # print resolution
+      return 0 # bash is hard... return statuses lost (due to `read` hell of bash?)
+    elif isMonitor "$displayName" "$line";then
+      reading=1
+    fi
+  done
+  return 1
+}
+
+listProjectedDisplays() {
+  for display in $(listDisplays | getDisplayName); do
+    [ "$(isDisplayInUse "$display")" = INUSE ] && printf '%s\n' "$display"
+  done
+}
+
+project() {
+  local mode="$(getPreferredResolution "$1")";
+
+  local xtraArgs
+  if [ -n "$mode" ];then
+    xtraArgs="--mode $mode"
+  else
+    xtraArgs='--auto'
+  fi
+
+  xrandr --output "$1" $xtraArgs --right-of "$2"
+}
+
+arg=$1; if [ -z "$arg" ];then arg=--help; fi
+declare -r this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+case $arg in
+  --help|-h|help|-help)
+    printf 'usage: %s advisory|PROJECT_TO
+
+    `%s` helps you project to an external monitor
+
+    - advisory - Prints an advisory `xrandr` command if extra display exist
+        Mostly just says something like:
+           `xrandr --auto --output HDMI1 --right-of eDP1`
+    - PROJECT_TO - Display name to project to [uber hack! just use `advisory`]
+    \r' "$this" "$this" >&2
+    exit 1
+    ;;
+  advisory)
+    haveUnusedDisplays || exit 0 # no advice
+    numExtra=$(( $(listDisplays | wc -l) - 1 ))
+    displays="$(listDisplays | getDisplayName)"
+    displayOpts="$(printf '%s|' $displays | sed -e 's/|$//')"
+    msg='%d extra display(s) detected.'
+    msg=$msg' Project via `xrandr --auto --output [%s] --right-of=[%s]`\n'
+    printf "$msg" $numExtra "$displayOpts" "$displayOpts"
+    exit
+    ;;
+esac
+
+haveExtraDisplays || {
+  printf 'No extra displays connected (`xrandr` to see)\n' >&2
+  exit 2
+}
+declare -r projectTo="$arg"
+
+if ! listDisplays | grep "$projectTo" >/dev/null;then
+  printf 'ERROR no such display, "%s", in `xrandr` output\n' "$projectTo" >&2
+  exit 3
+fi
+
+
+if [ "$(listProjectedDisplays | wc -l)" = 1 ];then
+  projectFrom="$(listProjectedDisplays)"
+elif [ "$(listProjectedDisplays | wc -l)" = 2 ] &&
+      listProjectedDisplays | grep "$projectTo" > /dev/null; then
+  printf 'WARNING, making assumption & turning off %s\n' "$projectTo" >&2
+  xrandr --output "$projectTo" --off
+  exit $?
+else
+  printf \
+    'ERROR: cannot easily guess display to project %s to the right of
+    \rTry `%s advisory` instead\n' \
+    "$projectTo" "$this" >&2
+  exit 4
+fi
+
+
+if [ "$projectFrom" = "$projectTo" ];then
+  printf 'ERROR trying to project %s to its own right-side\n' "$projectTo" >&2
+  exit 5
+fi
+project "$projectTo" "$projectFrom"
