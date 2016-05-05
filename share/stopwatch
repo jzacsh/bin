@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+declare -r start=$(date +%s)
+declare -r cursorSpace='  '
+
+declare -r color='\e[1;36m'
+declare -r col_end='\033[0m'
+stamp() { printf '\r%s\t%s%s' "$(date --iso-8601=ns)" "$1" "$cursorSpace" ; }
+
+now() { stamp "$(printf ${color}'%5d'$col_end $(( $(date +%s) - start )))"; }
+
+cleanup() { now && echo && stamp stopped && echo; exit; }
+trap cleanup SIGINT
+
+stamp started && echo
+while true; do now; done
