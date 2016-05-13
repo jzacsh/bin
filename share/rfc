@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# Obsessive evolution of `curl RFC_URL | less` into temp-file shannanogins so I
+# can get syntax highlighting
+
+getRfcUrl() ( printf 'http://tools.ietf.org/rfc/rfc%s.txt' "$1"; )
+
+curl -Ls "$(getRfcUrl "$1")" | "${PAGER:-less}"
