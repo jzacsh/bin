@@ -5,36 +5,32 @@
 declare -r target="$1"
 
 use_pygmentize() {
-  if echo $TERM | grep 256 >/dev/null 2>&1;then
+  local termOpt=''
+  if echo "$TERM" | grep -E '256|tmux' >/dev/null 2>&1;then
     # For more, see /usr/share/doc/python-pygments/formatters.html
     termOpt=' -f terminal256 '
-  else
-    termOpt=''
   fi
   pygmentize -g $termOpt "$target"
 }
 
 use_sourceHighlight() {
-  source-highlight --data-dir "${TMP:-/tmp}"/"source-highlight.$$" "$target"
+  source-highlight --data-dir "${TMP:-/tmp}"/"src-highlight.$$" "$target"
 }
 
 isTargetBinary() {
-  file --dereference --mime-encoding --brief "$target" 2>/dev/null | grep binary >/dev/null 2>&1
+  file --dereference --mime-encoding --brief "$target" 2>/dev/null |
+    grep binary >/dev/null 2>&1
 }
 
-isHighlighterAvailable() {
-  {
-    type \pygmentize >/dev/null 2>&1 ||
-    type \source-highlight >/dev/null 2>&1
-  }
-}
+haveExec() ( type "$1" >/dev/null 2>&1; )
+isHighlighterAvailable() { haveExec pygmentize || haveExec source-highlight; }
 
 if isTargetBinary || ! isHighlighterAvailable;then
   lesspipe "$target"
 else
-  if type -p pygmentize >/dev/null 2>&1;then
+  if haveExec pygmentize;then
     use_pygmentize
-  elif type -p source-highlight >/dev/null 2>&1;then
+  elif haveExec source-highlight;then
     use_sourceHighlight
   fi
 fi
