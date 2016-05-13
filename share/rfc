@@ -2,7 +2,51 @@
 #
 # Obsessive evolution of `curl RFC_URL | less` into temp-file shannanogins so I
 # can get syntax highlighting
+set -e
 
-getRfcUrl() ( printf 'http://tools.ietf.org/rfc/rfc%s.txt' "$1"; )
+declare -r opt="$2"
+shouldSaveCopy() (
+  [ -z "$opt" ] && return 1
+  for flg in s -s --s save -save --save;do [ "$opt" = "$flg" ] && return 0; done
+  return 1
+)
 
-curl -Ls "$(getRfcUrl "$1")" | "${PAGER:-less}"
+declare -r rfcNum="$1";
+[ -n "$rfcNum" ] || {
+  declare -r this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+  printf \
+    'usage: `%s RFC_NUMBER`\n\tPages an RFC; eg `%s 2324`\n' \
+    "$this" "$this" >&2
+  exit 1
+}
+declare -r rfcUrl="http://tools.ietf.org/rfc/rfc${1}.txt"
+
+declare -r rfcCopy="$(mktemp --tmpdir "rfc-${rfcNum}_XXXXXX.txt")"
+{ [ $? -eq 0 ] && [ -n "$rfcCopy" ] && [ -r "$rfcCopy" ]; } || {
+  printf 'Failed to open local file for RFC highlighting. Get it yourself:
+    curl -Ls %s\n' "$rfcUrl" >&2
+  exit 2
+}
+
+cleanup() (
+  if shouldSaveCopy; then
+    printf 'Saved copy of RFC %s: %s\n' "$rfcNum" "$rfcCopy"
+  else
+    [ -n "$rfcCopy" ] && rm "$rfcCopy"
+  fi
+)
+trap cleanup EXIT
+
+curl -Ls "$rfcUrl" > "$rfcCopy" || {
+  printf 'Failed to download RFC %s at: %s\n' "$rfcNum" "$rfcUrl" >&2
+  exit 3
+}
+
+less -N "$rfcCopy"
+# Assumes you have a decent `LESSOPEN` and of course `less` itself; eg:
+#   export LESSOPEN='| pygmentize -g -f terminal256 %s'
+#   export LESS=' XFRr '
+#
+# Real life examples:
+# - https://github.com/jzacsh/bin/blob/b5424ec3c431/share/zacsh-highlight#L13
+# - https://github.com/jzacsh/bin/blob/b5424ec3c431/share/zacsh_exports#L66
