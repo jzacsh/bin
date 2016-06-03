@@ -27,7 +27,7 @@ fail() {
 set -x
 
 # safe-to modify options: #############################
-declare -r resticExec="$HOME"/tmp/src/restic/bin/restic
+declare -r resticExec="$HOME"/media/src/restic/bin/restic
 declare -r repo="$HOME"/back/local/restic
 declare -r excludeFile="$HOME"/.config/restic-exclude
 declare -r target="$HOME"
