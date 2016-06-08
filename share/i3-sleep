@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+~/bin/share/display-external offexternal
+~/bin/share/i3-lock-screen & disown
+dbus-send \
+  --system \
+  --dest=org.freedesktop.UPower \
+  --type=method_call \
+  --print-reply \
+  /org/freedesktop/UPower org.freedesktop.UPower.Suspend
