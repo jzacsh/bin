@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#
+# Thin wrapper `adb screencap`. Roughly does:
+#   f=`mktemp`; adb screencap /sdcard/shot.png && adb pull /sdcard/shot.png $f
+set -e
+
+declare -r thisScript="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+{ (( $# == 1 )) && { [ "$1" = cap ] || [ "$1" = record ]; }; } || {
+  printf \
+    'usage: `%s cap|record`\n\tEither records video or takes a screenshot\n' \
+    "$thisScript" >&2
+  exit 1
+}
+
+declare -r adbCommand=s"creen${1}"
+if [ "$1" = cap ];then
+  declare -r onceRunInstruction='Please wait...'
+  declare -r defaultOndisk=/sdcard/screenshot.png
+elif [ "$1" = record ];then
+  declare -r onceRunInstruction='^C to finish'
+  declare -r defaultOndisk=/sdcard/recording.mp4
+fi
+
+
+pullFromDevice() (
+  local tmpl localFile
+  tmpl="$(
+    printf '%s_%s_XXXXXX.%s' \
+      "$thisScript" \
+      "$(date --iso-8601=d)" \
+      "${defaultOndisk/*./}"
+  )"
+  localFile="$(mktemp --tmpdir  "$tmpl")"
+
+  {
+    adb pull "$defaultOndisk" "$localFile" >/dev/null 2>&1 &&
+    [ -e "$localFile" ] &&
+    [ "$(stat "$localFile" --printf '%b')" != 0 ]
+  } || {
+    rm "$localFile" 2>/dev/null # clear empty files
+    return
+  }
+
+  printf '%s\n' "$localFile"
+  adb shell rm "$defaultOndisk"
+)
+
+declare -r oldOutput="$(pullFromDevice)"
+if [ -n "${oldOutput/ */}" ];then
+  printf \
+    'WARNING: old ouptut found on device & pulled first:\n\t%s\n' \
+    "$oldOutput"
+fi
+
+finalPullFromDevice() (
+  local offDevice; offDevice="$(pullFromDevice)"
+  if [ -n "${offDevice/ */}" ];then
+    printf 'Success; result copied here:\n\t%s\n' "$offDevice"
+    exit 0
+  else
+    printf \
+      'Error: %s failed\n\tmaybe poke around w/`adb`, you like: %s\n' \
+      "$adbCommand" "$defaultOndisk" >&2
+    exit 1
+  fi
+)
+trap finalPullFromDevice EXIT
+
+printf 'RUNNING %s now; %s\n' "$adbCommand" "$onceRunInstruction"
+adb shell "$adbCommand" "$defaultOndisk"
+exit 0
