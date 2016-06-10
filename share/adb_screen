@@ -26,7 +26,7 @@ pullFromDevice() (
   local tmpl localFile
   tmpl="$(
     printf '%s_%s_XXXXXX.%s' \
-      "$thisScript" \
+      "$adbCommand" \
       "$(date --iso-8601=d)" \
       "${defaultOndisk/*./}"
   )"
