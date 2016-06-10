@@ -2,7 +2,7 @@
 #
 # Thin wrapper `adb screencap`. Roughly does:
 #   f=`mktemp`; adb screencap /sdcard/shot.png && adb pull /sdcard/shot.png $f
-set -e
+set -euo pipefail
 
 declare -r thisScript="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 { (( $# == 1 )) && { [ "$1" = cap ] || [ "$1" = record ]; }; } || {
