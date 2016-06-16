@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+type git_update_current >/dev/null 2>&1 || {
+  printf 'Error: requisite `git_update_current` script not found.\n' >&2
+  exit 1
+}
+
+(( $# > 0 )) || {
+  thisScript="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"; declare -r thisScript
+  printf '`usage: %s [GIT_REPO ...]` updates each directory argument repository.\n' "$thisScript" >&2
+  exit 1
+}
+
+for dir in "${@}";do git_update_current "$dir"; done
