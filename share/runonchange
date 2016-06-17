@@ -32,7 +32,7 @@ col() { _clr=$1; shift; echo -en "${clr[$_clr]}$@${clr[end]}"; }
 
 captureChanges() {
   set +e
-  bash -c "$cmd";
+  bash -c "set -euo pipefail; $cmd";
 }
 
 msg='\n'${clr[ylw]}'RUNNING'${clr[end]}'\t`%s` for changes to %s\n\n'
