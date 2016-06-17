@@ -54,6 +54,7 @@ export LESS_TERMCAP_ZW=$(tput rsupm)
 
 # Static/vanilla (not appending) env vars:
 export EMAIL=jzacsh@gmail.com
+export GPG_TTY="$(tty)"
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_CONFIG_HOME=$HOME/.config
 export CSCOPE_DB=$HOME/.vim/cscope.out
