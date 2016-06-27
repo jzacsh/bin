@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#
+# Like `who` on my machine, but on my LAN instead
+set -euo pipefail
+
+ip neighbour | while IFS=\n read neighbor; do
+  host "${neighbor/ */}" >/dev/null 2>&1 || { echo "$neighbor"; continue; }
+
+  host="$(host "${neighbor/ */}" | sed -e 's/.*domain\ name\ pointer\ //')"
+  printf '\n%s\n\t%s\n\n' "$host" "$neighbor"
+done
