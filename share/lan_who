@@ -3,9 +3,33 @@
 # Like `who` on my machine, but on my LAN instead
 set -euo pipefail
 
-ip neighbour | while IFS=\n read neighbor; do
-  host "${neighbor/ */}" >/dev/null 2>&1 || { echo "$neighbor"; continue; }
+[ "$EUID" = 0 ] || {
+  printf 'Error: must be run as root\n' >&2
+  exit 1
+}
 
-  host="$(host "${neighbor/ */}" | sed -e 's/.*domain\ name\ pointer\ //')"
-  printf '\n%s\n\t%s\n\n' "$host" "$neighbor"
-done
+myFirstQuad="$(
+  while read device type state connection; do
+    [ "$state" = connected ] || continue
+    ip -4 -oneline address |
+      grep -E '^[[:digit:]]*:[[:space:]]*'"$device" |
+      while IFS=' ' read number dev family addr _; do
+        echo "${addr:0:3}"
+      done
+  done < <(nmcli --colors no device | sed 1d | grep connected)
+)"; declare -r myFirstQuad
+
+while read ip mac; do
+  [ "${ip:0:3}" = "$myFirstQuad" ] || {
+    echo "$ip" "$mac"
+    continue; # not really ip/mac; just extra metadata we pass along
+  }
+  if host "$ip" > /dev/null 2>&1; then
+    localName="$(host "$ip" | sed --expression \
+      's|^.*domain[[:space:]]*name[[:space:]]*pointer[[:space:]]*||'
+    )"
+    printf '%s\t%s\n' "$ip" "$localName"
+  else
+    host "$ip" 2>&1 || true
+  fi
+done < <(arp-scan --quiet --localnet 2>&1)
