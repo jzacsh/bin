@@ -3,20 +3,33 @@
 # Like `who` on my machine, but on my LAN instead
 set -euo pipefail
 
+haveExec() ( type "$1" >/dev/null 2>&1; )
+
+haveExec arp-scan || {
+  printf 'Error: must have arp-scan installed\n' >&2
+  exit 1
+}
+
 [ "$EUID" = 0 ] || {
   printf 'Error: must be run as root\n' >&2
   exit 1
 }
 
 myFirstQuad="$(
-  while read device type state connection; do
-    [ "$state" = connected ] || continue
-    ip -4 -oneline address |
-      grep -E '^[[:digit:]]*:[[:space:]]*'"$device" |
-      while IFS=' ' read number dev family addr _; do
-        echo "${addr:0:3}"
-      done
-  done < <(nmcli --colors no device | sed 1d | grep connected)
+  if haveExec nmcli;then
+    while read device type state connection; do
+      [ "$state" = connected ] || continue
+      ip -4 -oneline address |
+        grep -E '^[[:digit:]]*:[[:space:]]*'"$device" |
+        while IFS=' ' read number dev family addr _; do
+          echo "${addr:0:3}"
+        done
+    done < <(nmcli --colors no device | sed 1d | grep connected)
+  else
+    printf \
+      'WARNING: cannot figure out first quad of your LAN, assuming 192!\n' >&2
+    echo 192
+  fi
 )"; declare -r myFirstQuad
 
 while read ip mac; do
