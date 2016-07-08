@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+# Minimal window manager (ie: not KDE/Gnome) volume control
+#
+# Usage: [-NUMBER | +NUMBER]
+#   Called without arguments, will simply toggle mute.
+#   NUMBER indicates percentage to change volume.
+#     Example: "-5" indicates the volume should be reduced by 5 percent.
+#
+# This script is a fork of simpler i3 config I used to have:
+#   # Pulse Audio controls
+#   bindsym XF86AudioLowerVolume exec pactl set-sink-mute @DEFAULT_SINK@ 0 &&
+#       pactl set-sink-volume @DEFAULT_SINK@ '-5%'
+#   bindsym XF86AudioRaiseVolume exec pactl set-sink-mute @DEFAULT_SINK@ 0 &&
+#       pactl set-sink-volume @DEFAULT_SINK@ '+5%'
+#   bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
+set -euo pipefail
+
+if [ $# -eq 0 ];then
+  pactl set-sink-mute @DEFAULT_SINK@ toggle
+else
+  pactl set-sink-mute @DEFAULT_SINK@ 0 # ensure we're NOT muted
+
+  pactl set-sink-volume @DEFAULT_SINK@ "$1"'%'
+fi
+
+
+#beep # auditory indication of what just happened
+# TODO, resolve https://github.com/johnath/beep/issues/8 and replace w/above
+# resolved
+if [ -r /usr/share/sounds/freedesktop/stereo/bell.oga ];then
+  mpv /usr/share/sounds/freedesktop/stereo/bell.oga
+fi
