@@ -5,5 +5,5 @@ declare -r dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 lockscrnexec="$dir/i3-lock-screen"
 [ -x "$lockscrnexec" ] || lockscrnexec=i3lock
 
-xset dpms $@
+xset s $@
 xss-lock --notifier=$HOME/bin/dist/minwm_dim-screen -- "$lockscrnexec"
