@@ -5,8 +5,5 @@ declare -r dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 lockscrnexec="$dir/i3-lock-screen"
 [ -x "$lockscrnexec" ] || lockscrnexec=i3lock
 
-/usr/bin/xautolock \
-  -time ${1:-1} \
-  -locker "$lockscrnexec" \
-  -notify 30 \
-  -notifier 'zenity --notification --timeout=20 --text "LOCKING screen in 30 seconds"'
+xset s $@
+xss-lock --notifier=$HOME/bin/dist/minwm_dim-screen -- "$lockscrnexec"

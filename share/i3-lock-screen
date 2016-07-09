@@ -3,9 +3,10 @@
 ~/.host/common/away
 
 i3lock \
+  --nofork \
   --tiling \
   --pointer=default \
   --show-failed-attempts \
   --image="$HOME"/media/img/wallpaper/lockscreen-sleeping.png
 
-i3lock -n; ~/.host/common/seated
+~/.host/common/seated
