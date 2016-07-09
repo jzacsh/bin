@@ -85,4 +85,6 @@ trap cleanupTmpServer 3 SIGINT
 printf 'Serving "%s", port :%s,\n\tnginx conf in:\t%s\n\tstatic files from:\t%s\n' \
   "$appName" "$appPort" "$nginxTmpDir" "$staticFiles"
 printf '\tInterrupt, or kill directly:\n\t\tsudo nginx -c "%s" -s stop\n' "$nginxConfig"
-tail -f "$nginxTmpDir"/nginx.*.log
+
+if ! type grc >/dev/null 2>&1;then alias grc=' '; fi
+grc tail -f "$nginxTmpDir"/nginx.*.log
