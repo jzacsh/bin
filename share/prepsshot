@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+declare -r maxWidth=900
+
+declare -a deps=(
+  cwebp
+  exiftool
+  detox
+); declare -r deps
+
+for dep in "${deps[@]}";do
+  if type "$dep" >/dev/null 2>&1;then continue;fi
+
+  printf 'Error: require `%s` util\n' "$dep" >&2
+  exit 1
+done
+
+this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"; declare -r this
+usage() (
+  printf '
+  usage: %s IMAGE_FILE [IMAGE_TWO ...]
+
+    For each IMAGE_FILE creates a copy that:
+    - is stripped of potentialy embedded PII
+    - renamed for long-term storage
+    - shrinked for efficient sharing
+  ' "${this,,}"
+)
+
+[ "$#" -gt 0 ] || {
+  printf 'Error: no files passed\n' >&2
+  usage >&2
+  exit 1
+}
+
+outDir="$(mktemp --tmpdir  --directory "$this"_imgconversions_XXXXX.d)"
+declare -r outDir
+
+scrapeDetoxName() (
+  local bench="$outDir"/.detoxbench/
+  [ -d "$bench" ] || mkdir "$bench"
+
+  find "$bench" -mindepth 1 -type f -exec rm {} +; # cleanup old cruft
+
+  local dummyFile="$bench"/"$1"
+  touch "$dummyFile" # create dummy file
+  detox "$dummyFile" # rename
+
+  find "$bench" -mindepth 1 -type f -printf '%P\n' # print new name
+
+  find "$bench" -mindepth 1 -type f -exec rm {} +;
+)
+
+isReadableNonemptyFile() (
+  [ -r "$1" ] && [ -f "$1" ] && [ "$(stat --printf='%s' "$1")" -gt 0 ]
+)
+
+for orig in "$@";do
+  isReadableNonemptyFile "$orig" || {
+    printf \
+      'skipping: expected regular, readable, non-empty file:\n\t%s\n' \
+      "$orig" >&2
+    continue;
+  }
+  in_img="$(readlink -f "$orig")"
+
+  outName="$(scrapeDetoxName "$(basename "$orig")")"
+  outName="$(date --iso-8601=d)_${outName}"
+
+  outPath="$outDir"/"$outName"
+  cp "$in_img" "$outPath"
+  exiftool -overwrite_original -quiet -all=  "$outPath"
+
+  # TODO it *seems* cwebp already steps exif data. verify this and remove
+  # `exiftool` usage
+
+  cwebp -quiet -resize "$maxWidth" 0 "$outPath" -o "$outPath".webp
+  rm "$outPath"
+done
+
+# list successes
+find "$outDir" -mindepth 1 -maxdepth 1 -type f -print
