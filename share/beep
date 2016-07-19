@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Try to emit beep sound. NOTE: This is a thin wrapper that falls back to
+# Johnathan Nightingale's beep program.
+set -euo pipefail
+
+haveCmd() ( type "$1" >/dev/null 2>&1; )
+
+declare -r xdgBell=/usr/share/sounds/freedesktop/stereo/bell.oga
+if [ -r "$xdgBell" ] && [ -f "$xdgBell" ];then
+  player=''
+  if haveCmd mpv;then
+    player='mpv --really-quiet'
+  elif haveCmd mplayer;then
+    player='mplayer -quiet'
+  fi
+
+  if [ -n "$player" ];then
+    $player "$xdgBell"
+    exit $?
+  fi
+fi
+
+if haveCmd beep;then
+  # Try this last, as it doesn't actually work for me or even emit errors
+  # https://github.com/johnath/beep/issues/8
+  beep; exit $?
+fi
+
+printf 'Error: could not find way to emit a beep.\n' >&2
+exit 1
