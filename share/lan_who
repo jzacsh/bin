@@ -10,6 +10,10 @@ haveExec arp-scan || {
   exit 1
 }
 
+isGoodNmCliVersion() (
+  [ "$(nmcli  --version | sed -e 's|.*version\ ||g; s|\..*||g')" = 1 ];
+)
+
 [ "$EUID" = 0 ] || {
   printf 'Error: must be run as root\n' >&2
   exit 1
@@ -17,6 +21,11 @@ haveExec arp-scan || {
 
 myFirstQuad="$(
   if haveExec nmcli;then
+    if isGoodNmCliVersion;then
+      nmCli='nmcli --colors no device'
+    else
+      nmCli='nmcli device'
+    fi
     while read device type state connection; do
       [ "$state" = connected ] || continue
       ip -4 -oneline address |
@@ -24,7 +33,7 @@ myFirstQuad="$(
         while IFS=' ' read number dev family addr _; do
           echo "${addr:0:3}"
         done
-    done < <(nmcli --colors no device | sed 1d | grep connected)
+    done < <($nmCli | sed 1d | grep connected)
   else
     printf \
       'WARNING: cannot figure out first quad of your LAN, assuming 192!\n' >&2
