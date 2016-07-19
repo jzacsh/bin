@@ -4,6 +4,9 @@ declare -r cmd="$1"
 declare -r watchTarget="$2"
 declare -r handleDelay=1
 
+if [ -d "$watchTarget" ]; then isDirWatch=1; else isDirWatch=0; fi
+declare -r isDirWatch
+
 _fn="${0,,}"; usage() {
   local usageMsg='usage: `%s` "some build cmd" SOME_DIR [GREP_INVERT_STR]\n\n'
   usageMsg+='\tSOME_DIR defaults to cwd\n'
@@ -43,9 +46,19 @@ captureChanges  # ... kick things off for show
 declare -r handleMsg='\n\n
 '${clr[red]}'HANDLING'${clr[end]}' change %d seconds ago to "%s"...\n$`%s`\n\n'
 
+actualFile() { # $1=%w $2=%f see "format" of inotifywait(1)
+  local watched="$1" file="$2"
+  if (( isDirWatch ));then
+    printf '%s/%s' "$watched" "$file"
+  else
+    printf '%s' "$file"
+  fi
+}
+
 excludeRule="$3"
-shouldSkipFile() {
-  [ -n "$excludeRule" ] && [ -z "$(echo -n "$1" | grep --invert-match --extended-regexp "$excludeRule")" ]
+shouldSkipFile() { # $1=%w $2=%f see "format" of inotifywait(1)
+  [ -n "$excludeRule" ] || return 1
+  [ -z "$(actualFile "$1" "$2" | grep --invert-match --extended-regexp "$excludeRule")" ]
 }
 
 # handles event at $1 timestamp, for file $2
@@ -77,17 +90,10 @@ poolChanges() {
 
 didOldSkip=0
 didFileSkip=0
-inotifywait \
-  --monitor \
-  --event=attrib \
-  --recursive \
-  --exclude='^\.\w*.*\.s[a-w][a-z]$' \
-  --timefmt='%s' \
-  --format='%T %f' "$watchTarget" |
-while read chngTime file foo; do
+while read chngTime target file; do
+  # silently skip changes for ignored *and* late files
   if hasBeen $handleDelay $chngTime;then
-    # silently skip changes for ignored *and* late files
-    if shouldSkipFile "$file";then printf '.' >&2; continue; fi
+    if shouldSkipFile "$target" "$file";then printf '.' >&2; continue; fi
 
     if (( didOldSkip ));then
       if (( didOldSkip > 40 ));then
@@ -102,12 +108,16 @@ while read chngTime file foo; do
         $handleDelay
     fi
 
-    msg="$(printf '%d sec ago: "%s"' $(secondsSince $chngTime) "$file")"
+    msg="$(
+      printf '%d sec ago: "%s"' \
+        $(secondsSince $chngTime) \
+        "$(actualFile "$target" "$file")"
+    )"
     printf "$msg" >&2
     didOldSkip=$(( didOldSkip + ${#msg} )); continue
   fi
 
-  if shouldSkipFile "$file";then
+  if shouldSkipFile "$target" "$file";then
     if (( didFileSkip ));then
       if (( didFileSkip > 40 ));then
         didFileSkip=0
@@ -121,11 +131,19 @@ while read chngTime file foo; do
         "$excludeRule" >&2
     fi
 
-    printf '"%s"' "$file" >&2
+    printf '"%s"' "$(actualFile "$target" "$file")" >&2
     didFileSkip=$(( didFileSkip + ${#file} )); continue
   fi
 
   didOldSkip=0
   didFileSkip=0
   poolChanges $chngTime "$file"
-done
+done < <(
+  inotifywait \
+    --monitor \
+    --event=attrib \
+    --recursive \
+    --exclude='^\.\w*.*\.s[a-w][a-z]$' \
+    --timefmt='%s' \
+    --format='%T %w %f' "$watchTarget"
+)
