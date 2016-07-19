@@ -6,6 +6,8 @@ set -euo pipefail
 
 haveCmd() ( type "$1" >/dev/null 2>&1; )
 
+if haveCmd emitBeep_;then unset emitBeep_; fi
+
 declare -r xdgBell=/usr/share/sounds/freedesktop/stereo/bell.oga
 if [ -r "$xdgBell" ] && [ -f "$xdgBell" ];then
   player=''
@@ -16,15 +18,27 @@ if [ -r "$xdgBell" ] && [ -f "$xdgBell" ];then
   fi
 
   if [ -n "$player" ];then
-    $player "$xdgBell"
-    exit $?
+    emitBeep_() ( $player "$xdgBell"; )
   fi
 fi
 
-if haveCmd beep;then
-  # Try this last, as it doesn't actually work for me or even emit errors
-  # https://github.com/johnath/beep/issues/8
-  beep; exit $?
+# Keep beep(1) as fallback, as it doesn't actually work for me or even emit
+# errors; see: https://github.com/johnath/beep/issues/8
+if ! haveCmd emitBeep_ && haveCmd beep;then
+  emitBeep_() ( beep )
+fi
+
+if haveCmd emitBeep_;then
+  numBeeps=1
+  if [ $# -gt 0 ];then
+    numBeeps=$1
+  fi
+
+  beepExit=0
+  for i in $(seq $numBeeps);do
+    emitBeep_ || exit 1
+  done
+  exit 0
 fi
 
 printf 'Error: could not find way to emit a beep.\n' >&2
