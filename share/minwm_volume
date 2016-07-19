@@ -26,8 +26,5 @@ fi
 
 
 #beep # auditory indication of what just happened
-# TODO, resolve https://github.com/johnath/beep/issues/8 and replace w/above
-# resolved
-if [ -r /usr/share/sounds/freedesktop/stereo/bell.oga ];then
-  mpv /usr/share/sounds/freedesktop/stereo/bell.oga
-fi
+# Expected to be https://github.com/jzacsh/bin/blob/10fc31df03aa/share/bell
+if [ -x ~/bin/share/bell ];then ~/bin/share/bell; fi
