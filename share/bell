@@ -25,7 +25,7 @@ fi
 # Keep beep(1) as fallback, as it doesn't actually work for me or even emit
 # errors; see: https://github.com/johnath/beep/issues/8
 if ! haveCmd emitBeep_ && haveCmd beep;then
-  emitBeep_() ( beep )
+  emitBeep_() ( beep; )
 fi
 
 if haveCmd emitBeep_;then
