@@ -1,12 +1,70 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
+this="$(readlink -f "${BASH_SOURCE[0]}")"; declare -r this
 
 ~/.host/common/away
+
+blankPng() (
+  # Place a blank PNG for the moment; taken from public domain
+  # https://commons.wikimedia.org/wiki/File:Blank.png
+  printf
+    'iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAYAAACddGYaAAAAAXNSR0IArs4c6QAAAAZiS0dEAO8AUQBRItXOlAAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9gJDxcIBl8Z3A0AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAC0lEQVQI12NgwAUAABoAASRETuUAAAAASUVORK5CYII='
+)
+
+randomPng() (
+  local dir randPng randWallpaper
+  dir="$(dirname "$this")"
+  randWallpaper="$("$dir"/minwm_randimg wallpaper)";
+  [ -n "${randWallpaper/ */}" ] || {
+    printf 'Error: failed to find a random wallpaper for lock scrn\n' >&2
+    return 1
+  }
+  if [ "$(file --mime-type --brief "$randWallpaper")" = 'image/png' ];then
+    printf '%s' "$randWallpaper"
+    return;
+  fi
+
+  local dataHome
+  dataHome="${XDG_DATA_HOME:-$HOME/.local/share}"
+  { [ -d "$dataHome" ] && [ -w "$dataHome" ]; } || {
+    printf 'Error: no writeable $XDG_DATA_HOME to cache PNG conversions\n' >&2
+    return 1
+  }
+  local prgmName; prgmName="$(basename "$this")"
+  local cacheDir="$dataHome"/"$prgmName".cache/
+  { [ -e "$cacheDir" ] || mkdir "$cacheDir"; } || {
+    printf 'Error: failed to start cache dir for PNG conversions\n' >&2
+    return 1
+  }
+
+  local origkey; origkey="$(md5sum "$randWallpaper" | cut -f 1 -d ' ')"
+  [ -n "${origkey/ */}" ] || {
+    printf 'Error: failed to get a hash of random wallpaper:\n\t"%s"\n' \
+      "$randWallpaper" >&2
+    return 1
+  }
+
+  randPng="$cacheDir"/"${origkey}.png"
+  if [ -e "$randPng" ];then
+    printf '%s' "$randPng"
+    return 0
+  fi
+
+  blankPng | base64 --decode > "$randPng"
+  printf '%s' "$randPng"
+  convert "$randWallpaper" "$randPng" & disown
+)
 
 i3lock \
   --nofork \
   --tiling \
   --pointer=default \
   --show-failed-attempts \
-  --image="$HOME"/media/img/wallpaper/lockscreen-sleeping.png
+  --image="$HOME/media/img/lockscreen-sleeping.png"
+
+  # TODO: figure out why this actually still hangs the program, design
+  # backgrounding...
+# --image="$(randomPng || echo '/dev/null')"
 
 ~/.host/common/seated
