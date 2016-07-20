@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#
+# Sets random wallpaper from $XDG_PICTURES_DIR or $1 subdirectory under it
+set -euo pipefail
+
+dir="$(xdg-user-dir PICTURES)/${1:-.}"
+feh --bg-fill "$(find "$dir" -type f -print | shuf | head -n 1)"
