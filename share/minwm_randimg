@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#
+# Sets random wallpaper from $1, child path under $XDG_PICTURES_DIR
+set -euo pipefail
+
+[ "$#" -gt 0 ] || {
+  printf 'Error expected sub path as argument (or ".") for $XDG_DIR_PICTURES\n' >&2
+  exit 1
+}
+dir="$(xdg-user-dir PICTURES)/$1"
+find "$dir" -type f -print | shuf | head -n 1
