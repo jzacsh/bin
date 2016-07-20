@@ -9,8 +9,12 @@
 #
 # $1=env var to export (eg: PYTHONPATH)
 # $@=strings to colon-delimited prepend (eg: /my/pylib /sys/pylib)
+
 exportPrependedOnce() {
   local env_var="$1";shift
+
+  # TODO make this safe to run in script that has `set -u` -- ie: temporarily
+  # unset it if it's set
 
   local to_prepend="$(
     local -a found=( $(printf "${!env_var}" | tr : '\n') )
