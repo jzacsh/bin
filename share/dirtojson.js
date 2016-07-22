@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+#!/usr/bin/env nodejs
+
 'use strict';
 
 var fs = require('fs');
