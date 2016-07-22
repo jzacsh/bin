@@ -20,8 +20,13 @@ masterDir="$(
 { [ -d "$masterDir" ] && [ -w "$masterDir" ]; } ||
   die 'writeable, local master of CDN dir not found:\n\t"%s"\n' "$masterDir"
 
-"$dirtojson" "$masterDir" > "$masterDir"/index.json ||
-  die 'failed to build and save JSON index of files\n'
+buildIndex() ( "$dirtojson" "$masterDir"; )
+
+declare -r jsonIndex="$masterDir"/index.json
+{ [ -f "$jsonIndex" ] && diff -u "$jsonIndex" <(buildIndex); } || {
+  buildIndex> "$jsonIndex" ||
+    die 'failed to build and save JSON index of files\n'
+}
 
 rsync \
     --verbose --delete --archive --acls --xattrs --recursive \
