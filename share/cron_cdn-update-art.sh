@@ -13,7 +13,10 @@ declare -r dirtojson="$HOME/bin/share/dirtojson.js"
 { [ -f "$dirtojson" ] && [ -x "$dirtojson" ]; } ||
   die 'Cannot find `dirtojson` utility at:\n\t"%s"\n' "$dirtojson"
 
-masterDir="$(readlinkf -f "$HOME/media/www/content/art")"; declare -r masterDir
+masterDir="$(
+  readlink -f "$HOME/media/www/keycdn/content/art" ||
+    die 'KeyCDN master dir ont where expected'
+)"; declare -r masterDir
 { [ -d "$masterDir" ] && [ -w "$masterDir" ]; } ||
   die 'writeable, local master of CDN dir not found:\n\t"%s"\n' "$masterDir"
 
