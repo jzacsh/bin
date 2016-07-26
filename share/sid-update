@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+#
+# Script to run updates, intended for manual execution.
+set -o errexit
+set -o nounset
+set -o pipefail
+
+declare -a aptCommands=(
+  update
+  upgrade
+  update
+  dist-upgrade
+  update
+  autoclean
+  autoremove
+); declare -r aptCommands
+
+#####################################
+
+# STEP 1: Backup current system state
+sudo ~/bin/share/borgw_system.sh /mnt/localbackups/"$(hostname)"
+
+# STEP 2: Actually move further along bleeding edge
+time (
+  set -x
+  for act in "${aptCommands[@]}"; do
+    sudo apt-get "$act"
+  done
+) 2>&1 | tee -a ~/usr/log/bleeding-update.log
