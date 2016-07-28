@@ -59,7 +59,7 @@ if ! cmpr > /dev/null 2>&1; then
       "\$$(printf "$latest" | sed -e "s|$HOME|HOME|")"
     cmpr;
   } | "${PAGER:-less}"
-  echo; read -p "Run irssi with $(col red old config) anyway? [yN] " answer
+  echo; read -p "Run "$ircClient" with $(col red old config) anyway? [yN] " answer
   ans="${answer,,}"; ans="${ans:0:1}"
   if [ "$ans" != y ];then
     printf \
