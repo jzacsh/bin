@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+#
+# Manually set brightness while I debug my system configuration. eg:
+#   $ xbacklight
+#   No outputs have backlight property
+set -euo pipefail
+
+declare -r sysBacklight=/sys/class/backlight/intel_backlight
+declare -r brightnessFile="$sysBacklight"/brightness
+max="$(< "$sysBacklight"/max_brightness)"; declare -r max
+cur="$(< "$brightnessFile")"; declare -r cur
+
+calc() ( bc | sed -e 's|\..*$||g'; ) # use floats, then strip precision
+[ $# -eq 1 ] || {
+  this="$(basename "$(readlink -f "$0")")"
+  printf 'Error: no percentage change provided
+
+  Usage %s [-|+]PERCENTAGE
+
+  For example:
+    $ %s -10  # Decreases brightness 10%%
+    $ %s 30   # Increases brightness 30%%
+    $ %s +90  # Increases brightness 90%%
+
+  Currently at %s%% (%s of %s)
+  See system files for more, in:\n\t%s
+  \n' \
+    "$this" "$this" "$this" "$this" \
+    "$(printf 'scale=4; (%s / %s) * 100\n' $cur $max | calc)" \
+    "$cur" "$max" "$sysBacklight" >&2
+  exit 1
+}
+
+direc="$1";
+if [ "${direc:0:1}" = '+' ];then direc="${direc:1:${#direc}}"; fi
+[ -n "${direc/ */}" ]
+target="$(printf 'scale=4; %f + (%f * .01 * %s)\n' $cur $max "$direc" | calc)"
+if [ "${target:0:1}" = '-' ]; then target=0; fi
+if [ "$target" -gt "$max" ];then target=$max; fi
+
+sudo sh -c "echo $target > "$brightnessFile""
