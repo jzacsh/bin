@@ -38,4 +38,5 @@ target="$(printf 'scale=4; %f + (%f * .01 * %s)\n' $cur $max "$direc" | calc)"
 if [ "${target:0:1}" = '-' ]; then target=0; fi
 if [ "$target" -gt "$max" ];then target=$max; fi
 
+set -x
 sudo sh -c "echo $target > "$brightnessFile""
