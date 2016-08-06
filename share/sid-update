@@ -18,7 +18,11 @@ declare -a aptCommands=(
 #####################################
 
 # STEP 1: Backup current system state
-sudo ~/bin/share/borgw_system.sh /mnt/localbackups/"$(hostname)"
+if [[ $# -eq 0 ]] || [[ "$1" != --no-backup ]];then
+  sudo ~/bin/share/borgw_system.sh /mnt/localbackups/"$(hostname)"
+else
+  echo 'WARNING: not backing up before modifying system!' >&2
+fi
 
 # STEP 2: Actually move further along bleeding edge
 time (
