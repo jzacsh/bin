@@ -3,6 +3,9 @@ set -euo pipefail
 
 this="$(readlink -f "${BASH_SOURCE[0]}")"; declare -r this
 
+tput() ( true; ) # mock to get only env. vars
+source ~/bin/share/zacsh_exports
+
 ~/.host/common/away
 
 blankPng() (

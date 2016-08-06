@@ -11,6 +11,7 @@
 # $@=strings to colon-delimited prepend (eg: /my/pylib /sys/pylib)
 
 exportPrependedOnce() {
+  set +u
   local env_var="$1";shift
 
   # TODO make this safe to run in script that has `set -u` -- ie: temporarily
