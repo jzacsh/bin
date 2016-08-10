@@ -42,7 +42,7 @@ http {
     scgi_temp_path $nginxTmpDir/scgi_temp;
     uwsgi_temp_path $nginxTmpDir/uwsgi_temp;
 
-    include       /usr/local/nginx/conf/mime.types;
+    include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
     sendfile       off;
     tcp_nopush     off;
