@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+# Text-to-speach: playback strings from stdin
+#   Adapted from http://askubuntu.com/a/179922
+set -euo pipefail
+
+if [ -t 0 ];then
+  printf 'Error: expected contents from stdin\n' >&2
+  exit 1
+fi
+
+waveF="$(mktemp --tmpdir tmp_speak_pico2wave_XXXXXXX.wav)"
+declare -r waveF
+
+textContent="$(mktemp --tmpdir tmp_speak_text-content_XXXXXXX.txt)"
+declare -r textContent
+
+while read ln; do echo "$ln" >> "$textContent";done
+
+echo 'BUILDING audio from from stdin...' >&2
+time { pico2wave --wave="$waveF" "$(< "$textContent")"; }
+mpv "$waveF"
+
+echo 'Done playing back stdin, Cleaning up' >&2
+for f in "$waveF" "$textContent";do if [ -f "$f" ];then
+  rm "$f" ;fi
+done
