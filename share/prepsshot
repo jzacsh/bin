@@ -16,23 +16,36 @@ for dep in "${deps[@]}";do
   exit 1
 done
 
+declare -r acceptedOpts='k' # getopts first argument
 this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"; declare -r this
 usage() (
   printf '
-  usage: %s IMAGE_FILE [IMAGE_TWO ...]
+  usage: %s [-%s] IMAGE_FILE [IMAGE_TWO ...]
 
     For each IMAGE_FILE creates a copy that:
     - is stripped of potentialy embedded PII
     - renamed for long-term storage
     - shrinked for efficient sharing
-  ' "${this,,}"
+    - converted to webp, unless -k is passed
+  ' "${this,,}" "$acceptedOpts"
 )
 
-[ "$#" -gt 0 ] || {
-  printf 'Error: no files passed\n' >&2
-  usage >&2
-  exit 1
-}
+declare -A opts=( [k]=0 )
+while getopts "$acceptedOpts" flag;do
+  case "$flag" in
+    k) opts["$flag"]=1;;
+    *)
+      printf -- \
+        'Error: Unrecognized flag, expected one of: "%s". See usage:\n%s\n' \
+        "$acceptedOpts" "$(usage)" >&2
+      exit 1
+      ;;
+  esac
+done
+shift $(( $OPTIND - 1 ))
+declare -r opts
+
+[ "$#" -gt 0 ] || { printf 'Error: need images\n%s\n' "$(usage)" >&2; exit 1; }
 
 outDir="$(mktemp --tmpdir  --directory "$this"_imgconversions_XXXXX.d)"
 declare -r outDir
@@ -68,15 +81,19 @@ for orig in "$@";do
   outName="$(scrapeDetoxName "$(basename "$orig")")"
   outName="$(date --iso-8601=d)_${outName}"
 
-  outPath="$outDir"/"$outName"
-  cp "$in_img" "$outPath"
-  exiftool -overwrite_original -quiet -all=  "$outPath"
+  stripped="$outDir"/"$outName"
+  cp "$in_img" "$stripped"
+  exiftool -overwrite_original -quiet -all=  "$stripped"
 
-  # TODO it *seems* cwebp already steps exif data. verify this and remove
-  # `exiftool` usage
-
-  cwebp -quiet -resize "$maxWidth" 0 "$outPath" -o "$outPath".webp
-  rm "$outPath"
+  outPath="$outDir"/max-"$maxWidth"_"$outName"
+  if (( opts[k] ));then
+    convert -resize "$maxWidth" "$stripped" "$outPath"
+  else
+    # TODO it *seems* cwebp already strips exif data. verify this and remove
+    # `exiftool` usage
+    cwebp -quiet -resize "$maxWidth" 0 "$stripped" -o "$outPath".webp
+  fi
+  rm "$stripped"
 done
 
 # list successes
