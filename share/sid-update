@@ -11,8 +11,9 @@ declare -a aptCommands=(
   update
   dist-upgrade
   update
-  autoclean
-  autoremove
+#Dangerous, may leave me w/o quick/easy rollback:
+# autoclean
+# autoremove
 ); declare -r aptCommands
 
 #####################################
