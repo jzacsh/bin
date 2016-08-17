@@ -12,7 +12,7 @@ declare -r thisScript="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
   exit 1
 }
 
-declare -r adbCommand=s"creen${1}"
+adbCommand=s"creen${1}"
 if [ "$1" = cap ];then
   declare -r onceRunInstruction='Please wait...'
   declare -r defaultOndisk=/sdcard/screenshot.png
@@ -32,17 +32,21 @@ pullFromDevice() (
   )"
   localFile="$(mktemp --tmpdir  "$tmpl")"
 
-  {
-    adb pull "$defaultOndisk" "$localFile" >/dev/null 2>&1 &&
-    [ -e "$localFile" ] &&
-    [ "$(stat "$localFile" --printf '%b')" != 0 ]
-  } || {
+  (
+    # adb shell "du $defaultOndisk" >&2 &&
+    adb pull "$defaultOndisk" "$localFile" >/dev/null &&
+      [ -e "$localFile" ] &&
+      [ "$(stat "$localFile" --printf '%b')" != 0 ]
+  ) || (
     rm "$localFile" 2>/dev/null # clear empty files
     return
-  }
+  )
 
   printf '%s\n' "$localFile"
-  adb shell rm "$defaultOndisk"
+
+  #TODO uncomment this when we can reliable do our `adb pull` above ^, as of
+  #now, we fail to transfer every byte as expected.
+  # adb shell rm "$defaultOndisk"
 )
 
 declare -r oldOutput="$(pullFromDevice)"
@@ -53,19 +57,25 @@ if [ -n "${oldOutput/ */}" ];then
 fi
 
 finalPullFromDevice() (
+  set +x
   local offDevice; offDevice="$(pullFromDevice)"
   if [ -n "${offDevice/ */}" ];then
-    printf 'Success; result copied here:\n\t%s\n' "$offDevice"
-    exit 0
+    printf \
+      '%s:\n\t$ adb pull %s %s &&\n\t    adb shell "rm -v %s"\n' \
+      'Success; Fetch a copy by running' \
+      "$defaultOndisk" "$offDevice" "$defaultOndisk"
+    return 0
   else
     printf \
       'Error: %s failed\n\tmaybe poke around w/`adb`, you like: %s\n' \
       "$adbCommand" "$defaultOndisk" >&2
-    exit 1
+    return 1
   fi
 )
 trap finalPullFromDevice EXIT
 
+
 printf 'RUNNING %s now; %s\n' "$adbCommand" "$onceRunInstruction"
-adb shell "$adbCommand" "$defaultOndisk"
+command="$adbCommand"; if [ "$1" = record ];then command+=" --verbose";fi
+set -x; adb shell "$command" "$defaultOndisk"
 exit 0
