@@ -11,7 +11,6 @@ declare -a deps=(
 
 for dep in "${deps[@]}";do
   if type "$dep" >/dev/null 2>&1;then continue;fi
-
   printf 'Error: require `%s` util\n' "$dep" >&2
   exit 1
 done
@@ -70,12 +69,13 @@ isReadableNonemptyFile() (
   [ -r "$1" ] && [ -f "$1" ] && [ "$(stat --printf='%s' "$1")" -gt 0 ]
 )
 
-for orig in "$@";do
+preporig() (
+  local orig; orig="$1"
   isReadableNonemptyFile "$orig" || {
     printf \
       'skipping: expected regular, readable, non-empty file:\n\t%s\n' \
       "$orig" >&2
-    continue;
+    return
   }
   in_img="$(readlink -f "$orig")"
 
@@ -105,7 +105,10 @@ for orig in "$@";do
     'generated %s from %s\n' \
     "$(basename "$(if [ -e "$outPath" ];then echo "$outPath"; else echo "$outPath".webp; fi)")" \
     "$(basename "$in_img")"
-done
+)
+
+# TODO figure out what goes wrong when backgrounding preporig
+for orig in "$@";do preporig "$orig"; done
 
 # list successes
 find "$outDir" -mindepth 1 -maxdepth 1 -type f -print
