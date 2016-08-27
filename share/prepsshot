@@ -111,4 +111,4 @@ preporig() (
 for orig in "$@";do preporig "$orig"; done
 
 # list successes
-find "$outDir" -mindepth 1 -maxdepth 1 -type f -print
+# find "$outDir" -mindepth 1 -maxdepth 1 -type f -print
