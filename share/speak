@@ -19,7 +19,7 @@ while read ln; do echo "$ln" >> "$textContent";done
 
 echo 'BUILDING audio from from stdin...' >&2
 time { pico2wave --wave="$waveF" "$(< "$textContent")"; }
-mpv "$waveF"
+mpv --really-quiet "$waveF"
 
 echo 'Done playing back stdin, Cleaning up' >&2
 for f in "$waveF" "$textContent";do if [ -f "$f" ];then
