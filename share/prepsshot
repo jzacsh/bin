@@ -16,7 +16,7 @@ for dep in "${deps[@]}";do
   exit 1
 done
 
-declare -r acceptedOpts='k' # getopts first argument
+declare -r acceptedOpts='ks' # getopts first argument
 this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"; declare -r this
 usage() (
   printf '
@@ -25,7 +25,7 @@ usage() (
     For each IMAGE_FILE creates a copy that:
     - is stripped of potentialy embedded PII
     - renamed for long-term storage
-    - shrinked for efficient sharing
+    - shrinked for efficient sharing, unless -s is passed
     - converted to webp, unless -k is passed
   ' "${this,,}" "$acceptedOpts"
 )
@@ -34,6 +34,7 @@ declare -A opts=( [k]=0 )
 while getopts "$acceptedOpts" flag;do
   case "$flag" in
     k) opts["$flag"]=1;;
+    s) opts["$flag"]=1;;
     *)
       printf -- \
         'Error: Unrecognized flag, expected one of: "%s". See usage:\n%s\n' \
@@ -85,15 +86,25 @@ for orig in "$@";do
   cp "$in_img" "$stripped"
   exiftool -overwrite_original -quiet -all=  "$stripped"
 
-  outPath="$outDir"/max-"$maxWidth"_"$outName"
+  outPath="$outDir"/stripped_"$outName"
+  cp "$stripped" "$outPath" # baseline, in case nothing below runs
   if (( opts[k] ));then
-    convert -resize "$maxWidth" "$stripped" "$outPath"
+    (( opts[s] )) ||
+      convert -resize "$maxWidth" "$stripped" "$outPath"
   else
     # TODO it *seems* cwebp already strips exif data. verify this and remove
     # `exiftool` usage
-    cwebp -quiet -resize "$maxWidth" 0 "$stripped" -o "$outPath".webp
+    resizeOpt=''
+    (( opts[s] )) ||
+      resizeOpt=" -resize "$maxWidth" 0 "
+    cwebp -quiet $resizeOpt "$stripped" -o "$outPath".webp
   fi
   rm "$stripped"
+
+  printf -- \
+    'generated %s from %s\n' \
+    "$(basename "$(if [ -e "$outPath" ];then echo "$outPath"; else echo "$outPath".webp; fi)")" \
+    "$(basename "$in_img")"
 done
 
 # list successes
