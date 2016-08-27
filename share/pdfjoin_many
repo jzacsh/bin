@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+declare -r usLetter='{21.59cm,27.94cm}'
+usage() (
+  printf -- 'usage: %s OUTPUT TITLE AUTHOR [PAPER_SIZE]
+
+  Description
+    Joins large (in my case 1,300+) number of files in multiple steps, so as not
+    to overwhelm pdflatex and get "too many open files" error.
+    
+    Collects newline-separated file list from stdin and joins all files, by
+    their sort(1) --version-sort listing, as a single PDF.
+    
+  Arguments
+    OUTPUT: File path to which final PDF should be written
+      
+    TITLE: Title of the final PDF, embedded as metadata.
+      See --pdftitle option of `pdfjam --help` for more.
+
+    AUTHOR: Author of the final PDF, embedded as metadata.
+      See --pdfauthor option of `pdfjam --help` for more.
+
+    PAPER_SIZE: Defaults to US Letter (%s).
+      See --papersize option of `pdfjam --help` for alternatives.
+
+  Example Usage:
+    $ find scanned-pages/ -type f -name "*.jpg" -print |
+          %s myscannedcopy.pdf "my scanned book" "some ripoff author"
+'   "$(basename "$0")" "$usLetter" "$(basename "$0")"
+)
+
+[[ $# -ge 3 ]] || {
+  ( printf 'Error: not enough arguments\n'; usage; ) >&2
+  exit 1
+}
+declare -r finalPdf="$1"
+declare -r pj_title="$2"
+declare -r pj_author="$3"
+declare -r pj_paperSize="${4:-$usLetter}"
+
+if [ -t 0 ];then
+  ( printf 'Error: file listing expected on stdin but TTY found\n'; usage; ) >&2
+  exit 1
+fi
+
+#########################################
+
+important() (
+  while read line;do
+    echo "$line"
+    echo "$line" | speak 2>/dev/null # & disown
+  done
+)
+
+iter=0
+buildStage() (
+  mktemp \
+    --tmpdir  \
+    --directory \
+    "pdfjoin_exponential_stage-${1}_XXXXXX.d"
+)
+stage="$(buildStage $iter)"
+while read file;do
+  printf -- .
+  cp -rp "$file" "$stage"/
+done
+printf '\nFinished making initial base copies\n'
+
+buildNextStage() {
+  if declare -p nextStage > /dev/null 2>&1;then
+    stage="$nextStage"
+  fi
+  iter=$(( iter + 1 ))
+  nextStage="$(buildStage $iter)"
+  partNum=0
+  printf \
+    'STARTING stage %d with %d files to join\n' \
+    $iter $(previousStageFiles | wc -l) |
+      important
+}
+
+isFullyJoined() ( [ $iter -ne 0 ] && [ "$(find "$nextStage" -type f -print | wc -l)" = 1 ]; )
+previousStageFiles() ( find "$stage"/ -type f -print | sort --version-sort; )
+
+successJoin=0 # must be set on LAST line of file, else defeats purpose
+report() (
+  if (( successJoin ));then return;fi
+  printf 'ERROR: exitiing with a problem. Last stage was %d.\n' $iter |
+      important >&2
+  printf 'Last stage files are in:\n\t%s\n' "$nextStage" >&2
+  exit 1
+)
+trap report EXIT
+
+while ! isFullyJoined;do
+  buildNextStage
+
+  j=1; while read file;do
+    if (( j % 2 ));then
+      file_a="$file"
+    else
+      file_b="$file"
+
+      partNum=$(( partNum + 1 ))
+      printf \
+        -v partFile \
+        '%s/part_%02d.0_stage-%d.pdf' \
+        "$nextStage" $partNum $iter
+
+      printf \
+        'JOINING\t%s\t%s\n' \
+        "$(basename "$file_a")" \
+        "$(basename "$file_b")"
+      time (
+        set -x
+        pdfjoin \
+          --tidy \
+          --quiet \
+          --outfile "$partFile" \
+          --pdftitle "$pj_title" \
+          --pdfauthor "$pj_author" \
+          --papersize "$pj_paperSize" \
+          --fitpaper false \
+          --rotateoversize false \
+          "$file_a" "$file_b"
+        rm -v "$file_a" "$file_b"
+      )
+    fi
+
+    j=$(( j + 1 ))
+  done < <(previousStageFiles)
+
+  # mathematically, only one file can remain. but hey! maybe my math sucks...
+  printf 'CARRYING OVER %s REMAINDER FILES...\n' \
+    "$(find "$stage" -type f -print | wc -l)" | important
+  r=1
+  while read remaining; do
+    printf '\tCARRYING over file: "%s"\n' "$remaining"
+    (
+      printf \
+        -v remainOut \
+        '%s/part_%02d.%d_remainderof-%d_%s' \
+        "$nextStage" $partNum $r $iter "$(basename "$remaining")"
+      set -x
+      mv -v "$remaining" "$remainOut"
+    )
+    r=$(( r + 1 ))
+  done < <(find "$stage" -type f -print)
+done
+
+[ "$(find "$nextStage" -type f -print | wc -l)" -eq 1 ] || {
+  printf 'ERROR: somehow finished without trimming down to single PDF\n' >&2
+  exit 1
+}
+
+find "$nextStage" -type f -exec mv {} "$finalPdf" \;
+printf \
+  'SUCCESS: File written to %s:\n\t"%s"\n' \
+  "$(basename "$finalPdf")" \
+  "$(readlink -f "$finalPdf")"
+successJoin=1 # MUST be last line of this script
