@@ -29,6 +29,8 @@ Summary:
   exit 1
 }
 
+curlFollow() ( set -x; curl --location --max-time 3 $@; )
+
 scrape_rel_tag() {
   # @TODO(zacsh) re-write this script in python an import an xml/xpath parser to
   # find the link[rel="shortcut icon"]
@@ -40,15 +42,15 @@ path_is_image() {
   local guess ondisk ftype mimetype
   guess="$1"
 
-  if ! curl -ILf "$guess" >/dev/null 2>&1;then
+  if ! curlFollow --head "$guess";then
     return 1
   fi
 
-  ondisk="$(mktemp)"
-  curl -sL "$guess" > "$ondisk"
+  ondisk="$(mktemp --tmpdir  favipng_orig_XXXXXX)"
+  curlFollow --silent "$guess" > "$ondisk"
   (( $? )) && return 2
 
-   # eg.: mime-type "image/png" => "image"
+  # eg.: mime-type "image/png" => "image"
   mimetype="$(file --brief --mime-type "$ondisk")"
   ftype="${mimetype/\/*/}"
 
