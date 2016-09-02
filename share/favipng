@@ -95,20 +95,20 @@ save_ico_to() {
 
 FAVIPNG_CONVERSION="${FAVIPNG_CONVERSION:-icopng}"
 
-if ! type "$FAVIPNG_CONVERSION" >/dev/null 2>&1;then
-  printf 'FAVIPNG_CONVERSION env. variable was set to, "%s", but must be set to
+{ type -p "$FAVIPNG_CONVERSION" >/dev/null 2>&1 || [ -x "$FAVIPNG_CONVERSION" ]; } || (
+  printf '$FAVIPNG_CONVERSION env. variable was set to, "%s", but must be set to
   a valid executable\n' "$FAVIPNG_CONVERSION" >&2
   exit 2
-fi
+)
 
 scrape_rel_tag || guess_path
 
-if [[ -z $F_FOUND ]];then
+if [[ -z "${F_FOUND/ */}" ]];then
   # @TODO(zacsh) when scrape_rel_tag is complete, then add this back to the
   # error output:
 # printf 'Could not determine location of icon.
 # Tried scraping for <link rel="shortcut icon" ... />
-  printf 'Tried guessing locations under the provided URL:\n\t%s\n' \
+  printf 'Failed trying to guess locations under the provided URL:\n\t%s\n' \
     "$1" "${guesses[@]}"  >&2
   exit 3
 fi
