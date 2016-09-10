@@ -16,13 +16,18 @@ declare -a aptCommands=(
 # autoremove
 ); declare -r aptCommands
 
+highlight() ( \grep --extended-regexp --color=always "$1"; )
 teeLog() ( tee -a ~/usr/log/bleeding-update.log; )
 this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 declare -r this
 #####################################
 
 # STEP 0: Log Beginning/end of this script
-log() ( printf '[%s | %s] %s\n' "$(date --iso-8601=ns)" "$this" "$*" | teeLog; )
+log() (
+  printf '[%s | %s] %s\n' "$(date --iso-8601=ns)" "$this" "$*" |
+    highlight "$this" |
+    teeLog
+)
 trap 'log FINISHED' EXIT
 log STARTING
 
@@ -39,4 +44,4 @@ time (
   for act in "${aptCommands[@]}"; do
     sudo apt-get "$act"
   done
-) 2>&1 | grep --extended-regexp --color=always '^|^The\ following.*$' | teeLog
+) 2>&1 | highlight '^|^The\ following.*$' | teeLog
