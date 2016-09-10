@@ -39,4 +39,4 @@ time (
   for act in "${aptCommands[@]}"; do
     sudo apt-get "$act"
   done
-) 2>&1 | grep -E '^|^The\ following.*$' | teeLog
+) 2>&1 | grep --extended-regexp --color=always '^|^The\ following.*$' | teeLog
