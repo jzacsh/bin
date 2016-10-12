@@ -18,8 +18,7 @@ declare -a aptCommands=(
 
 highlight() ( \grep --extended-regexp --color=always "$1"; )
 teeLog() ( tee -a ~/usr/log/bleeding-update.log; )
-this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
-declare -r this
+this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"; declare -r this
 #####################################
 
 # STEP 0: Log Beginning/end of this script
@@ -44,4 +43,4 @@ time (
   for act in "${aptCommands[@]}"; do
     sudo apt-get "$act"
   done
-) 2>&1 | highlight '^|^The\ following.*$' | teeLog
+) 2>&1 | teeLog
