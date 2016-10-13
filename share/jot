@@ -27,4 +27,14 @@ printf '= Jot Doc Started %s\n%s <%s>\nv0.0.1, %s\n\n' \
   "$(date --iso-8601=d)" > "$jotDoc"
 printf '$EDITOR launching:\n%s\n\n' "$jotDoc"
 
+hashOfDoc() ( md5sum < "$1" | cut -f 1 -d ' '; )
+baseHash="$(hashOfDoc "$jotDoc")"; declare -r baseHash
+cleanupNothingJotted() (
+  local currentHash; currentHash="$(hashOfDoc "$jotDoc")"
+  [[ "$baseHash" = "$currentHash" ]] || return 0
+  printf 'Nothing jotted, removing doc...\n' >&2
+  rm -v "$jotDoc"
+)
+trap cleanupNothingJotted EXIT
+
 "$EDITOR" "$jotDoc" +:Goyo +:SyntasticToggleMode
