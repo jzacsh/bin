@@ -49,7 +49,7 @@ fi
 important() (
   while read line;do
     echo "$line"
-    echo "$line" | speak 2>/dev/null # & disown
+    echo "$line" | speak 2>/dev/null || true # ignore speak failures
   done
 )
 
