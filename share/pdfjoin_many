@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# TODO: convert arg parsing to getopts bash builtin; then allow toggling of
+# `--fitpaper = true`, below. About 50% of the time I'm toggling it on.
 declare -r usLetter='{21.59cm,27.94cm}'
 usage() (
   printf -- 'usage: %s OUTPUT TITLE AUTHOR [PAPER_SIZE]
