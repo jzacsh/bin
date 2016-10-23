@@ -57,6 +57,8 @@ important() (
 
 iter=0
 buildStage() (
+  # TODO: store these in an array, and discard them in a cleanup step (warning:
+  # change this function to be a {} - rather than it's current () - first.
   mktemp \
     --tmpdir  \
     --directory \
