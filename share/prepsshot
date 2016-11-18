@@ -101,10 +101,12 @@ preporig() (
   fi
   rm "$stripped"
 
+  local actualOut; actualOut="$(if [ -e "$outPath" ];then echo "$outPath"; else echo "$outPath".webp; fi)"
   printf -- \
-    'generated %s from %s\n' \
-    "$(basename "$(if [ -e "$outPath" ];then echo "$outPath"; else echo "$outPath".webp; fi)")" \
-    "$(basename "$in_img")"
+    'generated %s from %s\n\t%s\n' \
+    "$(basename "$actualOut")" \
+    "$(basename "$in_img")" \
+    "$actualOut"
 )
 
 # TODO figure out what goes wrong when backgrounding preporig
