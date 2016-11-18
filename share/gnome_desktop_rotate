@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+bgrndsDir="$(readlink -f "$1")"; declare -r bgrndsDir
+
+currentBgrnd="$(
+  gsettings get org.gnome.desktop.background picture-uri |
+    sed --expression 's|file://||' \
+        --expression "s|^'||" \
+        --expression "s|'$||"
+)"
+declare -r currentBgrnd
+
+lsBgrnds() (
+  find "$bgrndsDir" -mindepth 1 -maxdepth 1 -type f -print |
+      grep -v "$currentBgrnd" |
+      sort
+)
+
+numBgrnds="$(lsBgrnds | wc -l)"; declare -r numBgrnds
+
+randIdx="$(shuf --input-range "1-${numBgrnds}" --head-count 1)"
+declare -r randIdx # integer in [1,$numBgrnds]
+
+randBgrnd="$(lsBgrnds | sed -n "$randIdx"p)" 
+declare -r randBgrnd
+
+printf -v fileUri 'file://%s' "$randBgrnd"; declare -r fileUri
+
+gsettings set org.gnome.desktop.background picture-uri "$fileUri"
+
+printf 'Set background to:\n\t%s\n' "$randBgrnd"
