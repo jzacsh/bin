@@ -125,7 +125,7 @@ while ! isFullyJoined;do
           --pdftitle "$pj_title" \
           --pdfauthor "$pj_author" \
           --papersize "$pj_paperSize" \
-          --fitpaper false \
+          --fitpaper true \
           --rotateoversize false \
           "$file_a" "$file_b"
         rm -v "$file_a" "$file_b"
