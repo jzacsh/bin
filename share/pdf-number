@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+declare -r inputPdf="$1"
+
+outputPdf="$(
+  mktemp \
+    --tmpdir=. \
+    "$(basename "${inputPdf/.pdf/}")"'-header_XXXXX.pdf'
+)"; declare -r outputPdf
+trap 'rm '"$outputPdf" ERR
+
+pagenum="$(
+  pdftk "$inputPdf" dump_data |
+     grep NumberOfPages |
+     cut -d ' ' -f 2
+)"; declare -r pagenum
+
+seq "$pagenum" |
+  enscript --quiet --lines-per-page=1 --header=' ' --output - |
+  ps2pdf - |
+  pdftk "$inputPdf" multistamp - output "$outputPdf"
+
+echo "$outputPdf"
