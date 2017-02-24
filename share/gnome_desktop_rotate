@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+declare -r defaultDisplay=':0'
 bgrndsDir="$(readlink -f "$1")"; declare -r bgrndsDir
 
 currentBgrnd="$(
@@ -27,6 +28,20 @@ declare -r randBgrnd
 
 printf -v fileUri 'file://%s' "$randBgrnd"; declare -r fileUri
 
-gsettings set org.gnome.desktop.background picture-uri "$fileUri"
+disp="$DISPLAY"
+if [[ -z "${DISPLAY/ */}" ]]; then
+  printf \
+    'WARNING: $DISPLAY not set (is "%s"); assuming value of "%s".\n' \
+    "$DISPLAY" "$defaultDisplay" >&2
+  disp="$defaultDisplay"
+fi
 
-printf 'Set background to:\n\t%s\n' "$randBgrnd"
+if {
+  set -x
+  DISPLAY="$disp" gsettings set org.gnome.desktop.background picture-uri "$fileUri"
+};then
+  printf 'Successfully set background to:\n\t%s\n' "$randBgrnd"
+else
+  printf 'FAILED to set background to:\n\t%s\n' "$randBgrnd" >&2
+  exit 1
+fi
