@@ -28,11 +28,11 @@ declare -r randBgrnd
 
 printf -v fileUri 'file://%s' "$randBgrnd"; declare -r fileUri
 
-disp="$DISPLAY"
-if [[ -z "${DISPLAY/ */}" ]]; then
+disp="${DISPLAY:- }"
+if [[ -z "${disp/ */}" ]]; then
   printf \
     'WARNING: $DISPLAY not set (is "%s"); assuming value of "%s".\n' \
-    "$DISPLAY" "$defaultDisplay" >&2
+    "$disp" "$defaultDisplay" >&2
   disp="$defaultDisplay"
 fi
 
