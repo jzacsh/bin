@@ -36,10 +36,10 @@ if [[ -z "${DISPLAY/ */}" ]]; then
   disp="$defaultDisplay"
 fi
 
-if {
+if (
   set -x
   DISPLAY="$disp" gsettings set org.gnome.desktop.background picture-uri "$fileUri"
-};then
+);then
   printf 'Successfully set background to:\n\t%s\n' "$randBgrnd"
 else
   printf 'FAILED to set background to:\n\t%s\n' "$randBgrnd" >&2
