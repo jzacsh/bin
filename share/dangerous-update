@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"; declare -r this
+
+declare -r logFile="$1"
+
+declare -a actions=(update upgrade update dist-upgrade update); declare -r actions
+
+(
+  printf '%s\t`%s` STARTING\n' "$(date --iso-8601=ns)" "$this"
+  time (
+    for act in "${actions[@]}";do
+      ( set -x; sudo apt-get "$act"; ) || {
+        printf '\nFAILURE: action, `%s` failed (see above logs)\n' "$act" >&2
+        break;
+      }
+    done
+  )
+  printf '%s\t`%s` ENDING\n' "$(date --iso-8601=ns)"  "$this" 
+) 2>&1 | tee -a "$logFile"
