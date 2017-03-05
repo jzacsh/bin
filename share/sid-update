@@ -38,9 +38,8 @@ else
 fi
 
 # STEP 2: Actually move further along bleeding edge
-time (
-  set -x
+time {
   for act in "${aptCommands[@]}"; do
-    sudo apt-get "$act"
+    ( set -x; sudo apt-get "$act"; )
   done
-) 2>&1 | teeLog
+} 2>&1 | teeLog
