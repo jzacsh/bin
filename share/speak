@@ -24,6 +24,6 @@ trap cleanup EXIT
 
 while read ln; do echo "$ln" >> "$textContent";done
 
-echo 'BUILDING audio from from stdin...' >&2
+echo 'BUILDING audio from stdin...' >&2
 time { pico2wave --wave="$waveF" "$(< "$textContent")"; }
 mpv --really-quiet "$waveF"
