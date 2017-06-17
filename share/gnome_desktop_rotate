@@ -3,6 +3,7 @@ set -euo pipefail
 
 declare -r defaultDisplay=':0'
 bgrndsDir="$(readlink -f "$1")"; declare -r bgrndsDir
+picsDir="$(xdg-user-dir PICTURES)"; declare -r picsDir
 
 currentBgrnd="$(
   gsettings get org.gnome.desktop.background picture-uri |
@@ -12,36 +13,28 @@ currentBgrnd="$(
 )"
 declare -r currentBgrnd
 
-lsBgrnds() (
-  find "$bgrndsDir" -mindepth 1 -maxdepth 1 -type f -print |
-      grep -v "$currentBgrnd" |
-      sort
+findRandImgNot() (
+  local invertMatch; invertMatch="$1"
+  local numBgrnds randBgrnd randIdx unused
+  mapfile -t unused < <(
+    find "$bgrndsDir" -mindepth 1 -maxdepth 1 -type f -print |
+        grep --extended-regexp --invert-match "$invertMatch" |
+        sort
+  )
+  numBgrnds="${#unused[@]}"
+
+  # integer in [1,$numBgrnds]
+  randIdx="$(shuf --input-range "1-${numBgrnds}" --head-count 1)"
+
+  printf '%s' "${unused[$randIdx]}"
 )
 
-numBgrnds="$(lsBgrnds | wc -l)"; declare -r numBgrnds
+randDsktp="$(findRandImgNot "$currentBgrnd"'$')"
+randLogin="$(
+  desktop="$(basename randDsktp)"
+  findRandImgNot "${currentBgrnd}|${desktop}"'$'
+)"
 
-randIdx="$(shuf --input-range "1-${numBgrnds}" --head-count 1)"
-declare -r randIdx # integer in [1,$numBgrnds]
-
-randBgrnd="$(lsBgrnds | sed -n "$randIdx"p)" 
-declare -r randBgrnd
-
-printf -v fileUri 'file://%s' "$randBgrnd"; declare -r fileUri
-
-disp="${DISPLAY:- }"
-if [[ -z "${disp/ */}" ]]; then
-  printf \
-    'WARNING: $DISPLAY not set (is "%s"); assuming value of "%s".\n' \
-    "$disp" "$defaultDisplay" >&2
-  disp="$defaultDisplay"
-fi
-
-if (
-  set -x
-  DISPLAY="$disp" gsettings set org.gnome.desktop.background picture-uri "$fileUri"
-);then
-  printf 'Successfully set background to:\n\t%s\n' "$randBgrnd"
-else
-  printf 'FAILED to set background to:\n\t%s\n' "$randBgrnd" >&2
-  exit 1
-fi
+cd "$picsDir"
+ln --force --symbolic --verbose "$randDsktp" auto_desktop.jpg
+ln --force --symbolic --verbose "$randLogin" auto_login.jpg
