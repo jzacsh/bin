@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ $# -gt 0 ]] || {
+  printf 'usage: %s COMMAND < <(list-files)\n' "$(basename "$0")" >&2
+  exit 1
+}
+
+opts='& disown' # default
+if [[ "$1" = '-q' ]];then
+  opts='> /dev/null 2>&1 '"$opts"
+  shift
+fi
+
+mapfile -t pdfs; declare -r pdfs
+
+isPdfChoice() (
+  [[ -n "$1" ]] &&
+    [[ "$1" =~ ^[0-9]+$ ]] &&
+    [[ "$1" -ge 1 ]] &&
+    [[ "$1" -le "${#pdfs[@]}" ]] &&
+    printf -- '%d' $1
+)
+
+while true;do
+  printf '%s\n' ${pdfs[@]} | cat -n
+  printf 'Run `%s` against which of above? [1-%d] ' "$*" "${#pdfs[@]}"
+  read choice < /dev/tty
+
+  index="$(isPdfChoice "$choice")" || {
+    printf 'Done.\n'
+    exit
+  }
+
+  printf -v cmd -- '%s %s %s' \
+    "$*" "${pdfs[$(( index - 1 ))]}" "$opts"
+
+  printf 'Running `%s`...\n' "$cmd"
+  bash -c "set  -x; $cmd" || printf 'warning: exit was %d\n' $? >&2
+  echo
+ done
