@@ -82,17 +82,15 @@ export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
 export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
 export PUNCH_CARD="$(xdg-user-dir DOCUMENTS)/punchcard"
 
-if [ -d $HOME/tmp ];then
-  export TMPDIR=$HOME/tmp
+if [[ -d "$HOME"/tmp ]];then export TMPDIR="$HOME"/tmp; fi
 
-  tmuxSshSock=${TMPDIR}/ssh-auth-sock.tmux
-  if [ -n "$SSH_AUTH_SOCK" ] && [ "$SSH_AUTH_SOCK" != "$tmuxSshSock" ];then
-    rm -f "$tmuxSshSock"
-    ln -sf "$SSH_AUTH_SOCK" "$tmuxSshSock"
-    export SSH_AUTH_SOCK="$tmuxSshSock"
-  fi
-  unset tmuxSshSock
+tmuxSshSock="${TMPDIR:-"$HOME"/.ssh}"/ssh-auth-sock.tmux
+if [[ "${SSH_AUTH_SOCK:-x}" != x ]] && [[ "$SSH_AUTH_SOCK" != "$tmuxSshSock" ]];then
+  rm -f "$tmuxSshSock"
+  ln -sf "$SSH_AUTH_SOCK" "$tmuxSshSock"
+  export SSH_AUTH_SOCK="$tmuxSshSock"
 fi
+unset tmuxSshSock
 
 # prefer source highlighting over archive inspection
 if type zacsh-highlight > /dev/null 2>&1;then
