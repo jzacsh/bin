@@ -116,7 +116,7 @@ exportPrependedOnce 'PATH' \
   "$HOME/bin/share" \
   "$HOME/bin/dist" \
   "$HOME/bin/lib" \
-  "$HOME/usr/lib/go/bin" \
+  "$GOPATH/bin" \
   "$HOME/.local/bin/" \
   "$JAVA_HOME/bin" \
   "$HOME/usr/local/bin/android/sdk/platform-tools" \
