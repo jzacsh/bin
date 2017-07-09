@@ -28,7 +28,7 @@ findRandImgNot() (
   numBgrnds="${#unused[@]}"
 
   # integer in [1,$numBgrnds]
-  randIdx="$(shuf --input-range "1-${numBgrnds}" --head-count 1)"
+  randIdx="$(shuf --input-range "0-$(( numBgrnds - 1 ))" --head-count 1)"
 
   printf '%s' "${unused[$randIdx]}"
 )
