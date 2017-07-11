@@ -48,6 +48,10 @@ declare pidFile="$dataDir"/"$(basename "$(readlink -f "${BASH_SOURCE[0]}")")".pi
 isPidAlive "$pidFile" &&
   fail 3 "previous backup (PID=$(< "$pidFile")) still running"
 
+# see comment thread in https://superuser.com/q/1228940/748767
+printf \
+  'WARNING: either update to sysrestic or update PID file logic w/flock\n' >&2
+
 ##############################################################
 # We're definitely backing up now, so register cleanup and PID
 #
