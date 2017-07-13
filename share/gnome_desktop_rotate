@@ -2,7 +2,12 @@
 set -euo pipefail
 
 declare -r defaultDisplay=':0'
+
 bgrndsDir="$(readlink -f "$1")"; declare -r bgrndsDir
+[[ -d "$bgrndsDir" && -r "$bgrndsDir" ]] || {
+  printf 'no bgrnds dir at: %s\n' "$1" >&2
+  exit 1
+}
 picsDir="$(xdg-user-dir PICTURES)"; declare -r picsDir
 [[ "$picsDir" != "$HOME" ]] || {
   printf 'error: failed to load xdg-user dir "PICTURES"\n' >&2
