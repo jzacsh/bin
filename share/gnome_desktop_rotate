@@ -5,8 +5,8 @@ declare -r defaultDisplay=':0'
 
 bgrndsDir="$(readlink -f "$1")"; declare -r bgrndsDir
 [[ -d "$bgrndsDir" && -r "$bgrndsDir" ]] || {
-  printf 'no bgrnds dir at: %s\n' "$1" >&2
-  exit 1
+  printf 'warn: no bgrnds dir at: %s\n' "$1" >&2
+  exit 0
 }
 picsDir="$(xdg-user-dir PICTURES)"; declare -r picsDir
 [[ "$picsDir" != "$HOME" ]] || {
