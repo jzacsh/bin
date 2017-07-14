@@ -2,7 +2,12 @@
 set -euo pipefail
 
 declare -r defaultDisplay=':0'
+
 bgrndsDir="$(readlink -f "$1")"; declare -r bgrndsDir
+[[ -d "$bgrndsDir" && -r "$bgrndsDir" ]] || {
+  printf 'warn: no bgrnds dir at: %s\n' "$1" >&2
+  exit 0
+}
 picsDir="$(xdg-user-dir PICTURES)"; declare -r picsDir
 [[ "$picsDir" != "$HOME" ]] || {
   printf 'error: failed to load xdg-user dir "PICTURES"\n' >&2
@@ -26,6 +31,11 @@ findRandImgNot() (
         sort
   )
   numBgrnds="${#unused[@]}"
+
+  if (( numBgrnds == 0 ));then
+    printf 'warning: no alternative desktop images to install. exiting...\n' >&2
+    exit
+  fi
 
   # integer in [1,$numBgrnds]
   randIdx="$(shuf --input-range "0-$(( numBgrnds - 1 ))" --head-count 1)"
