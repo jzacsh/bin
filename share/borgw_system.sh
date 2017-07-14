@@ -14,16 +14,16 @@ die() (
   local msg="$1"; shift
   printf 'Error: '"$msg" "$@" >&2; exit 1
 )
-isWriteDir() ( [ -d "$1" ] || [ -w "$1" ]; )
+isWriteDir() ( [[ -d "$1" || -w "$1" ]]; )
 
-[ $# -eq 1 ] || die '
+[[ "$#" -eq 1 ]] || die '
   Usage: BACKUP_DISKDIR
 
   Such that a borg repo exists at BACKUP_DISKDIR/system/borg
 ' "$(basename "$0")"
 declare -r machineRepoDir="$1"
 
-[ "$EUID" -eq 0 ] || die 'MUST be run as root, but found $EUID=%s\n' "$EUID"
+[[ "$EUID" -eq 0 ]] || die 'MUST be run as root, but found $EUID=%s\n' "$EUID"
 
 isWriteDir "$machineRepoDir" ||
   die 'Machine backups container not writeable dir:\n\t"%s"\n' "$machineRepoDir"
@@ -32,7 +32,7 @@ declare -r repoDir="$machineRepoDir"/system/borg
 isWriteDir "$repoDir" ||
   die 'Path to repo dir not a writeable directory:\n\t"%s"\n' "$repoDir"
 
-{ [ -d "$srcDir" ] && [ -r "$srcDir" ]; } ||
+[[ -d "$srcDir" && -r "$srcDir" ]] ||
   die 'Source for backup is not a readable directory:\n\t"%s"\n' "$srcDir"
 
 set -x
