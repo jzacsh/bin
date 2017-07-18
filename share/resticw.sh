@@ -92,6 +92,7 @@ time {
   "$resticExec" \
     backup \
     --repo "$repo" \
+    --one-file-system \
     --exclude-file "$excludeFile" \
     "$target"
   backupExited=$?
