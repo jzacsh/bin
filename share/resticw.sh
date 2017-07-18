@@ -42,11 +42,6 @@ fail() {
   exit $failWith
 }
 
-##########################
-# Start logging everything
-#
-set -x
-
 # safe-to modify options: #############################
 declare -r resticExec="$HOME"/media/src/restic/bin/restic
 declare -r repo="$HOME"/back/local/restic
@@ -93,12 +88,14 @@ isNonemptyReadable "$excludeFile" ||
 #
 "$resticExec" version
 time {
+  set -x
   "$resticExec" \
     backup \
     --repo "$repo" \
     --exclude-file "$excludeFile" \
     "$target"
   resticExited=$?
+  set +x
 }
 
 log INFO 'repo size per `du -sh` is now: %s\n' "$(du -sh "$repo")"
