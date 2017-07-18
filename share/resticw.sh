@@ -56,22 +56,21 @@ declare -r target="$HOME"
 
 export TMPDIR=/tmp/
 
-{ [ -n "$resticExec" ] && [ -x "$resticExec" ]; } ||
-  fail 1 "Path to restic, '$resticExec', not executable"
+[[ "${resticExec:-x}" != x && -x "$resticExec" ]] ||
+  fail 1 "path to restic, '$resticExec', not executable"
 
 ######################################
 # Deal with previously running backups
 #
 declare -r dataDir="${XDG_DATA_HOME:-$HOME/.local/share}"
-{ [ -n "$dataDir" ] && [ -d "$dataDir" ] && [ -w "$dataDir" ]; } ||
+[[ "${dataDir:-x}" != x && -d "$dataDir" && -w "$dataDir" ]] ||
   fail 2 'No $XDG_DATA_HOME to store PID in'
 declare pidFile="$dataDir"/"$(basename "$(readlink -f "${BASH_SOURCE[0]}")")".pid
 isPidAlive "$pidFile" &&
   fail 3 "previous backup (PID=$(< "$pidFile")) still running"
 
 # see comment thread in https://superuser.com/q/1228940/748767
-printf \
-  'WARNING: either update to sysrestic or update PID file logic w/flock\n' >&2
+log WARN 'either update to sysrestic or update PID file logic w/flock\n' >&2
 
 ##############################################################
 # We're definitely backing up now, so register cleanup and PID
@@ -79,14 +78,14 @@ printf \
 printf '%d' "$$" > "$pidFile" # record this backup's PID
 trap cleanup SIGINT
 
-{ [ -n "$repo" ] && [ -w "$repo" ] && [ -d "$repo" ]; } ||
-  fail 4 "Restic '$repo' not a writable directory"
+[[ "${repo:-x}" != x && -w "$repo" && -d "$repo" ]] ||
+  fail 4 "restic '$repo' not a writable directory"
 
 isNonemptyReadable "$excludeFile" ||
   fail 5 "expected non-empty, readable exclude-file: '$excludeFile'"
 
-{ [ -n "$target" ] && [ -r "$target" ] && [ -d "$target" ]; } ||
-  fail 6 "Backup target, '$target', not readable"
+[[ "${target:-x}" != x && -r "$target" && -d "$target" ]] ||
+  fail 6 "backup target, '$target', not readable"
 
 #########################
 # Finally, run the backup
@@ -100,7 +99,8 @@ time {
     "$target"
   resticExited=$?
 }
-du -sh "$repo"
+
+log INFO 'repo size per `du -sh` is now: %s\n' "$(du -sh "$repo")"
 
 cleanup
 date --iso-8601=ns
