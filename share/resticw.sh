@@ -1,8 +1,24 @@
 #!/usr/bin/env bash
 #
 # Cron job to thinly wrap restic, given RESTIC_PASSWORD (eg: set atop crontab).
-set -e
-date --iso-8601=ns
+set -euo pipefail
+
+this="$(readlink -f "${BASH_SOURCE[0]}")"; declare -r this
+exeName="$(basename "$this")"
+log() {
+  local lvl="$1"
+  local msg="$2"
+  shift 2
+
+  local prefix
+  printf -v prefix -- \
+    '[%s %s] %s: ' \
+    "$exeName" "$(date --iso-8601=s)" "$lvl"
+
+  printf "$prefix""$msg" "$*"
+}
+
+log INFO 'starting\n'
 
 # Noisy, meticulous functions to DRY up this script
 #
