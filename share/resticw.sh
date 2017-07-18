@@ -65,7 +65,8 @@ export TMPDIR=/tmp/
 declare -r dataDir="${XDG_DATA_HOME:-$HOME/.local/share}"
 [[ "${dataDir:-x}" != x && -d "$dataDir" && -w "$dataDir" ]] ||
   fail 2 'No $XDG_DATA_HOME to store PID in'
-declare pidFile="$dataDir"/"$(basename "$(readlink -f "${BASH_SOURCE[0]}")")".pid
+
+printf -v pidFile '%s/%s.pid' "$dataDir" "$exeName"
 isPidAlive "$pidFile" &&
   fail 3 "previous backup (PID=$(< "$pidFile")) still running"
 
