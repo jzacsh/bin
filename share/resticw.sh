@@ -22,17 +22,22 @@ log INFO 'starting\n'
 
 # Noisy, meticulous functions to DRY up this script
 #
-cleanup() { [ -n "$pidFile" ] && echo -n > "$pidFile"; }
-isReadableFile() { [ -n "$1" ] && [ -r "$1" ] && [ -f "$1" ]; }
-isNonemptyReadable() { isReadableFile "$1" && [ -n "$(< "$1")" ]; }
+cleanup() {
+  log INFO 'cleaning up PID file: "%s"\n' "$pidFile"
+  [[ "${pidFile:-x}" = x ]] || echo -n > "$pidFile"
+}
+isReadableFile() { [[ "${1:-x}" != x && -r "$1" && -f "$1" ]]; }
+isNonemptyReadable() { isReadableFile "$1" && [[ -n "$(< "$1")" ]]; }
 isPidAlive() { isNonemptyReadable "$1" && kill -0 "$(< "$1")" >/dev/null 2>&1; }
 fail() {
   local failWith=1
-  if [ $# -gt 1 ]; then
+  if [[ "$#" -gt 1 ]]; then
     failWith=$1; shift
   fi
 
-  printf 'ERROR:\t%s\n' "$*" >&2
+  cleanup
+
+  log FATAL '%s\n' "$*" >&2
 
   exit $failWith
 }
