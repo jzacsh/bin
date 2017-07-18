@@ -104,4 +104,22 @@ fi
 
 log INFO 'repo size per `du -sh` is now: %s\n' "$(du -sh "$repo")"
 
+log INFO 'cleaning up old backups...\n'
+time {
+  set -x
+  "$resticExec" \
+    forget \
+    --repo "$repo" \
+    --keep-daily 7 \
+    --keep-weekly 4 \
+    --keep-monthly 18
+  forgetExited=$?
+  set +x
+}
+
+if (( forgetExited ));then
+  fail 8 \
+    'Cleaning old backups failed; `restic forget` exited %d\n' $forgetExited
+fi
+
 cleanup
