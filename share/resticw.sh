@@ -94,12 +94,14 @@ time {
     --repo "$repo" \
     --exclude-file "$excludeFile" \
     "$target"
-  resticExited=$?
+  backupExited=$?
   set +x
 }
+
+if (( backupExited ));then
+  fail 7 'backup failed; `restic backup` exited %d\n' $backupExited
+fi
 
 log INFO 'repo size per `du -sh` is now: %s\n' "$(du -sh "$repo")"
 
 cleanup
-date --iso-8601=ns
-exit ${resticExited:-0}
