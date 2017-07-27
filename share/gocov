@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "$#" -ne 0 ]] || {
+  printf 'usage: [-k] %s PKG[...]
+    PKG iare package arguments expected by `go test [packages]`
+    -k: keep coverage profiles, rather than cleaning them up
+' "$(basename "$0")" >&2
+  exit 1
+}
+
+keepTmps=0
+if [[ "${1,,}" = -k ]];then shift; keepTmps=1; fi
+
+tmpd="$(mktemp --directory --tmpdir=  "gocov.$(date +%s).XXXXXX.d")"
+declare -r tmpd
+
+cleanup() {
+  if (( keepTmps ));then
+    printf 'WARNING: leaving coverage profiles intact: %s\n' "$tmpd" >&2
+    return
+  fi
+
+  printf 'cleaning up temp files... ' >&2
+  rm "$tmpd" -rf
+  printf 'done.\n' >&2
+}
+trap cleanup EXIT
+
+while read pkg; do
+  id="$(echo "$pkg" | sum | cut -f 1 -d ' ')"
+  printf 'cov.%s\t%s\n' "$id" "$pkg" | tee -a "$tmpd"/index
+  go test \
+    -test.coverprofile \
+    "$tmpd"/cov."$id".profile "$pkg" > "$tmpd"/cov."$id".msgs 2>&1
+done < <(go list "$@")
+
+printf '\nSummary:\n'
+grep \
+  --color=always --extended-regexp --no-filename \
+  'coverage:\s*[[:digit:]]*(\.[[:digit:]]*)?%' "$tmpd"/cov*
