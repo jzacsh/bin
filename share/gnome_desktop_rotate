@@ -2,6 +2,8 @@
 set -euo pipefail
 
 declare -r defaultDisplay=':0'
+declare -r autoDesk=auto_desktop.jpg
+declare -r autoLogn=auto_login.jpg
 
 bgrndsDir="$(readlink -f "$1")"; declare -r bgrndsDir
 [[ -d "$bgrndsDir" && -r "$bgrndsDir" ]] || {
@@ -14,13 +16,14 @@ picsDir="$(xdg-user-dir PICTURES)"; declare -r picsDir
   exit 1
 }
 
-currentBgrnd="$(
-  gsettings get org.gnome.desktop.background picture-uri |
-    sed --expression 's|file://||' \
-        --expression "s|^'||" \
-        --expression "s|'$||"
-)"
-declare -r currentBgrnd
+cd "$picsDir"
+
+if [[ -e "$autoDesk" && -r "$autoDesk" ]];then
+  currentDesk="$(basename "$(readlink -f "$autoDesk")")"
+fi
+if [[ -e "$autoLogn" && -r "$autoLogn" ]];then
+  currentLogn="$(basename "$(readlink -f "$autoLogn")")"
+fi
 
 findRandImgNot() (
   local invertMatch; invertMatch="$1"
@@ -43,12 +46,8 @@ findRandImgNot() (
   printf '%s' "${unused[$randIdx]}"
 )
 
-randDsktp="$(findRandImgNot "$currentBgrnd"'$')"
-randLogin="$(
-  desktop="$(basename randDsktp)"
-  findRandImgNot "${currentBgrnd}|${desktop}"'$'
-)"
+randDsktp="$(findRandImgNot "$currentDesk"'$')"
+randLogin="$(findRandImgNot "$currentLogn"'$')"
 
-cd "$picsDir"
-ln --force --symbolic --verbose "$randDsktp" auto_desktop.jpg
-ln --force --symbolic --verbose "$randLogin" auto_login.jpg
+ln --force --symbolic --verbose "$randDsktp" "$autoDesk"
+ln --force --symbolic --verbose "$randLogin" "$autoLogn"
