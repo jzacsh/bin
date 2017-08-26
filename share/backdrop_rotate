@@ -46,8 +46,8 @@ findRandImgNot() (
   printf '%s' "${unused[$randIdx]}"
 )
 
-randDsktp="$(findRandImgNot "$currentDesk"'$')"
-randLogin="$(findRandImgNot "$currentLogn"'$')"
+randDsktp="$(findRandImgNot "${currentDesk:-''}"'$')"
+randLogin="$(findRandImgNot "${currentLogn:-''}"'$')"
 
 ln --force --symbolic --verbose "$randDsktp" "$autoDesk"
 ln --force --symbolic --verbose "$randLogin" "$autoLogn"
