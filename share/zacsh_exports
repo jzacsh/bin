@@ -70,6 +70,7 @@ export SHOT_UPLOAD='ompload'
 export TTS_CONFIG=~/.ttskeyrc
 export PASTIE=clbin
 export EDITOR=vim
+if type nvim >/dev/null 2>&1;then export EDITOR=nvim;fi
 export DIFF=' up '
 export LESS=' XFR '
 export RLWRAP=' AaN '
