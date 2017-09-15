@@ -124,7 +124,8 @@ exportPrependedOnce 'PATH' \
   "$HOME/usr/local/bin/android/sdk/tools" \
   "$HOME/usr/local/bin/android/studio/bin" \
   "$HOME/usr/local/bin/valgrind/bin" \
-  "/usr/lib/llvm-3.6/bin/"
+  "/usr/lib/llvm-3.6/bin/" \
+  "$HOME/.gem/ruby/2.4.0/bin/"
 
 exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python"
 exportPrependedOnce 'NODE_PATH' \
