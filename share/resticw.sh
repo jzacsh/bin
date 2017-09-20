@@ -22,13 +22,35 @@ log INFO 'starting\n'
 
 # Noisy, meticulous functions to DRY up this script
 #
+isReadableFile() { [[ "${1:-x}" != x && -r "$1" && -f "$1" ]]; }
+isNonemptyReadable() { isReadableFile "$1" && [[ -n "$(< "$1")" ]]; }
+isPidAlive() { isNonemptyReadable "$1" && kill -0 "$(< "$1")" >/dev/null 2>&1; }
+
+# safe-to modify options: #############################
+declare -r resticExec="$HOME"/media/src/restic/bin/restic
+declare -r repo="$HOME"/back/local/restic
+declare -r excludeFile="$HOME"/.config/restic-exclude
+declare -r target="$HOME"
+#######################################################
+
+export TMPDIR=/tmp/
+
+######################################
+# Deal with previously running backups
+#
+declare -r dataDir="${XDG_DATA_HOME:-$HOME/.local/share}"
+[[ "${dataDir:-x}" != x && -d "$dataDir" && -w "$dataDir" ]] ||
+  fail 2 'No $XDG_DATA_HOME to store PID in'
+
+printf -v pidFile '%s/%s.pid' "$dataDir" "$exeName"
+isPidAlive "$pidFile" &&
+  fail 3 "previous backup (PID=$(< "$pidFile")) still running"
+
 cleanup() {
   log INFO 'cleaning up PID file: "%s"\n' "$pidFile"
   [[ "${pidFile:-x}" = x ]] || echo -n > "$pidFile"
 }
-isReadableFile() { [[ "${1:-x}" != x && -r "$1" && -f "$1" ]]; }
-isNonemptyReadable() { isReadableFile "$1" && [[ -n "$(< "$1")" ]]; }
-isPidAlive() { isNonemptyReadable "$1" && kill -0 "$(< "$1")" >/dev/null 2>&1; }
+
 fail() {
   local failWith=1
   if [[ "$#" -gt 1 ]]; then
@@ -42,28 +64,9 @@ fail() {
   exit $failWith
 }
 
-# safe-to modify options: #############################
-declare -r resticExec="$HOME"/media/src/restic/bin/restic
-declare -r repo="$HOME"/back/local/restic
-declare -r excludeFile="$HOME"/.config/restic-exclude
-declare -r target="$HOME"
-#######################################################
-
-export TMPDIR=/tmp/
 
 [[ "${resticExec:-x}" != x && -x "$resticExec" ]] ||
   fail 1 "path to restic, '$resticExec', not executable"
-
-######################################
-# Deal with previously running backups
-#
-declare -r dataDir="${XDG_DATA_HOME:-$HOME/.local/share}"
-[[ "${dataDir:-x}" != x && -d "$dataDir" && -w "$dataDir" ]] ||
-  fail 2 'No $XDG_DATA_HOME to store PID in'
-
-printf -v pidFile '%s/%s.pid' "$dataDir" "$exeName"
-isPidAlive "$pidFile" &&
-  fail 3 "previous backup (PID=$(< "$pidFile")) still running"
 
 # see comment thread in https://superuser.com/q/1228940/748767
 log WARN 'either update to sysrestic or update PID file logic w/flock\n' >&2
