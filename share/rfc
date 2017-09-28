@@ -6,13 +6,15 @@ set -e
 
 declare -r opt="$2"
 shouldSaveCopy() (
-  [ -z "$opt" ] && return 1
-  for flg in s -s --s save -save --save;do [ "$opt" = "$flg" ] && return 0; done
+  [[ -n "$opt" ]] || return 1
+  for flg in s -s --s save -save --save;do
+    [[ "$opt" != "$flg" ]] || return 0
+  done
   return 1
 )
 
-declare -r rfcNum="$1";
-[ -n "$rfcNum" ] || {
+declare -r rfcNum="$1"
+[[ -n "$rfcNum" ]] || {
   declare -r this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
   printf \
     'usage: `%s RFC_NUMBER`\n\tPages an RFC; eg `%s 2324`\n' \
@@ -21,8 +23,8 @@ declare -r rfcNum="$1";
 }
 declare -r rfcUrl="http://tools.ietf.org/rfc/rfc${1}.txt"
 
-declare -r rfcCopy="$(mktemp --tmpdir "rfc-${rfcNum}_XXXXXX.txt")"
-{ [ $? -eq 0 ] && [ -n "$rfcCopy" ] && [ -r "$rfcCopy" ]; } || {
+declare -r rfcCopy="$(mktemp --tmpdir  "rfc-${rfcNum}_XXXXXX.txt")"
+[[ "$?" -eq 0 && -n "$rfcCopy" && -r "$rfcCopy" ]] || {
   printf 'Failed to open local file for RFC highlighting. Get it yourself:
     curl -Ls %s\n' "$rfcUrl" >&2
   exit 2
@@ -32,7 +34,7 @@ cleanup() (
   if shouldSaveCopy; then
     printf 'Saved copy of RFC %s: %s\n' "$rfcNum" "$rfcCopy"
   else
-    [ -n "$rfcCopy" ] && rm "$rfcCopy"
+    [[ -z "$rfcCopy" ]] || rm "$rfcCopy"
   fi
 )
 trap cleanup EXIT
