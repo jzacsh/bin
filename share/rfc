@@ -42,6 +42,9 @@ curl -Ls "$rfcUrl" > "$rfcCopy" || {
   exit 3
 }
 
+# strip form-feed characters
+sed --in-place --expression 's|\f||g'  "$rfcCopy"
+
 less -N "$rfcCopy"
 # Assumes you have a decent `LESSOPEN` and of course `less` itself; eg:
 #   export LESSOPEN='| pygmentize -g -f terminal256 %s'
