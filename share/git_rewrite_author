@@ -2,7 +2,12 @@
 set -euo pipefail
 
 if [[ "$#" -ne 3 && "$#" -ne 4 ]];then
-  printf 'usage: BAD_EMAIL CORRECT_EMAIL CORRECT_NAME [GIT_REV_RANGE]\n' >&2
+  printf 'usage: BAD_EMAIL CORRECT_EMAIL CORRECT_NAME [GIT_REV_RANGE]
+
+  GIT_REV_RANGE defaults to entire history (--all)
+  specifying it must be in the form of a commit OR ref, followed by two dots,
+  followed by a ref only (not a commit), eg: 26d5472d27b3b40..HEAD is valid.
+' >&2
   exit 1
 fi
 
@@ -10,8 +15,8 @@ declare -r wrongEmail="$1"
 declare -r replaceWithMail="$2"
 declare -r replaceWithName="$3"
 
-# eg: master...b38fee0ef9a12
-declare -r targetDefault='--all'
+# eg: 26d5472d27b3b40..HEAD
+declare -r targetDefault='-- --all'
 target="${4:-$targetDefault}"
 
 printf -v filter -- \
@@ -20,4 +25,5 @@ printf -v filter -- \
     GIT_AUTHOR_EMAIL "$replaceWithMail" GIT_AUTHOR_EMAIL \
     GIT_AUTHOR_NAME  "$replaceWithName" GIT_AUTHOR_NAME
 
-git filter-branch -f --env-filter "$filter" -- "$target"
+set -x
+git filter-branch -f --env-filter "$filter" $target
