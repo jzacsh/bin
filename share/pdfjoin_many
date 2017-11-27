@@ -64,12 +64,35 @@ buildStage() (
     --directory \
     "pdfjoin_exponential_stage-${1}_XXXXXX.d"
 )
+
+lastSizeLn=''
+isInConsistent=0
+getPageSizeLn() ( pdfinfo "$1" | grep -E '^Page\ size'; )
+
+isPDF() ( [[ "$(file --brief --mime-type "$1")" = 'application/pdf' ]]; )
+
 stage="$(buildStage $iter)"
 while read file;do
   printf -- .
   cp -rp "$file" "$stage"/
+
+  isPDF "$file" || continue
+
+  if [[ -z "$lastSizeLn" ]];then
+    lastSizeLn="$(getPageSizeLn "$file")"
+  elif [[ "$lastSizeLn" != "$(getPageSizeLn "$file")" ]];then
+    isInConsistent=1
+  fi
 done
 printf '\nFinished making initial base copies\n'
+
+if (( isInConsistent ));then
+  printf '\n' >&2
+  printf 'WARNING: not all PDFs are the same dimension\n' >&2
+  printf '  consider fixing outliers, eg:\n' >&2
+  printf '    `pdfjam --outfile FIXED.pdf --paper a4paper OUTLIER.pdf`\n' >&2
+  printf '\n' >&2
+fi
 
 buildNextStage() {
   if declare -p nextStage > /dev/null 2>&1;then
