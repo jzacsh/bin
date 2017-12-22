@@ -90,7 +90,7 @@ if [[ -d "$HOME"/tmp ]];then export TMPDIR="$HOME"/tmp; fi
 if [[ "${SSH_AUTH_SOCK:-x}" != x ]];then
   if [[ -e "$SSH_AUTH_SOCK" ]];then
     tmuxSshSock="${TMPDIR:-"$HOME"/.ssh}"/ssh-auth-sock.tmux
-    if [[ "$SSH_AUTH_SOCK" != "$tmuxSshSock" ]];then
+    if [[ "$(readlink -f "$SSH_AUTH_SOCK")" != "$(readlink -f "$tmuxSshSock")" ]];then
       was="$SSH_AUTH_SOCK"
       rm -f "$tmuxSshSock"
       ln -sf "$SSH_AUTH_SOCK" "$tmuxSshSock"
