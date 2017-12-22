@@ -85,13 +85,25 @@ export PUNCH_CARD="$(xdg-user-dir DOCUMENTS)/punchcard"
 
 if [[ -d "$HOME"/tmp ]];then export TMPDIR="$HOME"/tmp; fi
 
-tmuxSshSock="${TMPDIR:-"$HOME"/.ssh}"/ssh-auth-sock.tmux
-if [[ "${SSH_AUTH_SOCK:-x}" != x ]] && [[ "$SSH_AUTH_SOCK" != "$tmuxSshSock" ]];then
-  rm -f "$tmuxSshSock"
-  ln -sf "$SSH_AUTH_SOCK" "$tmuxSshSock"
-  export SSH_AUTH_SOCK="$tmuxSshSock"
+# ssh-agent (eval'd by typical bashrc) exposes the correct, current socket via
+# $SSH_AUTH_SOCK; below lines of code relocate that file to an expected path
+if [[ "${SSH_AUTH_SOCK:-x}" != x ]];then
+  if [[ -e "$SSH_AUTH_SOCK" ]];then
+    tmuxSshSock="${TMPDIR:-"$HOME"/.ssh}"/ssh-auth-sock.tmux
+    if [[ "$SSH_AUTH_SOCK" != "$tmuxSshSock" ]];then
+      was="$SSH_AUTH_SOCK"
+      rm -f "$tmuxSshSock"
+      ln -sf "$SSH_AUTH_SOCK" "$tmuxSshSock"
+      export SSH_AUTH_SOCK="$tmuxSshSock"
+      printf \
+        '[WARN] stabalized $SSH_AUTH_SOCK; was "%s", is now (via symlink) "%s"\n' \
+        "$was" "$SSH_AUTH_SOCK" >&2
+    fi
+    unset tmuxSshSock
+  else
+    export SSH_AUTH_SOCK=''
+  fi
 fi
-unset tmuxSshSock
 
 # prefer source highlighting over archive inspection
 if type zacsh-highlight > /dev/null 2>&1;then
