@@ -77,7 +77,6 @@ export RLWRAP=' AaN '
 export PAGER=less
 export RUBYOPT='w' #helpful ruby warnings
 export GOPATH="$HOME/usr/lib/go/"
-export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64/'
 export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
 export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
 export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
@@ -131,7 +130,6 @@ exportPrependedOnce 'PATH' \
   "$HOME/bin/lib" \
   "$GOPATH/bin" \
   "$HOME/.local/bin/" \
-  "$JAVA_HOME/bin" \
   "$HOME/usr/local/bin/android/sdk/platform-tools" \
   "$HOME/usr/local/bin/android/sdk/tools" \
   "$HOME/usr/local/bin/android/studio/bin" \
