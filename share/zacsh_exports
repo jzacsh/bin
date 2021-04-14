@@ -82,8 +82,6 @@ export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
 export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
 export PUNCH_CARD="$(xdg-user-dir DOCUMENTS)/punchcard"
 
-if [[ -d "$HOME"/tmp ]];then export TMPDIR="$HOME"/tmp; fi
-
 # ssh-agent (eval'd by typical bashrc) exposes the correct, current socket via
 # $SSH_AUTH_SOCK; below lines of code relocate that file to an expected path
 if [[ "${SSH_AUTH_SOCK:-x}" != x ]];then
