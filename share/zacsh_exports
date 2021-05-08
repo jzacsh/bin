@@ -55,7 +55,6 @@ export SHOT_PUB='shot'
 export SHOT_UPLOAD='ompload'
 export TTS_CONFIG=~/.ttskeyrc
 export PASTIE=clbin
-export RUBYOPT='w' #helpful ruby warnings
 export GOPATH="$HOME/usr/lib/go/"
 export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
 export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
@@ -119,7 +118,7 @@ exportPrependedOnce 'PATH' \
   "$HOME/usr/local/bin/android/studio/bin" \
   "$HOME/usr/local/bin/valgrind/bin" \
   "/usr/local/go/bin/" \
-  "$HOME/.gem/ruby/2.4.0/bin/"
+  "$HOME/.rvm/bin"
 
 exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python"
 exportPrependedOnce 'NODE_PATH' \
