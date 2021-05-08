@@ -118,7 +118,7 @@ exportPrependedOnce 'PATH' \
   "$HOME/usr/local/bin/android/studio/bin" \
   "$HOME/usr/local/bin/valgrind/bin" \
   "/usr/local/go/bin/" \
-  "$HOME/.rvm/bin"
+  "$HOME/.rbenv/shims"
 
 exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python"
 exportPrependedOnce 'NODE_PATH' \
