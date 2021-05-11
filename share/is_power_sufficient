@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# Fails if battery is discharging _and_ reserve is below $1 (integer) threshold.
+#
+# Useful as a simple script to determine if lapotp is sufficiently powered to do
+# something. eg:
+#   is_power_sufficient 30 # (battery=29%, is charging) --> $?=0
+#   is_power_sufficient 30 # (battery=30%, is charging) --> $?=0
+#   is_power_sufficient 30 # (battery=40%, is charging) --> $?=0
+#   is_power_sufficient 30 # (battery=30%, on battery)  --> $?=0
+#   is_power_sufficient 30 # (battery=29%, on battery)  --> $?=0
+set -euo pipefail
+
+threshold="${1:-60}"
+
+powerStats() (
+  upower --show-info /org/freedesktop/UPower/devices/battery_BAT0 |
+    sed -e '1,/^\s*battery\s*$/d' |
+    grep -E '^\s*(percentage|state):\s*'
+)
+
+# returns an integer string; eg: '20'
+getChargePercentage() (
+  powerStats | grep -E '\s*percentage:\s*' |
+    sed -e 's,.*[^0-9]\([0-9]\+\)%.*,\1,g'
+)
+
+isChargeAtleast() (
+  local actual="$(getChargePercentage)"
+  [[ "$actual" -ge "$1" ]]
+)
+
+isPluggedIn() ( powerStats | grep -E '\s*state:\s*charging' >/dev/null 2>&1; )
+
+explain() (
+  (( $? )) || return 0 # nothing to explain
+  printf \
+    'discharging and below threshold of %s%% (currently: %s%%)\n' \
+    "$threshold" "$(getChargePercentage)" >&2
+)
+trap explain EXIT
+
+isPluggedIn || isChargeAtleast "$threshold"
