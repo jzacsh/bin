@@ -29,6 +29,8 @@ function assert<T>(subject: T | AntiAssert, msg: string): Asserted<T> {
 const MAX_CACHE_AGE_MS = 7 * DAY_MS;
 const DEBUGGING = false;
 
+const EXPERIMENT_JUST_FILTER = true;
+
 function isReadableDir(absPath: string): boolean {
   let isReadableDir = false;
   let f;
@@ -274,7 +276,6 @@ class SemVerReader {
 
 const GOLANG_SEMVER_READER = new SemVerReader('go');
 
-/** Returns _roughly_ semver-sorted golang repository tags for main releases. */
 async function golangTags(): Promise<Array<string>> {
   const resp = await stripXsrfTokens(await golangRefsApi());
 
@@ -286,12 +287,18 @@ async function golangTags(): Promise<Array<string>> {
     filter(tag => tag).
 
     // Interpret semver values as presented as git tags
-    filter(tag => GOLANG_SEMVER_READER.isTag(tag)).
-    sort((a, b) => GOLANG_SEMVER_READER.comparator(a, b));
+    filter(tag => GOLANG_SEMVER_READER.isTag(tag));
+}
+
+/** Returns _roughly_ semver-sorted golang repository tags for main releases. */
+async function golangTagsSorted(): Promise<Array<string>> {
+  const tags = await golangTags();
+
+  return tags.sort((a, b) => GOLANG_SEMVER_READER.comparator(a, b));
 }
 
 async function latestUpstreamVersion(): Promise<string> {
-  return golangTags().then(tags => tags[0]);
+  return golangTagsSorted().then(tags => tags[0]);
 }
 
 async function installedVersion(): Promise<string> {
@@ -310,18 +317,28 @@ async function installedVersion(): Promise<string> {
 }
 
 /// actual main logic
-
-const installedVer = await installedVersion();
-const latestUpstream = await latestUpstreamVersion();
-if (DEBUGGING) {
-  console.log('installed version: "%s"', installedVer);
-  console.log('newest upstream: "%s"', latestUpstream);
-}
-
-const result = GOLANG_SEMVER_READER.comparator(installedVer, latestUpstream);
-if (result === comparatorEqual) {
-  if (DEBUGGING) console.log(`installed and upstream versions match (${installedVer})`);
+function settled(goodVersion: string) {
+  if (DEBUGGING) console.log(`installed and upstream versions match (${goodVersion})`);
   exit(0);
 }
-console.error(`golang is old: installed=${installedVer} vs. upstream=${latestUpstream}`);
-exit(1);
+
+const installedVer = await installedVersion();
+if (EXPERIMENT_JUST_FILTER) {
+  const tags = await golangTags();
+  let newerUpstreams = tags.find(upstream => GOLANG_SEMVER_READER.comparator(installedVer, upstream) === comparatorBLarger);
+  if (newerUpstreams === undefined) settled(installedVer);
+  console.error(
+    `golang is old - visit https://golang.org/dl - installed "${installedVer}" vs. a newer upstream: "${newerUpstreams}"`);
+  exit(1);
+} else {
+  const latestUpstream = await latestUpstreamVersion();
+  if (DEBUGGING) {
+    console.log('installed version: "%s"', installedVer);
+    console.log('newest upstream: "%s"', latestUpstream);
+  }
+
+  const result = GOLANG_SEMVER_READER.comparator(installedVer, latestUpstream);
+  if (result === comparatorEqual) settled(installedVer);
+  console.error(`golang is old: installed=${installedVer} vs. upstream=${latestUpstream}`);
+  exit(1);
+}
