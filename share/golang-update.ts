@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run  --allow-run --allow-net --allow-read
+#!/usr/bin/env -S deno run --allow-write --allow-env --allow-run --allow-net --allow-read
 /**
  * Checks whether version of golang is the most up to date.
  *
@@ -8,9 +8,39 @@
 // TODO(jzacsh) rm '.ts' extension on this file once deno solves this:
 // https://github.com/denoland/deno/issues/5088
 
-const { args, env, exit, readTextFile } = Deno;
+const { openSync, args, env, exit, writeTextFileSync, readTextFileSync, lstatSync, writeTextFile, errors } = Deno;
 
+import { exec } from 'https://deno.land/x/execute@v1.1.0/mod.ts';
+
+const SEC_MS = 1000;
+const MIN_MS = 60 * SEC_MS;
+const HRS_MS = 60 * MIN_MS;
+const DAY_MS = 24 * HRS_MS;
+
+type AntiAssert = null | undefined | 0;
+type Asserted<T> = T & Exclude<keyof T, AntiAssert>;
+function assert<T>(subject: T | AntiAssert, msg: string): Asserted<T> {
+  if (!subject) throw new Error(`assert: ${msg}`);
+  return subject as Asserted<T>; // dirty but works
+}
+
+// basic tools above this line
+
+const MAX_CACHE_AGE_MS = 7 * DAY_MS;
 const DEBUGGING = false;
+
+function isReadableDir(absPath: string): boolean {
+  let isReadableDir = false;
+  let f;
+  try {
+    f = openSync(absPath, {read: true});
+    const stat = f.statSync();
+    isReadableDir = stat.isDirectory;
+  } finally {
+    if (f) f.close();
+  }
+  return isReadableDir;
+}
 
 /**
  * Returns `content` string with the following first line removed:
@@ -20,10 +50,66 @@ function stripXsrfTokens(content: string): string {
   return content.replace(new RegExp(`^\\s*\\)]}'\\s*`), '');
 }
 
+/**
+ * Fetches from a URL unless we're within TTL of /var/run/user/$UID/.. cache
+ * file, in which case local file is used.
+ */
+class RuntimeCacheUrl {
+  private static readonly TTL_MS = DEBUGGING ? 2 * SEC_MS : MAX_CACHE_AGE_MS;
+  private readonly cachePath: string;
+  /**
+   * @param url remote URL for JSON data
+   * @param runtimePath file path, relative to /var/run/user/$UID/, where data
+   *    should be cached.
+   */
+  constructor(
+    private readonly url: string,
+    private readonly runtimePath: string,
+  ) {
+    const rootDir: string = assert(env.get('XDG_RUNTIME_DIR'), `failed getting $XDG_RUNTIME_DIR`);
+    assert(isReadableDir(rootDir), 'failed ensuring $XDG_RUNTIME_DIR is available');
+    this.cachePath = `${rootDir}/${runtimePath}`;
+  }
+
+  /** Content of cache, or undefined if too old. */
+  private async getFreshCache(): Promise<string|undefined> {
+    // Fail early if the file looks old, empty, or we can't access it
+    try {
+      const stats = lstatSync(this.cachePath);
+      if (!stats.mtime) return undefined;
+      const diffMs = Date.now() - stats.mtime.getTime();
+      if (stats.size <= 1 || diffMs > RuntimeCacheUrl.TTL_MS) return undefined;
+    } catch (error) {
+      assert(
+        error instanceof errors.NotFound,
+        `unexpected error reading runtime file (at ${this.cachePath}): ${error}`);
+      return undefined;
+    }
+
+    try {
+      return readTextFileSync(this.cachePath);
+    } catch {
+    }
+    return undefined;
+  }
+
+  async fetch(): Promise<string> {
+    const cache = await this.getFreshCache();
+    if (cache !== undefined) return cache;
+
+    if (DEBUGGING) console.log('cache stale, fetching fresh data');
+    const content = await fetch(this.url).then(resp => resp.text());
+    writeTextFileSync(this.cachePath, content);
+    return content;
+  }
+}
+
 async function golangRefsApi(): Promise<string> {
-  // TODO(jzacsh): implement: switch this to /var/run/user/$UID/ cached file, with TTL O(days)
-  //    'https://go.googlesource.com/go/+refs/tags?format=JSON'
-  return await readTextFile('/home/jzacsh/tmp/golangrefs-tags.json');
+  const tagsJsonUrl = 'https://go.googlesource.com/go/+refs/tags?format=JSON';
+
+  return new RuntimeCacheUrl(tagsJsonUrl, `golang-update_702a271a9c9b8ca0c41cff7394613979b59853f6.txt`).fetch();
+
+  return readTextFileSync('/home/jzacsh/tmp/test-golang-data/golangrefs-tags.json');
   return `)]}'
 {
   "go1": {
@@ -37,11 +123,6 @@ async function golangRefsApi(): Promise<string> {
   }
 }
 `;
-}
-
-function assert<T>(expectation: T, errorMessage: string): T {
-  if (expectation) return expectation;
-  throw new Error(`assert: ${errorMessage}`);
 }
 
 const comparatorALarger: ComparatorALarger = -1;
@@ -150,7 +231,7 @@ class SemVer {
       if (idResult === comparatorEqual) continue;
       return idResult;
     }
-    if (a.parse.length === b.parse.length) comparatorEqual;
+    if (a.parse.length === b.parse.length) return comparatorEqual;
     return a.parse.length < b.parse.length ? comparatorBLarger : comparatorALarger;
   }
 }
@@ -192,10 +273,12 @@ class SemVerReader {
   }
 }
 
+const GOLANG_SEMVER_READER = new SemVerReader('go');
+
+/** Returns _roughly_ semver-sorted golang repository tags for main releases. */
 async function golangTags(): Promise<Array<string>> {
   const resp = await stripXsrfTokens(await golangRefsApi());
 
-  const semVerReader = new SemVerReader('go');
   return Object.
     keys(JSON.parse(resp)).
 
@@ -204,15 +287,42 @@ async function golangTags(): Promise<Array<string>> {
     filter(tag => tag).
 
     // Interpret semver values as presented as git tags
-    filter(tag => semVerReader.isTag(tag)).
-    sort((a, b) => semVerReader.comparator(a, b));
+    filter(tag => GOLANG_SEMVER_READER.isTag(tag)).
+    sort((a, b) => GOLANG_SEMVER_READER.comparator(a, b));
 }
 
-async function golangRefsJson(): Promise<Array<string>> {
-  const tags = await golangTags();
-  return [tags[0], tags[tags.length - 1]];
+async function latestUpstreamVersion(): Promise<string> {
+  return golangTags().then(tags => tags[0]);
 }
 
-// TODO(jzacsh): implement: actually compare to `go version` output and do
-// nothing if identical.
-console.log('newest tag: "%s"', await golangRefsJson());
+async function installedVersion(): Promise<string> {
+  // Expecting "go version go1.1.6.4 linux/amd64" output for `go version`
+  return exec('go version').then((goline: string) => {
+    const parts = assert(goline, 'expected non-empty `go version` output').split(' ');
+    assert(
+        parts.length === 4,
+        `internal bug: 'go version' output changed from usual format; got: "${goline}"`);
+    const tag = parts[2];
+    assert(
+      GOLANG_SEMVER_READER.isTag(tag),
+      `internal bug: 'go version' output a version tag we don't understand: "${tag}"`);
+    return tag;
+  });
+}
+
+/// actual main logic
+
+const installedVer = await installedVersion();
+const latestUpstream = await latestUpstreamVersion();
+if (DEBUGGING) {
+  console.log('installed version: "%s"', installedVer);
+  console.log('newest upstream: "%s"', latestUpstream);
+}
+
+const result = GOLANG_SEMVER_READER.comparator(installedVer, latestUpstream);
+if (result === comparatorEqual) {
+  if (DEBUGGING) console.log(`installed and upstream versions match (${installedVer})`);
+  exit(0);
+}
+console.error(`golang is old: installed=${installedVer} vs. upstream=${latestUpstream}`);
+exit(1);
