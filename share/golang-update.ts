@@ -104,25 +104,24 @@ class RuntimeCacheUrl {
   }
 }
 
+/**
+ * Fetches results from golang git repo's API, which looks something like:
+ *    {
+ *      "go1": {
+ *        "value": "6174b5e21e73714c63061e66efdbe180e1c5491d"
+ *      },
+ *      "go1.0.1": {
+ *        "value": "2fffba7fe19690e038314d17a117d6b87979c89f"
+ *      },
+ *      "go1.0.2": {
+ *        "value": "cb6c6570b73a1c4d19cad94570ed277f7dae55ac"
+ *      }
+ *    }
+ */
 async function golangRefsApi(): Promise<string> {
   const tagsJsonUrl = 'https://go.googlesource.com/go/+refs/tags?format=JSON';
 
   return new RuntimeCacheUrl(tagsJsonUrl, `golang-update_702a271a9c9b8ca0c41cff7394613979b59853f6.txt`).fetch();
-
-  return readTextFileSync('/home/jzacsh/tmp/test-golang-data/golangrefs-tags.json');
-  return `)]}'
-{
-  "go1": {
-    "value": "6174b5e21e73714c63061e66efdbe180e1c5491d"
-  },
-  "go1.0.1": {
-    "value": "2fffba7fe19690e038314d17a117d6b87979c89f"
-  },
-  "go1.0.2": {
-    "value": "cb6c6570b73a1c4d19cad94570ed277f7dae55ac"
-  }
-}
-`;
 }
 
 const comparatorALarger: ComparatorALarger = -1;
