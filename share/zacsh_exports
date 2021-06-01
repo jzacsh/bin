@@ -105,7 +105,12 @@ elif type lesspipe >/dev/null 2>&1;then
   export LESSOPEN='|lesspipe %s'
 fi
 
+# TODO(jzacsh) switch to: DENO_INSTALL="$HOME/usr/lib/deno"
 export DENO_INSTALL="$HOME/.deno"
+
+# rustlang things; see https://sh.rustup.rs script for details
+export RUSTUP_HOME="$HOME/usr/lib/rust/rustup"
+export CARGO_HOME="$HOME/usr/lib/rust/cargo"
 
 exportPrependedOnce 'PATH' \
   "$HOME/bin" \
@@ -120,6 +125,7 @@ exportPrependedOnce 'PATH' \
   "$HOME/usr/local/bin/android/studio/bin" \
   "$HOME/usr/local/bin/valgrind/bin" \
   "/usr/local/go/bin/" \
+  "$CARGO_HOME/bin" \
   "$DENO_INSTALL/bin" \
   "$HOME/.rbenv/shims"
 
