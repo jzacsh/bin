@@ -1,0 +1,211 @@
+#!/bin/bash
+#
+# Saves & restores all windows' positions, workspace placements, and dimensions.
+set -euo pipefail
+
+declare action="${1:-list}"
+declare window_id="${2:-}"
+
+declare -r this="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+declare -r data_dir="$XDG_DATA_HOME/zacshwindows"
+mkdir -p "$data_dir"
+
+save_suffix=wmctrl
+
+assert_have_cmd() (
+  local cmd="$1"
+  type "$1" >/dev/null 2>&1 || {
+    printf \
+      'error: %s depends on `%s` command to operate, but not in $PATH\n' \
+      "$this" "$cmd" >&2
+    exit 1
+  }
+)
+assert_have_cmd wmctrl
+assert_have_cmd xwininfo
+
+has_saves() { [[ "$(list_saves | wc -l)" -gt 0 ]]; }
+
+list_saves() {
+  find "$data_dir" -type f -print -size +0 -name "*.$save_suffix" |
+    sort --numeric-sort
+}
+
+list_last() { list_saves | tail -n 1; }
+
+list_session() (
+  local session="$1"
+  if [[ -z "$window_id" ]]; then
+    cat "$session"
+  else
+    sed --quiet "/^${window_id}/p" "$session"
+  fi
+)
+
+get_xy_coords() (
+  local win_id="$1"
+  xwininfo -stats -id "$win_id" |
+    grep --extended-regexp '^\s*Absolute\ *upper-left\ *' |
+    sed --regexp-extended --expression \
+        's/.*[[:space:]]([[:digit:]]+).*/\1/'
+)
+
+win_exists() (
+  local window_id="$1"
+  wmctrl -l | grep "$window_id" >/dev/null 2>&1
+)
+
+
+# hard working stats to make remind me what a pain in the $#@! i just saved
+# myself from (of my DE's own incompetence)
+declare -A stats=(
+  [DESKTOPS_SEEN]=''
+  [WINDOWS_SEEN]=0
+)
+
+# $1=[DESKTOP|WINDOW] $2=[DESKTOP_ID]
+record_seen() {
+  local seen="$1"
+  case "$seen" in
+    DESKTOP)
+      local desktop_id="$2"
+      stats[DESKTOPS_SEEN]="${stats[DESKTOPS_SEEN]} "$desktop_id""
+      ;;
+    WINDOW)
+      stats[WINDOWS_SEEN]="$(( 1 + "${stats[WINDOWS_SEEN]}" ))"
+      ;;
+  esac
+}
+
+print_desktops_seen() (
+  # do _not_ use quotes here!
+  printf '%s\n' ${stats[DESKTOPS_SEEN]} | sort | uniq
+)
+
+# $1=action
+pat_on_back() (
+  local action="$1"
+  printf '%s %s windows across %s desktops {%s}\n' \
+    "$action" \
+    "${stats[WINDOWS_SEEN]}" \
+    "$(print_desktops_seen | wc -l)" \
+    "$(printf '%s,' $(print_desktops_seen))"
+)
+
+case "$action" in
+  cat)
+    if has_saves;then
+      last="$(list_last)"
+      printf \
+        'Session data from last save "%s":\n' \
+        "$(basename "$last")"
+      ( set -x; cat "$last"; )
+    else
+      echo 'no previously saved sessions' >&2
+      exit 1
+    fi
+    ;;
+  list)
+    if has_saves;then
+      printf 'Found %s saved sessions:\n' "$(list_saves | wc -l)"
+      list_saves | sed --expression 's,^'"$HOME"'/,~/,g'
+    else
+      echo 'no previously saved sessions' >&2
+      exit 1
+    fi
+    ;;
+  save)
+    save_to="$(date +"${data_dir}/auto.%s_%Y-%m-%d.$save_suffix")"
+
+    # TODO(jzacsh) consider naming my saves (e.g. with a different suffix like
+    # `manual.[user provided slug that's strictly alphanumeric].%Y-%m-%d...`
+    # in which case the below "clear the file" line is necessary, since the idea
+    # is the user wants to blow away previous settings under a given name.
+    echo -n > "$save_to" # clear the file
+
+    printf \
+      "Saving %s windows' positions & sizes to: %s ...\n" \
+      "$(wmctrl -l -G | wc -l)" \
+      "$(basename "$save_to")"
+
+    # see wmctrl(1) man page for these columns
+    while read win_id desktop_id offset_y offset_y width height label; do
+      # WARNING: we can't use offset_* vars from wmctrl itself, for some reason
+      # they're always totally wrong when i have two displays connected (YES!
+      # even though you're taking the number *from* wmctrl and pasing it *back*
+      # into wmctrl, you'll see the window fly across your screen to the wrong
+      # display!) so we need to use xwininfo for "coordinates" instead - this is
+      # what `get_xy_coords` func wraps.
+      coords=( $(get_xy_coords "$win_id") )
+
+      record_seen WINDOW
+      record_seen DESKTOP "$desktop_id"
+
+      printf "saving window '%s'...\n" "$label"
+      echo \
+        "$win_id" \
+        "$desktop_id" \
+        "${coords[0]}" \
+        "${coords[1]}" \
+        "$width" \
+        "$height" \
+        "$label" >> "$save_to"
+    done < <(wmctrl -l -G)
+    printf \
+      "Done; %s windows' positions & sizes saved to: %s - to restore:\n$ %s\n" \
+      "$(wmctrl -l -G | wc -l)" \
+      "$(basename "$save_to")" \
+      "$this"' restore'
+    pat_on_back 'Saved'
+    ;;
+  restore)
+    has_saves || {
+      printf 'nothing previously saved to restore at\n\t%s\n' "$data_dir" >&2
+      exit 1
+    }
+    last_save="$(list_last)"
+    if [[ -z "$window_id" ]];then
+      printf \
+        "Restoring all %s windows' positions & sizes from: %s\n" \
+        "$(wc -l < "$last_save")" \
+        "$(basename "$last_save")"
+    else
+      win_exists "$window_id" || {
+        printf 'ERROR: window "%s" no longer exists\n' "$window_id" >&2
+        exit 1
+      }
+      printf \
+        "Restoring only '%s' window's position & size from: %s\n" \
+        "$window_id" \
+        "$(basename "$last_save")"
+    fi
+    while read win_id desktop_id coord_x coord_y width height label; do
+      printf '... restoring window "%s"...\n' "$label"
+      if win_exists "$win_id";then
+        record_seen WINDOW
+        record_seen DESKTOP "$desktop_id"
+        wmctrl_move_arg="0,${coord_x},${coord_y},${width},${height}"
+        (
+          set -x;
+          # restore which desktop it was on
+          wmctrl \
+            -i \
+            -r "$win_id" \
+            -t "$desktop_id"
+          # restore its coordinates and dimensions on that desktop 
+          wmctrl \
+            -i \
+            -r "$win_id" \
+            -e "$wmctrl_move_arg"
+        )
+      else
+        printf 'WARNING: skipping nonextant window "%s"\n' "$win_id" >&2
+      fi
+    done < <(list_session "$last_save")
+    pat_on_back 'Restored'
+    ;;
+  *)
+    printf 'usage: %s [save|restore|list|cat] [RESTORE_WINDOW_ID]\n' "$this" >&2
+    exit 1
+    ;;
+esac
