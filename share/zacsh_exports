@@ -44,7 +44,7 @@ exportPrependedOnce() {
 # Static/vanilla (not appending) env vars:
 # EDITOR= is set atop normal ~/.bashrc
 if type nvim >/dev/null 2>&1;then export EDITOR=nvim;fi
-export EMAIL=jzacsh@gmail.com
+export EMAIL=j@zac.sh
 export GPG_TTY="$(tty)"
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_CONFIG_HOME=$HOME/.config

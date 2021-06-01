@@ -10,7 +10,7 @@ printf "
   A GUI utility to combine multiple PDF files into a single PDF.
 
   License: GPLv2
-  Author: Jonathan Zacsh <jzacsh@gmail.com>
+  Author: Jonathan Zacsh <j@zac.sh>
 
   Summary:
     A simple bash wrapper taking advantage of the existing pdftk and
