@@ -110,8 +110,8 @@ export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
 export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
 export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
 
-# TODO(jzacsh) switch to: DENO_INSTALL="$HOME/usr/lib/deno"
-export DENO_INSTALL="$HOME/.deno"
+# see https://deno.land/#installation
+export DENO_INSTALL="$HOME/usr/lib/deno"
 
 # rustlang things; see https://sh.rustup.rs script for details
 export RUSTUP_HOME="$HOME/usr/lib/rust/rustup"
