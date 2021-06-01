@@ -55,10 +55,6 @@ export SHOT_PUB='shot'
 export SHOT_UPLOAD='ompload'
 export TTS_CONFIG=~/.ttskeyrc
 export PASTIE=clbin
-export GOPATH="$HOME/usr/lib/go/"
-export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
-export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
-export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
 export PUNCH_CARD="$(xdg-user-dir DOCUMENTS)/punchcard"
 
 # ssh-agent (eval'd by typical bashrc) exposes the correct, current socket via
@@ -105,12 +101,25 @@ elif type lesspipe >/dev/null 2>&1;then
   export LESSOPEN='|lesspipe %s'
 fi
 
+#
+# Programming language & SDK stuff below this line
+#
+
+export GOPATH="$HOME/usr/lib/go/"
+export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
+export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
+export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
+
 # TODO(jzacsh) switch to: DENO_INSTALL="$HOME/usr/lib/deno"
 export DENO_INSTALL="$HOME/.deno"
 
 # rustlang things; see https://sh.rustup.rs script for details
 export RUSTUP_HOME="$HOME/usr/lib/rust/rustup"
 export CARGO_HOME="$HOME/usr/lib/rust/cargo"
+
+#
+# Export a single $PATH env. variable
+#
 
 exportPrependedOnce 'PATH' \
   "$HOME/bin" \
