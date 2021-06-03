@@ -113,6 +113,9 @@ export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
 # see https://deno.land/#installation
 export DENO_INSTALL="$HOME/usr/lib/deno"
 
+# see https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally
+export NPM_CONFIG_PREFIX="$HOME/usr/lib/npm/global"
+
 # rustlang things; see https://sh.rustup.rs script for details
 export RUSTUP_HOME="$HOME/usr/lib/rust/rustup"
 export CARGO_HOME="$HOME/usr/lib/rust/cargo"
@@ -136,6 +139,7 @@ exportPrependedOnce 'PATH' \
   "/usr/local/go/bin/" \
   "$CARGO_HOME/bin" \
   "$DENO_INSTALL/bin" \
+  "$NPM_CONFIG_PREFIX/bin" \
   "$HOME/.rbenv/shims"
 
 exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python"
