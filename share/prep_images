@@ -27,7 +27,7 @@ if [[ $1 = -h || $1 = --help ]];then
     MODS: absolute path. Default value: "%s"
 
     See also: convert(1), ImageMagick(1)
-    Author: Jonathan Zacsh <jzacsh@gmail.com>
+    Author: Jonathan Zacsh <j@zac.sh>
   ' "$(basename $0)" "$path" "$mods" >& 2
   exit 1
 fi

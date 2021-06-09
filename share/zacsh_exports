@@ -44,7 +44,7 @@ exportPrependedOnce() {
 # Static/vanilla (not appending) env vars:
 # EDITOR= is set atop normal ~/.bashrc
 if type nvim >/dev/null 2>&1;then export EDITOR=nvim;fi
-export EMAIL=jzacsh@gmail.com
+export EMAIL=j@zac.sh
 export GPG_TTY="$(tty)"
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_CONFIG_HOME=$HOME/.config
@@ -55,10 +55,6 @@ export SHOT_PUB='shot'
 export SHOT_UPLOAD='ompload'
 export TTS_CONFIG=~/.ttskeyrc
 export PASTIE=clbin
-export GOPATH="$HOME/usr/lib/go/"
-export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
-export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
-export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
 export PUNCH_CARD="$(xdg-user-dir DOCUMENTS)/punchcard"
 
 # ssh-agent (eval'd by typical bashrc) exposes the correct, current socket via
@@ -105,7 +101,28 @@ elif type lesspipe >/dev/null 2>&1;then
   export LESSOPEN='|lesspipe %s'
 fi
 
-export DENO_INSTALL="$HOME/.deno"
+#
+# Programming language & SDK stuff below this line
+#
+
+export GOPATH="$HOME/usr/lib/go/"
+export GRADLE_USER_HOME="$XDG_CONFIG_HOME"/gradle/
+export ECLIPSE_HOME="$HOME"/back/code/ide/eclipse/installations/java-mars
+export ANDROID_HOME="$HOME"/usr/local/bin/android/sdk
+
+# see https://deno.land/#installation
+export DENO_INSTALL="$HOME/usr/lib/deno"
+
+# see https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally
+export NPM_CONFIG_PREFIX="$HOME/usr/lib/npm/global"
+
+# rustlang things; see https://sh.rustup.rs script for details
+export RUSTUP_HOME="$HOME/usr/lib/rust/rustup"
+export CARGO_HOME="$HOME/usr/lib/rust/cargo"
+
+#
+# Export a single $PATH env. variable
+#
 
 exportPrependedOnce 'PATH' \
   "$HOME/bin" \
@@ -120,7 +137,9 @@ exportPrependedOnce 'PATH' \
   "$HOME/usr/local/bin/android/studio/bin" \
   "$HOME/usr/local/bin/valgrind/bin" \
   "/usr/local/go/bin/" \
+  "$CARGO_HOME/bin" \
   "$DENO_INSTALL/bin" \
+  "$NPM_CONFIG_PREFIX/bin" \
   "$HOME/.rbenv/shims"
 
 exportPrependedOnce 'PYTHONPATH' "$HOME/usr/lib/python"
