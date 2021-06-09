@@ -12,6 +12,11 @@ mkdir -p "$data_dir"
 
 save_suffix=wmctrl
 
+DEBUG_VERBOSITY=0
+AGGRESSIVE_RESTORE=0
+
+bash_set_x='set -x'; (( DEBUG_VERBOSITY )) || bash_set_x=''
+
 assert_have_cmd() (
   local cmd="$1"
   type "$1" >/dev/null 2>&1 || {
@@ -52,9 +57,24 @@ get_xy_coords() (
 
 win_exists() (
   local window_id="$1"
-  wmctrl -l | grep "$window_id" >/dev/null 2>&1
+  list_existing_windows | grep "$window_id" >/dev/null 2>&1
 )
 
+# prints a lists of all normal windows, sorted by desktop number
+list_existing_windows() (
+  set noglob # so sed expressions' internal regex isn't interpreted
+
+  # drop these two windows:
+  #   0x0420012d -1 0    0    3840 2136 zacsh Desktop
+  #   0x04200135 -1 7680 0    1920 1058 zacsh nemo-desktop
+  local drop_desktop='/[[:space:]]-1[[:space:]]*0[[:space:]]*0[[:space:]].*zacsh[[:space:]]*Desktop[[:space:]]*$/d'
+  local drop_nemodesktop='/[[:space:]]-1[[:space:]].*[[:space:]]*0[[:space:]].*zacsh[[:space:]]*nemo-desktop[[:space:]]*$/d'
+  wmctrl -l -G |
+    sed --regexp-extended \
+      --expression "$drop_desktop" \
+      --expression "$drop_nemodesktop" |
+    sort --numeric-sort --key 2,2
+)
 
 # hard working stats to make remind me what a pain in the $#@! i just saved
 # myself from (of my DE's own incompetence)
@@ -99,7 +119,7 @@ case "$action" in
       printf \
         'Session data from last save "%s":\n' \
         "$(basename "$last")"
-      ( set -x; cat "$last"; )
+      ( $bash_set_x; cat "$last"; )
     else
       echo 'no previously saved sessions' >&2
       exit 1
@@ -125,7 +145,7 @@ case "$action" in
 
     printf \
       "Saving %s windows' positions & sizes to: %s ...\n" \
-      "$(wmctrl -l -G | wc -l)" \
+      "$(list_existing_windows | wc -l)" \
       "$(basename "$save_to")"
 
     # see wmctrl(1) man page for these columns
@@ -141,7 +161,8 @@ case "$action" in
       record_seen WINDOW
       record_seen DESKTOP "$desktop_id"
 
-      printf "saving window '%s'...\n" "$label"
+      printf '... saving from desktop %2s window id=%s "%s"...\n' \
+        "$desktop_id" "$win_id" "$label"
       echo \
         "$win_id" \
         "$desktop_id" \
@@ -150,10 +171,10 @@ case "$action" in
         "$width" \
         "$height" \
         "$label" >> "$save_to"
-    done < <(wmctrl -l -G)
+    done < <(list_existing_windows)
     printf \
       "Done; %s windows' positions & sizes saved to: %s - to restore:\n$ %s\n" \
-      "$(wmctrl -l -G | wc -l)" \
+      "$(list_existing_windows | wc -l)" \
       "$(basename "$save_to")" \
       "$this"' restore'
     pat_on_back 'Saved'
@@ -170,6 +191,7 @@ case "$action" in
         "$(wc -l < "$last_save")" \
         "$(basename "$last_save")"
     else
+      # TODO update this logic to have an AGGRESSIVE_RESTORE mode as used below
       win_exists "$window_id" || {
         printf 'ERROR: window "%s" no longer exists\n' "$window_id" >&2
         exit 1
@@ -180,26 +202,58 @@ case "$action" in
         "$(basename "$last_save")"
     fi
     while read win_id desktop_id coord_x coord_y width height label; do
-      printf '... restoring window "%s"...\n' "$label"
-      if win_exists "$win_id";then
+      printf '... restoring from desktop %2s window id=%s "%s"...\n' \
+        "$desktop_id" "$win_id" "$label"
+      if win_exists "$win_id" || (( AGGRESSIVE_RESTORE ));then
         record_seen WINDOW
         record_seen DESKTOP "$desktop_id"
         wmctrl_move_arg="0,${coord_x},${coord_y},${width},${height}"
+
+        # restore which desktop it was on ("-1" means "sticky on all workspaces")
+        if [[ "$desktop_id" = '-1' ]];then
+          # wmctrl is 16 years old and near dead. we have to hack around its quirks; only using:
+          #  -b add,sticky and -r [label] works
+          # TODO(zacsh) still doesn't work
+          (
+            $bash_set_x
+            wmctrl \
+              -b add,sticky \
+              -r "$label"
+          ) || printf 'WARNING: skipping stickiness for window %s "%s"\n' \
+                "$win_id" "$label" >&2
+        else
+          (
+            $bash_set_x
+            wmctrl \
+              -i \
+              -t "$desktop_id" \
+              -r "$win_id"
+          )
+        fi
+
+        wmctrl_args='-i'
+        target="$win_id"
+        if ! win_exists "$win_id";then
+          printf \
+          'WARNING: aggressively trying ot restore window_id=%s via its label "%s"\n' \
+          "$win_id" "$label" >&2
+          target="$label"
+          wmctrl_args=''
+        fi
         (
-          set -x;
-          # restore which desktop it was on
-          wmctrl \
-            -i \
-            -r "$win_id" \
-            -t "$desktop_id"
+          $bash_set_x
           # restore its coordinates and dimensions on that desktop 
           wmctrl \
-            -i \
-            -r "$win_id" \
+            $wmctrl_args \
+            -r "$target" \
             -e "$wmctrl_move_arg"
-        )
+        ) || printf \
+          'ERROR: failed restoring window_id=%s "%s"\n' \
+          "$win_id" "$label" >&2
       else
-        printf 'WARNING: skipping nonextant window "%s"\n' "$win_id" >&2
+        printf \
+          'WARNING: skipping nonextant window id=%s "%s"\n' \
+          "$win_id" "$label" >&2
       fi
     done < <(list_session "$last_save")
     pat_on_back 'Restored'
