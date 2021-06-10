@@ -127,8 +127,9 @@ case "$action" in
     ;;
   list)
     if has_saves;then
-      printf 'Found %s saved sessions:\n' "$(list_saves | wc -l)"
-      list_saves | sed --expression 's,^'"$HOME"'/,~/,g'
+      printf 'Found %s saved sessions:\n' "$(list_saves | wc -l)" >&2
+      # above to stderr so we can script against list_saves output
+      list_saves
     else
       echo 'no previously saved sessions' >&2
       exit 1
