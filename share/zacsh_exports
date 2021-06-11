@@ -57,6 +57,10 @@ export TTS_CONFIG=~/.ttskeyrc
 export PASTIE=clbin
 export PUNCH_CARD="$(xdg-user-dir DOCUMENTS)/punchcard"
 
+#TODO(zacsh) at next boot - set this before starting tmux; experiment:
+# export TMUX_TMPDIR="$XDG_RUNTIME_DIR/tmux"
+# mkdir -vp "$TMUX_TMPDIR"
+
 # ssh-agent (eval'd by typical bashrc) exposes the correct, current socket via
 # $SSH_AUTH_SOCK; below lines of code relocate that file to an expected path
 #
