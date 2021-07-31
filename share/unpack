@@ -1,0 +1,174 @@
+#!/bin/bash
+declare -r this_prg="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+set -o errexit
+set -o pipefail
+set -o nounset
+
+usage() {
+  cat <<USAGE_EOF
+Usage: "$this_prg" ARCHIVE_FILE [{TARGET_REGEXP|.} [COPY_DEST]]
+
+Offers three conveniences:
+1. listing ARCHIVE_FILE's contents, without unpacking, if given no other args.
+2. simply deflating ARCHIVE_FILE's contents to a new folder in the pwd.
+3. extracting a single file in a simple, easy way without leaving a mess behind
+   (uses TARGET_REGEXP)
+
+The final mode is the most complicated, but the most frequent usage pattern of a
+given archive. In this mode "$this_prg" extracts from ARCHIVE_FILE the first file
+matching TARGET_REGEXP to a temp dir with a sane name or copies it to COPY_DEST.
+
+- ARCHIVE_FILE Filepath of an archive from which we're unpacking.
+
+- TARGET_REGEXP Regular expression indicating the file you're
+  trying to quickly extract. Valid expressions defined by find(1) "-regex".
+
+- COPY_DEST Optional filepath to a destination of which the first
+  found file should be copied. By default instead just copies the file to a
+  new tmpdir location with a simple, detoxed name.
+
+NOTE: this is intended to extract a file. If you need to extract a directory,
+you can send a small CL to make that possible.
+USAGE_EOF
+}
+
+log() (
+  local tag="$1" fmt="$2"; shift 2
+  printf \
+    "[%s.%s %7s] $fmt" \
+    "$this_prg" "$(date +%s)" "$tag" "$@" >&2
+)
+die() { log FATAL '%s\n' "$1"; exit 1; }
+
+[[ "$#" -gt 0 ]] || die "at least ARCHIVE_FILE required, but got $# arg(s)"
+declare -r archive_file="$1"
+
+declare -r help_regexp='h(elp)?'
+if [[ "${1//-/}" = $help_regexp ]]; then
+  usage
+  exit
+fi
+
+[[ -s "$archive_file" ]] || die \
+  'ARCHIVE_FILE should be a readable, non-empty archive: '"$archive_file"
+
+if [[ "$#" -eq 1 ]]; then
+  unpack_mode=LISTING
+else # $# >= 2
+  declare -r target_regexp="$2"
+  [[ -n "${target_regexp// /}" ]] || die \
+    "TARGET_REGEXP should be a non-empty expression: '$target_regexp'"
+
+  if [[ "$target_regexp" = . ]]; then
+    unpack_mode=SIMPLE
+  else
+    unpack_mode=TARGETED
+    if [[ "$#" -eq 3 ]]; then
+      declare -r copy_dest="$3"
+      [[ -n "${copy_dest// /}" ]] || die 'COPY_DEST must be a non-empty string'
+    fi
+  fi
+fi
+
+unarchive() (
+  local mime_type
+
+  if [[ "$#" -eq 1 ]]; then
+    cd "$1" # ensure we're unarchive in the right spot
+  else
+    [[ "$unpack_mode" = LISTING ]] || die \
+      'internal bug: to unpack, have to have dir to place content'
+  fi
+
+  mime_type="$(
+    file --brief --mime-type "$archive_file" || die \
+      'failed to inspect archive via file(1): '"$archive_file"
+  )"
+
+  case "$mime_type" in
+    'application/gzip')
+      if [[ "$unpack_mode" = LISTING ]]; then
+        tar --list             --file "$archive_file"
+      else
+        tar --extract --ungzip --file "$archive_file"
+      fi
+      ;;
+    'application/zip')
+      if [[ "$unpack_mode" = LISTING ]]; then
+        unzip -ql "$archive_file"
+      else
+        unzip -q  "$archive_file"
+      fi
+      ;;
+    *)
+      die 'Unrecognized archive file type; mimetype='"$mime_type"
+      ;;
+  esac
+)
+
+if [[ "$unpack_mode" = LISTING ]]; then
+  unarchive
+  exit
+fi
+
+mktemp_template() {
+  local date_template mkdir_template
+
+  local date_template="$1"; shift
+  local mkdir_template="$(
+    date +"$date_template" || die \
+        'internal bug: date(1) failed to generate string for template '"$date_template"
+  )"
+
+  mktemp "$mkdir_template" "$@" || die \
+    "internal bug(or resource limit): 'mktemp "$@"' failed for: '$mkdir_template'"
+}
+
+declare -a cleanup_targets=()
+cleanup() {
+  local err="$?"
+  # don't cleanup if something went wrong and investigation is likely warranted
+  [[ "$err" -eq 0 ]] || return "$err"
+
+  [[ "${#cleanup_targets[@]}" -gt 0 ]] || return "$err"
+  rm -rf "${cleanup_targets[@]}"
+}
+trap cleanup EXIT
+
+if [[ "$unpack_mode" = SIMPLE ]]; then
+  dst_tmpl='unpacked-%F.%s_XXXXXX_'"$(basename "$archive_file").d"
+  dst_match="$(mktemp_template "$dst_tmpl" --tmpdir=.  -d)"
+  unarchive "$dst_match"
+  echo "$dst_match"
+else
+  unpack_dir="$(mktemp_template 'unpack-extraction_%F.%s_XXXXXXX.d' --tmpdir= -d)"
+
+  log INFO 'unpacking to temp dir: %s\n' "$unpack_dir"
+  unarchive "$unpack_dir"  || die 'unpack of archive: '"$archive_file"
+
+  find_matches() { find "$unpack_dir" -type f -regex "$target_regexp"; }
+
+  match_count="$(find_matches | wc -l)"
+  [[ "$match_count" -gt 0 ]] || die \
+    'no matches found in archive; have a look: '"$unpack_dir"
+
+  if [[ "$match_count" -eq 1 ]];then
+    cleanup_targets+=( "$unpack_dir" )
+  else
+    log WARNING \
+      'multiple matches (%s), but only taking the first; you can access the others after: %s\n' \
+      "$match_count" "$unpack_dir"
+  fi
+
+  src_match="$(find_matches)"
+  src_inode="$(stat --printf '%i' "$src_match")"
+  detox "$src_match" || die \
+    "detox(1) of source file failed: '$src_match'"
+  src_detoxed="$(find "$unpack_dir" -type f -inum "$src_inode")"
+
+  dst_tmpl='unpacked-%F.%s_XXXXXX_'"$(basename "$src_detoxed")"
+  dst_match="$(mktemp_template "$dst_tmpl" --tmpdir="${copy_dest:-}"  )"
+  cp "$src_detoxed" "$dst_match"
+
+  echo "$dst_match"
+fi
