@@ -3,6 +3,7 @@ declare -r this_prg="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 set -o errexit
 set -o pipefail
 set -o nounset
+set +o xtrace
 
 usage() {
   cat <<USAGE_EOF
@@ -40,14 +41,14 @@ log() (
 )
 die() { log FATAL '%s\n' "$1"; exit 1; }
 
-[[ "$#" -gt 0 ]] || die "at least ARCHIVE_FILE required, but got $# arg(s)"
-declare -r archive_file="$1"
-
-declare -r help_regexp='h(elp)?'
-if [[ "${1//-/}" = $help_regexp ]]; then
+declare -r help_regexp='-?-?h(elp)?$'
+if [[ "${1:-}" =~ $help_regexp ]]; then
   usage
   exit
 fi
+
+[[ "$#" -gt 0 ]] || die "at least ARCHIVE_FILE required, but got $# arg(s)"
+declare -r archive_file="$1"
 
 [[ -s "$archive_file" ]] || die \
   'ARCHIVE_FILE should be a readable, non-empty archive: '"$archive_file"
